@@ -1,0 +1,46 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/FUNBIDE.API/Dockerfile
+    container_name: funbide-api
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__FunbideDatabase: ${FUNBIDE_DB_CONNECTION_STRING}
+      Supabase__Jwt__ProjectUrl: ${SUPABASE_PROJECT_URL}
+      Supabase__Admin__ProjectUrl: ${SUPABASE_PROJECT_URL}
+      Supabase__Admin__ServiceRoleKey: ${SUPABASE_SERVICE_ROLE_KEY}
+      Backup__PgHost: ${FUNBIDE_DB_HOST}
+      Backup__PgDatabase: ${FUNBIDE_DB_NAME}
+      Backup__PgUser: ${FUNBIDE_DB_USER}
+      Backup__PgPassword: ${FUNBIDE_DB_PASSWORD}
+      Backup__AesKeyBase64: ${FUNBIDE_BACKUP_AES_KEY}
+    volumes:
+      - funbide_backups:/var/backups/funbide
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: funbide-nginx
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/ssl:/etc/nginx/ssl:ro
+      - certbot_webroot:/var/www/certbot:ro
+
+volumes:
+  funbide_backups:
+  certbot_webroot:

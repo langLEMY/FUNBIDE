@@ -1,0 +1,176 @@
+.personal-crear-card,
+.personal-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.personal-crear-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.personal-crear-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.personal-crear-form input,
+.personal-crear-form select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 180px;
+}
+
+.personal-crear-form button {
+  background: var(--series-pacientes);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.personal-crear-form button:hover {
+  filter: brightness(1.1);
+}
+
+.personal-crear-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.personal-crear-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.personal-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.personal-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.personal-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+  vertical-align: middle;
+}
+
+.personal-row-inactivo {
+  opacity: 0.55;
+}
+
+.personal-row-identidad {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.personal-row-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border-hairline);
+}
+
+.personal-row-avatar-iniciales {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--series-dinero);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.personal-row-nombre {
+  margin: 0;
+  font-weight: 500;
+}
+
+.personal-row-correo {
+  margin: 2px 0 0;
+  font-size: 12px;
+}
+
+.personal-row-rol {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.personal-row-estado {
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.personal-row-estado.activo {
+  background: rgba(25, 158, 112, 0.16);
+  color: var(--series-pacientes);
+}
+
+.personal-row-estado.inactivo {
+  background: rgba(230, 103, 103, 0.16);
+  color: var(--danger);
+}
+
+.personal-row-acciones {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.personal-row-acciones button {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.personal-row-acciones button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.personal-row-acciones button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.personal-row-boton-peligro {
+  color: var(--danger) !important;
+}
+
+.personal-row-error {
+  color: var(--danger);
+  font-size: 12px;
+  padding-top: 0 !important;
+}

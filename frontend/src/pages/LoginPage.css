@@ -1,0 +1,77 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-marca {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.login-subtitulo {
+  text-align: center;
+  margin: 4px 0 24px;
+  font-size: 13px;
+}
+
+.login-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.login-input {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 10px 12px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.login-input:focus {
+  outline: 2px solid var(--series-dinero);
+  outline-offset: 1px;
+}
+
+.login-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: -6px 0 16px;
+}
+
+.login-boton {
+  background: var(--series-dinero);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-boton:hover {
+  filter: brightness(1.1);
+}
+
+.login-boton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

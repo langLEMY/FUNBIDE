@@ -1,0 +1,98 @@
+:root {
+  --page-plane: #0d0d0d;
+  --surface-1: #1a1a19;
+  --surface-2: #202020;
+  --surface-hover: #262626;
+
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+
+  --gridline: #2c2c2a;
+  --baseline: #383835;
+  --border-hairline: rgba(255, 255, 255, 0.1);
+
+  --series-dinero: #3987e5;
+  --series-dinero-fill: rgba(57, 135, 229, 0.1);
+  --series-pacientes: #199e70;
+  --series-pacientes-fill: rgba(25, 158, 112, 0.1);
+
+  --danger: #e66767;
+
+  --radius-card: 14px;
+  --radius-control: 8px;
+
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--page-plane);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.pantalla-centrada {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+/* Cualquier página puede marcar controles como .no-imprimir; esto además fuerza
+   toda la paleta a un esquema claro para impresión, sin tocar cada componente. */
+@media print {
+  :root {
+    --page-plane: #ffffff;
+    --surface-1: #ffffff;
+    --surface-2: #ffffff;
+    --surface-hover: #ffffff;
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --text-muted: #666666;
+    --gridline: #dddddd;
+    --baseline: #cccccc;
+    --border-hairline: #cccccc;
+  }
+
+  .sidebar,
+  .topbar,
+  .no-imprimir {
+    display: none !important;
+  }
+
+  .dashboard-layout,
+  .dashboard-layout-main,
+  .dashboard-layout-content {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+}

@@ -1,0 +1,181 @@
+.resumen-filtros {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.resumen-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.resumen-presets button {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-hairline);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.resumen-presets button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.resumen-rango {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.resumen-rango label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.resumen-rango input[type='date'] {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 13px;
+  color-scheme: dark;
+}
+
+.resumen-rango button {
+  background: var(--series-dinero);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.resumen-rango button:hover {
+  filter: brightness(1.1);
+}
+
+.resumen-rango button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.resumen-imprimir {
+  background: var(--surface-2) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-hairline) !important;
+  font-weight: 500 !important;
+}
+
+.resumen-imprimir:hover {
+  background: var(--surface-hover) !important;
+}
+
+.resumen-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+
+.resumen-encabezado-impresion {
+  display: none;
+}
+
+.resumen-grafico-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px 20px 8px;
+  margin-bottom: 20px;
+}
+
+.resumen-grafico-titulo {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.resumen-vacio {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.resumen-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+}
+
+.resumen-tabla-titulo {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.resumen-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.resumen-tipo-ingreso {
+  color: var(--series-pacientes);
+  font-weight: 500;
+}
+
+.resumen-tipo-egreso {
+  color: var(--danger);
+  font-weight: 500;
+}
+
+.resumen-tabla th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.resumen-tabla td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+@media print {
+  .resumen-encabezado-impresion {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 16px;
+  }
+
+  .resumen-grafico-card,
+  .resumen-tabla-card {
+    border: none;
+    padding: 0;
+  }
+}

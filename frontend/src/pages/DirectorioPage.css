@@ -1,0 +1,118 @@
+.directorio-crear-card,
+.directorio-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.directorio-crear-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.directorio-crear-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.directorio-crear-form input {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 200px;
+}
+
+.directorio-crear-form button {
+  background: var(--series-pacientes);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.directorio-crear-form button:hover {
+  filter: brightness(1.1);
+}
+
+.directorio-crear-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.directorio-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.directorio-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.directorio-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.directorio-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+  vertical-align: middle;
+}
+
+.directorio-tabla td input {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.directorio-acciones {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.directorio-acciones button {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.directorio-acciones button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.directorio-acciones button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.directorio-boton-peligro {
+  color: var(--danger) !important;
+}

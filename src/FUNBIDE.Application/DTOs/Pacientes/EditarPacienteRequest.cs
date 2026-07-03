@@ -1,0 +1,3 @@
+namespace FUNBIDE.Application.DTOs.Pacientes;
+
+public sealed record EditarPacienteRequest(Guid PacienteId, string Nombre, string Apellido, string Cedula, string? Telefono);

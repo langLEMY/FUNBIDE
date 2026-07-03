@@ -1,0 +1,29 @@
+.stat-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.stat-card-marca {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.stat-card-etiqueta {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.stat-card-valor {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.1;
+}

@@ -1,0 +1,15 @@
+.topbar {
+  height: 64px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.topbar-titulo {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}

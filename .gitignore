@@ -1,0 +1,32 @@
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+appsettings.*.local.json
+deploy/nginx/ssl/
+
+# Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Secretos y entornos locales — nunca se comitean, solo los .example
+.env
+.env.*
+!.env.example
+
+# Configuración local del usuario de Claude Code (no es del equipo)
+.claude/settings.local.json
+
+# Acceso directo de Windows: formato binario atado a rutas absolutas de esta
+# máquina, no portable. El script Iniciar-FUNBIDE.ps1 que sí abre sí se comitea
+# (usa $PSScriptRoot, portable).
+*.lnk
+
+# Archivos de trabajo temporales de sesiones de desarrollo
+*.tmp
+*.tmp.json
+.api-run.log
+.frontend-dev.log
