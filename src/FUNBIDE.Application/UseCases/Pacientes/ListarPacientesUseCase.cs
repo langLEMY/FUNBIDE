@@ -16,7 +16,8 @@ public sealed class ListarPacientesUseCase(IPacienteRepository pacienteRepositor
 
         return pacientes
             .Select(p => new PacienteDto(
-                p.Id, p.Nombre, p.Apellido, p.Documento.Valor, p.Telefono, p.FotoCedulaPath is not null))
+                p.Id, p.Nombre, p.Apellido, p.Documento.Valor, p.Telefono, p.FotoCedulaPath is not null,
+                p.Edad, p.Condicion, p.Estado, p.UltimaVisita))
             .ToList();
     }
 }

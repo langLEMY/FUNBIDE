@@ -18,8 +18,14 @@ namespace FUNBIDE.API.Controllers;
 [RequiereRol(RolUsuario.Fondos)]
 [SoloLecturaEInsercion]
 public sealed class FinanzasController(
-    IRegistrarMovimientoFinancieroUseCase registrarMovimiento) : ControllerBase
+    IRegistrarMovimientoFinancieroUseCase registrarMovimiento,
+    IListarMovimientosFinancierosUseCase listarMovimientos) : ControllerBase
 {
+    [HttpGet("movimientos")]
+    public async Task<ActionResult<IReadOnlyList<MovimientoFinancieroDto>>> ListarAsync(
+        CancellationToken cancellationToken) =>
+        Ok(await listarMovimientos.EjecutarAsync(cancellationToken));
+
     [HttpPost("movimientos")]
     public async Task<ActionResult<MovimientoFinancieroDto>> RegistrarAsync(
         RegistrarMovimientoFinancieroRequest request, CancellationToken cancellationToken) =>

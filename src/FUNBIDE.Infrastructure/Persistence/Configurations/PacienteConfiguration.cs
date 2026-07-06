@@ -25,6 +25,15 @@ public sealed class PacienteConfiguration : IEntityTypeConfiguration<Paciente>
         builder.Property(p => p.Telefono).HasMaxLength(30);
         builder.Property(p => p.FotoCedulaPath).HasMaxLength(300);
 
+        builder.Property(p => p.Edad);
+        builder.Property(p => p.Condicion).HasMaxLength(200);
+        builder.Property(p => p.Estado)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired()
+            .HasDefaultValue(Domain.Enums.EstadoPaciente.Activo);
+        builder.Property(p => p.UltimaVisita);
+
         builder.HasIndex(p => new { p.Nombre, p.Apellido });
     }
 }

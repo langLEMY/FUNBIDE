@@ -1,5 +1,6 @@
 using FluentValidation;
 using FUNBIDE.Application.UseCases.Auditoria;
+using FUNBIDE.Application.UseCases.Auth;
 using FUNBIDE.Application.UseCases.Citas;
 using FUNBIDE.Application.UseCases.Dashboard;
 using FUNBIDE.Application.UseCases.Empleados;
@@ -29,8 +30,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IObtenerHistorialPorPacienteUseCase, ObtenerHistorialPorPacienteUseCase>();
 
         services.AddScoped<IDescargarInventarioUseCase, DescargarInventarioUseCase>();
+        services.AddScoped<IListarInventarioUseCase, ListarInventarioUseCase>();
+        services.AddScoped<ICrearInventarioItemUseCase, CrearInventarioItemUseCase>();
 
         services.AddScoped<IObtenerLogsAuditoriaUseCase, ObtenerLogsAuditoriaUseCase>();
+
+        services.AddScoped<IRegistrarEventoLoginUseCase, RegistrarEventoLoginUseCase>();
 
         services.AddScoped<IListarPersonalUseCase, ListarPersonalUseCase>();
         services.AddScoped<ICrearUsuarioUseCase, CrearUsuarioUseCase>();
@@ -45,6 +50,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IActualizarFotoPerfilPropiaUseCase, ActualizarFotoPerfilPropiaUseCase>();
 
         services.AddScoped<IRegistrarMovimientoFinancieroUseCase, RegistrarMovimientoFinancieroUseCase>();
+        services.AddScoped<IListarMovimientosFinancierosUseCase, ListarMovimientosFinancierosUseCase>();
 
         services.AddScoped<IObtenerResumenHoyUseCase, ObtenerResumenHoyUseCase>();
         services.AddScoped<IObtenerResumenMesUseCase, ObtenerResumenMesUseCase>();

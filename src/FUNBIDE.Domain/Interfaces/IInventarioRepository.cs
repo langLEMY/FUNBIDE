@@ -13,6 +13,12 @@ public interface IInventarioRepository
 
     Task<InventarioItem?> ObtenerPorIdAsync(Guid inventarioItemId, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<InventarioItem>> ObtenerTodosAsync(CancellationToken cancellationToken);
+
+    Task<bool> ExisteCodigoAsync(string codigo, CancellationToken cancellationToken);
+
+    Task AgregarAsync(InventarioItem item, CancellationToken cancellationToken);
+
     Task RegistrarMovimientoAsync(MovimientoInventario movimiento, CancellationToken cancellationToken);
 
     Task GuardarCambiosAsync(CancellationToken cancellationToken);

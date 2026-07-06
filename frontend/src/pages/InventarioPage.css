@@ -1,0 +1,191 @@
+.inventario-crear-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.inventario-crear-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.inventario-crear-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.inventario-crear-form input,
+.inventario-crear-form select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 160px;
+}
+
+.inventario-crear-form button {
+  background: var(--series-pacientes);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inventario-crear-form button:hover {
+  filter: brightness(1.1);
+}
+
+.inventario-crear-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.inventario-buscador {
+  margin-bottom: 12px;
+}
+
+.inventario-buscador input {
+  width: 100%;
+  max-width: 360px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 12px;
+  font-size: 14px;
+}
+
+.inventario-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.inventario-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inventario-tab:hover {
+  color: var(--text-primary);
+}
+
+.inventario-tab.activo {
+  color: var(--text-primary);
+  border-bottom-color: var(--series-dinero);
+}
+
+.inventario-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.inventario-badge-ok {
+  background: var(--series-pacientes-fill);
+  color: var(--series-pacientes);
+}
+
+.inventario-badge-bajo {
+  background: rgba(224, 112, 95, 0.15);
+  color: var(--danger);
+}
+
+.inventario-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+}
+
+.inventario-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0 0 10px;
+}
+
+.inventario-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.inventario-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.inventario-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+  vertical-align: middle;
+}
+
+.inventario-acciones button {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.inventario-acciones button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.inventario-acciones button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.inventario-despacho-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.inventario-despacho-form input {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  font-size: 13px;
+  width: 110px;
+}
+
+.inventario-row-error {
+  color: var(--danger);
+  font-size: 12px;
+  padding-top: 0 !important;
+}

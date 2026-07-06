@@ -8,15 +8,18 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUNBIDE.API.Controllers;
 
 /// <summary>
-/// Acceso de solo lectura a los logs de auditoría para ADMIN. Los registros se
-/// insertan automáticamente vía el sink de Serilog (ver <c>SerilogConfiguration</c>);
-/// este controlador es append-only por si en el futuro se necesita registrar un
-/// evento manual, pero nunca permite editar ni borrar auditoría histórica.
+/// Acceso de solo lectura a los logs de auditoría para ADMIN (resumen financiero) y
+/// LEMY (bitácora de actividad: login, cambios, inventario, pacientes). Los registros
+/// se insertan automáticamente vía el sink de Serilog (ver <c>SerilogConfiguration</c>)
+/// o vía <see cref="Application.UseCases.Auth.IRegistrarEventoLoginUseCase"/> para
+/// intentos de inicio de sesión; este controlador es append-only por si en el futuro
+/// se necesita registrar un evento manual, pero nunca permite editar ni borrar
+/// auditoría histórica.
 /// </summary>
 [ApiController]
 [Route("api/auditoria")]
 [Authorize]
-[RequiereRol(RolUsuario.Admin)]
+[RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
 [SoloLecturaEInsercion]
 public sealed class AuditoriaController(IObtenerLogsAuditoriaUseCase obtenerLogs) : ControllerBase
 {

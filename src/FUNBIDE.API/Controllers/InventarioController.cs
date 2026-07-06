@@ -8,18 +8,35 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUNBIDE.API.Controllers;
 
 /// <summary>
-/// Endpoint transaccional de farmacia. El descargo de stock corre dentro de una
-/// transacción de base de datos con bloqueo de fila (ver <c>DescargarInventarioUseCase</c>
-/// e <c>InventarioRepository.ObtenerConBloqueoAsync</c>) para garantizar atomicidad
-/// incluso bajo descargos concurrentes del mismo ítem.
+/// Base de datos de inventario de farmacia. Todos los roles pueden consultar,
+/// agregar y despachar medicamentos/insumos. Cada acción declara su propio
+/// <see cref="RequiereRolAttribute"/> en vez de uno a nivel de clase, igual que
+/// <c>PacientesController</c>.
 /// </summary>
 [ApiController]
 [Route("api/inventario")]
 [Authorize]
-[RequiereRol(RolUsuario.Farmacia)]
-public sealed class InventarioController(IDescargarInventarioUseCase descargarInventario) : ControllerBase
+public sealed class InventarioController(
+    IListarInventarioUseCase listarInventario,
+    ICrearInventarioItemUseCase crearInventarioItem,
+    IDescargarInventarioUseCase descargarInventario) : ControllerBase
 {
+    [HttpGet]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    public async Task<ActionResult<IReadOnlyList<InventarioItemDto>>> ListarAsync(CancellationToken cancellationToken) =>
+        Ok(await listarInventario.EjecutarAsync(cancellationToken));
+
+    [HttpPost]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    public async Task<ActionResult<InventarioItemDto>> CrearAsync(
+        CrearInventarioItemRequest request, CancellationToken cancellationToken)
+    {
+        var item = await crearInventarioItem.EjecutarAsync(request, cancellationToken);
+        return Created("api/inventario", item);
+    }
+
     [HttpPost("descargo")]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
     public async Task<ActionResult<MovimientoInventarioDto>> DescargarAsync(
         DescargarInventarioRequest request, CancellationToken cancellationToken) =>
         Ok(await descargarInventario.EjecutarAsync(request, cancellationToken));

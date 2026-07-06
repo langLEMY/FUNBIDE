@@ -22,11 +22,14 @@ public sealed class CrearPacienteUseCase(IPacienteRepository pacienteRepository)
             throw new CedulaEnUsoException(documento.Valor);
         }
 
-        var paciente = new Paciente(request.Nombre, request.Apellido, documento, request.Telefono);
+        var paciente = new Paciente(
+            request.Nombre, request.Apellido, documento, request.Telefono, request.Edad, request.Condicion);
 
         await pacienteRepository.AgregarAsync(paciente, cancellationToken);
         await pacienteRepository.GuardarCambiosAsync(cancellationToken);
 
-        return new PacienteDto(paciente.Id, paciente.Nombre, paciente.Apellido, paciente.Documento.Valor, paciente.Telefono, false);
+        return new PacienteDto(
+            paciente.Id, paciente.Nombre, paciente.Apellido, paciente.Documento.Valor, paciente.Telefono, false,
+            paciente.Edad, paciente.Condicion, paciente.Estado, paciente.UltimaVisita);
     }
 }

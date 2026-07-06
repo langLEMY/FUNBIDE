@@ -1,9 +1,14 @@
 .dashboard-layout {
+  position: relative;
+  overflow: hidden;
   display: flex;
   height: 100vh;
+  background: var(--page-plane);
 }
 
 .dashboard-layout-main {
+  position: relative;
+  z-index: 1;
   flex: 1;
   display: flex;
   flex-direction: column;

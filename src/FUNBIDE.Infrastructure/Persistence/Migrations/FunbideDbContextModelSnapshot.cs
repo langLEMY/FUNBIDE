@@ -163,6 +163,11 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Categoria")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("Codigo")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -175,6 +180,11 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("StockActual")
                         .HasColumnType("integer");
+
+                    b.Property<int>("StockMinimo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()
@@ -190,6 +200,71 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                     b.ToTable("inventario_items", "funbide", t =>
                         {
                             t.HasCheckConstraint("ck_inventario_stock_no_negativo", "\"StockActual\" >= 0");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("2f1a1a2a-0001-4a3e-8a9a-000000000001"),
+                            Categoria = "Medicamento",
+                            Codigo = "MED-001",
+                            Nombre = "Acetaminofén 500mg",
+                            StockActual = 320,
+                            StockMinimo = 100
+                        },
+                        new
+                        {
+                            Id = new Guid("2f1a1a2a-0001-4a3e-8a9a-000000000002"),
+                            Categoria = "Medicamento",
+                            Codigo = "MED-002",
+                            Nombre = "Ibuprofeno 400mg",
+                            StockActual = 40,
+                            StockMinimo = 80
+                        },
+                        new
+                        {
+                            Id = new Guid("2f1a1a2a-0001-4a3e-8a9a-000000000003"),
+                            Categoria = "Medicamento",
+                            Codigo = "MED-003",
+                            Nombre = "Amoxicilina 500mg",
+                            StockActual = 150,
+                            StockMinimo = 60
+                        },
+                        new
+                        {
+                            Id = new Guid("2f1a1a2a-0001-4a3e-8a9a-000000000004"),
+                            Categoria = "Medicamento",
+                            Codigo = "MED-004",
+                            Nombre = "Loratadina 10mg",
+                            StockActual = 25,
+                            StockMinimo = 30
+                        },
+                        new
+                        {
+                            Id = new Guid("2f1a1a2a-0001-4a3e-8a9a-000000000005"),
+                            Categoria = "Insumo",
+                            Codigo = "INS-001",
+                            Nombre = "Guantes de nitrilo (caja)",
+                            StockActual = 60,
+                            StockMinimo = 20
+                        },
+                        new
+                        {
+                            Id = new Guid("2f1a1a2a-0001-4a3e-8a9a-000000000006"),
+                            Categoria = "Insumo",
+                            Codigo = "INS-002",
+                            Nombre = "Jeringas 5ml",
+                            StockActual = 15,
+                            StockMinimo = 40
+                        },
+                        new
+                        {
+                            Id = new Guid("2f1a1a2a-0001-4a3e-8a9a-000000000007"),
+                            Categoria = "Insumo",
+                            Codigo = "INS-003",
+                            Nombre = "Gasas estériles (paquete)",
+                            StockActual = 90,
+                            StockMinimo = 30
                         });
                 });
 
@@ -279,11 +354,25 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<string>("Condicion")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("Documento")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("documento_identidad");
+
+                    b.Property<int?>("Edad")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Activo");
 
                     b.Property<string>("FotoCedulaPath")
                         .HasMaxLength(300)
@@ -297,6 +386,9 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                     b.Property<string>("Telefono")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
+
+                    b.Property<DateOnly?>("UltimaVisita")
+                        .HasColumnType("date");
 
                     b.HasKey("Id");
 

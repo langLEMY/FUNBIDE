@@ -42,9 +42,21 @@ public sealed class ExceptionHandlingMiddleware(
         {
             await EscribirProblemaAsync(context, StatusCodes.Status409Conflict, "Cédula en uso", ex.Message);
         }
+        catch (CodigoInventarioEnUsoException ex)
+        {
+            await EscribirProblemaAsync(context, StatusCodes.Status409Conflict, "Código en uso", ex.Message);
+        }
         catch (DomainException ex)
         {
             await EscribirProblemaAsync(context, StatusCodes.Status400BadRequest, "Regla de negocio violada", ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            await EscribirProblemaAsync(context, StatusCodes.Status409Conflict, "Transición de estado inválida", ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            await EscribirProblemaAsync(context, StatusCodes.Status400BadRequest, "Argumento inválido", ex.Message);
         }
         catch (Exception ex)
         {

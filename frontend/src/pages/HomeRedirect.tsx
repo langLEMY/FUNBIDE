@@ -5,14 +5,12 @@ import { EstadoBloqueado } from '../components/EstadoBloqueado'
 const RUTA_POR_ROL: Partial<Record<string, string>> = {
   Admin: '/dashboard',
   Lemy: '/personal',
+  Doctor: '/pacientes',
+  Fondos: '/finanzas',
+  Farmacia: '/inventario',
 }
 
-/**
- * "/" no es una página en sí: manda a cada rol a su panel. Para roles que
- * todavía no tienen panel (Doctor, Fondos, Farmacia) muestra un mensaje
- * honesto de "todavía no existe", no un falso "acceso denegado" — y siempre
- * con salida (cerrar sesión), nunca un punto muerto.
- */
+/** "/" no es una página en sí: manda a cada rol a su panel. */
 export function HomeRedirect() {
   const { session, perfil, cargando, perfilCargando, perfilError } = useAuth()
 

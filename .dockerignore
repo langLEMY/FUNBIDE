@@ -6,3 +6,5 @@
 .git/
 .gitignore
 deploy/nginx/ssl/
+frontend/node_modules/
+frontend/dist/

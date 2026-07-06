@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>FUNBIDE.API</RootNamespace>
-    <UserSecretsId>funbide-api-secrets</UserSecretsId>
+    <UserSecretsId>funbide-api-secrets-local</UserSecretsId>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 

@@ -1,27 +1,54 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api, ApiError } from '../../lib/api'
-import type { Paciente, UrlFotoCedula } from '../../types/paciente'
+import type { EstadoPaciente, Paciente } from '../../types/paciente'
+import { ESTADOS_PACIENTE } from '../../types/paciente'
 
 interface PacienteRowProps {
   paciente: Paciente
-  puedeAdministrar: boolean
+  puedeEditar: boolean
+  puedeEliminar: boolean
+  puedeVerHistorial: boolean
   onActualizado: (paciente: Paciente) => void
   onEliminado: (pacienteId: string) => void
 }
 
-export function PacienteRow({ paciente, puedeAdministrar, onActualizado, onEliminado }: PacienteRowProps) {
+const formateadorFecha = new Intl.DateTimeFormat('es-DO', { dateStyle: 'medium' })
+
+function formatearUltimaVisita(valor: string | null): string {
+  if (!valor) return '—'
+  return formateadorFecha.format(new Date(`${valor}T00:00:00`))
+}
+
+function claseBadgeEstado(estado: EstadoPaciente): string {
+  switch (estado) {
+    case 'Activo':
+      return 'pacientes-badge pacientes-badge-activo'
+    case 'Seguimiento':
+      return 'pacientes-badge pacientes-badge-seguimiento'
+  }
+}
+
+export function PacienteRow({
+  paciente,
+  puedeEditar,
+  puedeEliminar,
+  puedeVerHistorial,
+  onActualizado,
+  onEliminado,
+}: PacienteRowProps) {
   const [editando, setEditando] = useState(false)
   const [nombreEdit, setNombreEdit] = useState(paciente.nombre)
   const [apellidoEdit, setApellidoEdit] = useState(paciente.apellido)
   const [cedulaEdit, setCedulaEdit] = useState(paciente.cedula)
   const [telefonoEdit, setTelefonoEdit] = useState(paciente.telefono ?? '')
+  const [edadEdit, setEdadEdit] = useState(paciente.edad?.toString() ?? '')
+  const [condicionEdit, setCondicionEdit] = useState(paciente.condicion ?? '')
+  const [estadoEdit, setEstadoEdit] = useState<EstadoPaciente>(paciente.estado)
   const [guardando, setGuardando] = useState(false)
 
-  const [subiendoFoto, setSubiendoFoto] = useState(false)
-  const [viendoFoto, setViendoFoto] = useState(false)
   const [eliminando, setEliminando] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const inputArchivoRef = useRef<HTMLInputElement>(null)
 
   const guardarEdicion = async () => {
     setError(null)
@@ -33,6 +60,9 @@ export function PacienteRow({ paciente, puedeAdministrar, onActualizado, onElimi
         apellido: apellidoEdit,
         cedula: cedulaEdit,
         telefono: telefonoEdit.trim() || null,
+        edad: edadEdit.trim() ? Number(edadEdit) : null,
+        condicion: condicionEdit.trim() || null,
+        estado: estadoEdit,
       })
       onActualizado(actualizado)
       setEditando(false)
@@ -48,6 +78,9 @@ export function PacienteRow({ paciente, puedeAdministrar, onActualizado, onElimi
     setApellidoEdit(paciente.apellido)
     setCedulaEdit(paciente.cedula)
     setTelefonoEdit(paciente.telefono ?? '')
+    setEdadEdit(paciente.edad?.toString() ?? '')
+    setCondicionEdit(paciente.condicion ?? '')
+    setEstadoEdit(paciente.estado)
     setEditando(false)
     setError(null)
   }
@@ -68,52 +101,44 @@ export function PacienteRow({ paciente, puedeAdministrar, onActualizado, onElimi
     }
   }
 
-  const handleVerFoto = async () => {
-    setError(null)
-    setViendoFoto(true)
-    try {
-      const { url } = await api.get<UrlFotoCedula>(`/api/pacientes/${paciente.id}/foto-cedula`)
-      window.open(url, '_blank', 'noopener,noreferrer')
-    } catch (err) {
-      setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo abrir la foto de la cédula.')
-    } finally {
-      setViendoFoto(false)
-    }
-  }
-
-  const handleArchivoSeleccionado = async (event: ChangeEvent<HTMLInputElement>) => {
-    const archivo = event.target.files?.[0]
-    event.target.value = ''
-    if (!archivo) {
-      return
-    }
-
-    setError(null)
-    setSubiendoFoto(true)
-    try {
-      const form = new FormData()
-      form.append('archivo', archivo)
-      const actualizado = await api.postForm<Paciente>(`/api/pacientes/${paciente.id}/foto-cedula`, form)
-      onActualizado(actualizado)
-    } catch (err) {
-      setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo subir la foto de la cédula.')
-    } finally {
-      setSubiendoFoto(false)
-    }
-  }
+  const columnas = puedeEditar || puedeEliminar || puedeVerHistorial ? 8 : 7
 
   if (editando) {
     return (
       <tr>
-        <td>
+        <td className="pacientes-celda-doble">
           <input value={nombreEdit} onChange={(event) => setNombreEdit(event.target.value)} placeholder="Nombre" />
-        </td>
-        <td>
           <input
             value={apellidoEdit}
             onChange={(event) => setApellidoEdit(event.target.value)}
             placeholder="Apellido"
           />
+        </td>
+        <td>
+          <input
+            type="number"
+            value={edadEdit}
+            onChange={(event) => setEdadEdit(event.target.value)}
+            placeholder="Edad"
+            min={0}
+          />
+        </td>
+        <td>
+          <input
+            value={condicionEdit}
+            onChange={(event) => setCondicionEdit(event.target.value)}
+            placeholder="Condición"
+          />
+        </td>
+        <td className="text-muted">{formatearUltimaVisita(paciente.ultimaVisita)}</td>
+        <td>
+          <select value={estadoEdit} onChange={(event) => setEstadoEdit(event.target.value as EstadoPaciente)}>
+            {ESTADOS_PACIENTE.map((estado) => (
+              <option key={estado} value={estado}>
+                {estado}
+              </option>
+            ))}
+          </select>
         </td>
         <td>
           <input value={cedulaEdit} onChange={(event) => setCedulaEdit(event.target.value)} placeholder="Cédula" />
@@ -125,7 +150,6 @@ export function PacienteRow({ paciente, puedeAdministrar, onActualizado, onElimi
             placeholder="Teléfono (opcional)"
           />
         </td>
-        <td className="text-muted">—</td>
         <td className="pacientes-acciones">
           <button type="button" onClick={() => void guardarEdicion()} disabled={guardando}>
             {guardando ? 'Guardando…' : 'Guardar'}
@@ -142,28 +166,24 @@ export function PacienteRow({ paciente, puedeAdministrar, onActualizado, onElimi
   return (
     <>
       <tr>
-        <td>{paciente.nombre}</td>
-        <td>{paciente.apellido}</td>
+        <td>{`${paciente.nombre} ${paciente.apellido}`}</td>
+        <td className="text-muted">{paciente.edad ?? '—'}</td>
+        <td className="text-muted">{paciente.condicion ?? '—'}</td>
+        <td className="text-muted">{formatearUltimaVisita(paciente.ultimaVisita)}</td>
+        <td>
+          <span className={claseBadgeEstado(paciente.estado)}>{paciente.estado}</span>
+        </td>
         <td>{paciente.cedula}</td>
         <td className="text-muted">{paciente.telefono ?? '—'}</td>
-        <td>
-          {paciente.tieneFotoCedula ? (
-            <button type="button" onClick={() => void handleVerFoto()} disabled={viendoFoto}>
-              {viendoFoto ? 'Abriendo…' : 'Ver foto'}
-            </button>
-          ) : (
-            <span className="text-muted">Sin foto</span>
-          )}
-        </td>
-        <td className="pacientes-acciones">
-          {puedeAdministrar && (
-            <>
+        {(puedeEditar || puedeEliminar || puedeVerHistorial) && (
+          <td className="pacientes-acciones">
+            {puedeVerHistorial && <Link to={`/pacientes/${paciente.id}/historial`}>Historial</Link>}
+            {puedeEditar && (
               <button type="button" onClick={() => setEditando(true)}>
                 Editar
               </button>
-              <button type="button" onClick={() => inputArchivoRef.current?.click()} disabled={subiendoFoto}>
-                {subiendoFoto ? 'Subiendo…' : paciente.tieneFotoCedula ? 'Reemplazar foto' : 'Subir foto'}
-              </button>
+            )}
+            {puedeEliminar && (
               <button
                 type="button"
                 className="pacientes-boton-peligro"
@@ -172,20 +192,13 @@ export function PacienteRow({ paciente, puedeAdministrar, onActualizado, onElimi
               >
                 {eliminando ? 'Eliminando…' : 'Eliminar'}
               </button>
-              <input
-                ref={inputArchivoRef}
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={handleArchivoSeleccionado}
-              />
-            </>
-          )}
-        </td>
+            )}
+          </td>
+        )}
       </tr>
       {error && (
         <tr>
-          <td colSpan={6} className="pacientes-row-error">
+          <td colSpan={columnas} className="pacientes-row-error">
             {error}
           </td>
         </tr>

@@ -1,0 +1,163 @@
+.actividad-filtros {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.actividad-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.actividad-presets button {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-hairline);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.actividad-presets button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.actividad-rango {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.actividad-rango label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.actividad-rango input[type='date'] {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.actividad-rango button {
+  background: var(--series-dinero);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.actividad-rango button:hover {
+  filter: brightness(1.1);
+}
+
+.actividad-rango button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.actividad-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.actividad-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.actividad-tab:hover {
+  color: var(--text-primary);
+}
+
+.actividad-tab.activo {
+  color: var(--text-primary);
+  border-bottom-color: var(--series-dinero);
+}
+
+.actividad-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+
+.actividad-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+}
+
+.actividad-tabla-scroll {
+  overflow-x: auto;
+}
+
+.actividad-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.actividad-tabla th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.actividad-tabla td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.actividad-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.actividad-badge-exito {
+  background: var(--series-pacientes-fill);
+  color: var(--series-pacientes);
+}
+
+.actividad-badge-fallido {
+  background: rgba(224, 112, 95, 0.15);
+  color: var(--danger);
+}

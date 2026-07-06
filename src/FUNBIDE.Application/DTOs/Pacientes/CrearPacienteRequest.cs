@@ -1,3 +1,4 @@
 namespace FUNBIDE.Application.DTOs.Pacientes;
 
-public sealed record CrearPacienteRequest(string Nombre, string Apellido, string Cedula, string? Telefono);
+public sealed record CrearPacienteRequest(
+    string Nombre, string Apellido, string Cedula, string? Telefono, int? Edad, string? Condicion);

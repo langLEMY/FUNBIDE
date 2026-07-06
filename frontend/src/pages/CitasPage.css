@@ -1,0 +1,190 @@
+.citas-crear-card,
+.citas-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.citas-crear-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.citas-crear-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.citas-crear-form input,
+.citas-crear-form select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 180px;
+}
+
+.citas-crear-form button {
+  background: var(--series-pacientes);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.citas-crear-form button:hover {
+  filter: brightness(1.1);
+}
+
+.citas-crear-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.citas-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.citas-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.citas-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.citas-tab:hover {
+  color: var(--text-primary);
+}
+
+.citas-tab.activo {
+  color: var(--text-primary);
+  border-bottom-color: var(--series-dinero);
+}
+
+.citas-tabla-scroll {
+  overflow-x: auto;
+}
+
+.citas-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.citas-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.citas-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+  vertical-align: middle;
+}
+
+.citas-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.citas-badge-pendiente {
+  background: var(--series-dinero-fill);
+  color: var(--series-dinero);
+}
+
+.citas-badge-programada {
+  background: rgba(93, 148, 224, 0.15);
+  color: #5d94e0;
+}
+
+.citas-badge-completada {
+  background: var(--series-pacientes-fill);
+  color: var(--series-pacientes);
+}
+
+.citas-badge-cancelada {
+  background: rgba(224, 112, 95, 0.15);
+  color: var(--danger);
+}
+
+.citas-acciones button {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.citas-acciones button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.citas-acciones button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.citas-accion-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.citas-accion-form input,
+.citas-accion-form textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.citas-accion-form textarea {
+  width: 200px;
+  min-height: 32px;
+  resize: vertical;
+}
+
+.citas-row-error {
+  color: var(--danger);
+  font-size: 12px;
+  padding-top: 0 !important;
+}

@@ -1,6 +1,7 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { ResumenDiario } from '../../types/dashboard'
-import { chartColors } from '../../styles/colors'
+import { coloresParaTema } from '../../styles/colors'
+import { useTheme } from '../../theme/ThemeContext'
 import './MonthlyMetricChart.css'
 
 interface MonthlyMetricChartProps {
@@ -12,6 +13,8 @@ interface MonthlyMetricChartProps {
 }
 
 export function MonthlyMetricChart({ titulo, datos, dataKey, color, formatearValor }: MonthlyMetricChartProps) {
+  const { tema } = useTheme()
+  const chartColors = coloresParaTema(tema)
   const gradientId = `monthly-chart-fill-${dataKey}`
 
   const puntos = datos.map((resumen) => ({

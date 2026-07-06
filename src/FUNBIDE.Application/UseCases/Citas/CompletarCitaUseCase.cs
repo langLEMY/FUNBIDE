@@ -13,6 +13,7 @@ public interface ICompletarCitaUseCase : IUseCase<CompletarCitaRequest, CitaDto>
 
 public sealed class CompletarCitaUseCase(
     ICitaRepository citaRepository,
+    IPacienteRepository pacienteRepository,
     ICurrentUserService currentUser,
     IResumenDiarioRepository resumenDiarioRepository,
     IUnitOfWork unitOfWork,
@@ -39,6 +40,15 @@ public sealed class CompletarCitaUseCase(
             var resumen = await resumenDiarioRepository.ObtenerOCrearConBloqueoAsync(hoy, ct);
             resumen.RegistrarPacienteAtendido();
             await resumenDiarioRepository.GuardarCambiosAsync(ct);
+
+            // Deja "última visita" del paciente al día de la cita completada, en vez de
+            // depender de que alguien lo actualice a mano.
+            var paciente = await pacienteRepository.ObtenerPorIdAsync(cita.PacienteId, ct);
+            if (paciente is not null)
+            {
+                paciente.RegistrarVisita(hoy);
+                await pacienteRepository.GuardarCambiosAsync(ct);
+            }
 
             return new CitaDto(
                 cita.Id, cita.PacienteId, cita.DoctorId, cita.Motivo, cita.Estado,

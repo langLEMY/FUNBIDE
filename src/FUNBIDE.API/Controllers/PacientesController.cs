@@ -11,9 +11,10 @@ namespace FUNBIDE.API.Controllers;
 
 /// <summary>
 /// Base de datos de pacientes (nombre, apellido, cédula, teléfono opcional y foto de
-/// cédula opcional). ADMIN solo puede consultarla; LEMY es quien la administra. Cada
-/// acción declara su propio <see cref="RequiereRolAttribute"/> en vez de uno a nivel de
-/// clase, igual que <c>EmpleadosController</c>.
+/// cédula opcional). Todos los roles pueden consultar y agregar pacientes; eliminar
+/// es de ADMIN, LEMY y DOCTOR; editar y gestionar la foto de cédula sigue siendo
+/// exclusivo de LEMY. Cada acción declara su propio <see cref="RequiereRolAttribute"/>
+/// en vez de uno a nivel de clase, igual que <c>EmpleadosController</c>.
 /// </summary>
 [ApiController]
 [Route("api/pacientes")]
@@ -27,12 +28,12 @@ public sealed class PacientesController(
     IObtenerUrlFotoCedulaUseCase obtenerUrlFotoCedula) : ControllerBase
 {
     [HttpGet]
-    [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
     public async Task<ActionResult<IReadOnlyList<PacienteDto>>> ListarAsync(CancellationToken cancellationToken) =>
         Ok(await listarPacientes.EjecutarAsync(cancellationToken));
 
     [HttpPost]
-    [RequiereRol(RolUsuario.Lemy)]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
     public async Task<ActionResult<PacienteDto>> CrearAsync(
         CrearPacienteRequest request, CancellationToken cancellationToken)
     {
@@ -47,7 +48,7 @@ public sealed class PacientesController(
         Ok(await editarPaciente.EjecutarAsync(request, cancellationToken));
 
     [HttpDelete("{id:guid}")]
-    [RequiereRol(RolUsuario.Lemy)]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy, RolUsuario.Doctor)]
     public async Task<IActionResult> EliminarAsync(Guid id, CancellationToken cancellationToken)
     {
         await eliminarPaciente.EjecutarAsync(id, cancellationToken);

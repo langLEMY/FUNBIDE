@@ -1,18 +1,27 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { PacienteRow } from '../components/pacientes/PacienteRow'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import type { Paciente } from '../types/paciente'
+import { ESTADOS_PACIENTE, type EstadoPaciente } from '../types/paciente'
 import './PacientesPage.css'
+
+const FILTRO_TODOS = 'Todos'
 
 export function PacientesPage() {
   const { perfil } = useAuth()
-  const puedeAdministrar = perfil?.rol === 'Lemy'
+  const puedeEditar = perfil?.rol === 'Lemy'
+  const puedeEliminar = perfil?.rol === 'Lemy' || perfil?.rol === 'Admin' || perfil?.rol === 'Doctor'
+  const puedeVerHistorial = perfil?.rol === 'Doctor'
+  const puedeCrear = Boolean(perfil)
 
   const [pacientes, setPacientes] = useState<Paciente[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const [busqueda, setBusqueda] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState<EstadoPaciente | typeof FILTRO_TODOS>(FILTRO_TODOS)
 
   const [nombre, setNombre] = useState('')
   const [apellido, setApellido] = useState('')
@@ -64,6 +73,8 @@ export function PacientesPage() {
         apellido,
         cedula,
         telefono: telefono.trim() || null,
+        edad: null,
+        condicion: null,
       })
       setPacientes((actual) => ordenar([...actual, nuevo]))
       setNombre('')
@@ -77,9 +88,20 @@ export function PacientesPage() {
     }
   }
 
+  const pacientesFiltrados = useMemo(() => {
+    const busquedaNormalizada = busqueda.trim().toLowerCase()
+    return pacientes.filter((paciente) => {
+      const coincideEstado = filtroEstado === FILTRO_TODOS || paciente.estado === filtroEstado
+      if (!coincideEstado) return false
+      if (!busquedaNormalizada) return true
+      const campos = [paciente.nombre, paciente.apellido, paciente.condicion ?? ''].join(' ').toLowerCase()
+      return campos.includes(busquedaNormalizada)
+    })
+  }, [pacientes, busqueda, filtroEstado])
+
   return (
     <DashboardLayout titulo="Pacientes">
-      {puedeAdministrar && (
+      {puedeCrear && (
         <section className="pacientes-crear-card">
           <h2>Agregar paciente</h2>
           <form className="pacientes-crear-form" onSubmit={(event) => void handleCrear(event)}>
@@ -111,43 +133,83 @@ export function PacientesPage() {
             </button>
           </form>
           {errorCrear && <p className="pacientes-error">{errorCrear}</p>}
-          <p className="pacientes-nota text-muted">
-            La foto de la cédula es opcional y se sube desde la tabla, después de agregar al paciente.
-          </p>
         </section>
       )}
+
+      <div className="pacientes-buscador">
+        <input
+          type="search"
+          placeholder="Buscar por nombre o condición…"
+          value={busqueda}
+          onChange={(event) => setBusqueda(event.target.value)}
+        />
+      </div>
+
+      <div className="pacientes-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={filtroEstado === FILTRO_TODOS}
+          className={`pacientes-tab${filtroEstado === FILTRO_TODOS ? ' activo' : ''}`}
+          onClick={() => setFiltroEstado(FILTRO_TODOS)}
+        >
+          Todos
+        </button>
+        {ESTADOS_PACIENTE.map((estado) => (
+          <button
+            key={estado}
+            type="button"
+            role="tab"
+            aria-selected={filtroEstado === estado}
+            className={`pacientes-tab${filtroEstado === estado ? ' activo' : ''}`}
+            onClick={() => setFiltroEstado(estado)}
+          >
+            {estado}
+          </button>
+        ))}
+      </div>
 
       <section className="pacientes-tabla-card">
         {error && <p className="pacientes-error">{error}</p>}
 
         {cargando ? (
           <p className="text-secondary">Cargando pacientes…</p>
-        ) : pacientes.length === 0 ? (
-          <p className="text-secondary">Todavía no hay pacientes registrados.</p>
+        ) : pacientesFiltrados.length === 0 ? (
+          <p className="text-secondary">
+            {pacientes.length === 0
+              ? 'Todavía no hay pacientes registrados.'
+              : 'No hay pacientes que coincidan con la búsqueda o el filtro.'}
+          </p>
         ) : (
-          <table className="pacientes-tabla">
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Apellido</th>
-                <th>Cédula</th>
-                <th>Teléfono</th>
-                <th>Foto de cédula</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pacientes.map((paciente) => (
-                <PacienteRow
-                  key={paciente.id}
-                  paciente={paciente}
-                  puedeAdministrar={puedeAdministrar}
-                  onActualizado={actualizarEnLista}
-                  onEliminado={quitarDeLista}
-                />
-              ))}
-            </tbody>
-          </table>
+          <div className="pacientes-tabla-scroll">
+            <table className="pacientes-tabla">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Edad</th>
+                  <th>Condición</th>
+                  <th>Última visita</th>
+                  <th>Estado</th>
+                  <th>Cédula</th>
+                  <th>Teléfono</th>
+                  {(puedeEditar || puedeEliminar || puedeVerHistorial) && <th>Acciones</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {pacientesFiltrados.map((paciente) => (
+                  <PacienteRow
+                    key={paciente.id}
+                    paciente={paciente}
+                    puedeEditar={puedeEditar}
+                    puedeEliminar={puedeEliminar}
+                    puedeVerHistorial={puedeVerHistorial}
+                    onActualizado={actualizarEnLista}
+                    onEliminado={quitarDeLista}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </DashboardLayout>

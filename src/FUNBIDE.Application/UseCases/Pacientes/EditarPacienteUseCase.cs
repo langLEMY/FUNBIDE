@@ -29,10 +29,12 @@ public sealed class EditarPacienteUseCase(IPacienteRepository pacienteRepository
             }
         }
 
-        paciente.ActualizarDatos(request.Nombre, request.Apellido, documento, request.Telefono);
+        paciente.ActualizarDatos(request.Nombre, request.Apellido, documento, request.Telefono, request.Edad, request.Condicion);
+        paciente.CambiarEstado(request.Estado);
         await pacienteRepository.GuardarCambiosAsync(cancellationToken);
 
         return new PacienteDto(
-            paciente.Id, paciente.Nombre, paciente.Apellido, paciente.Documento.Valor, paciente.Telefono, paciente.FotoCedulaPath is not null);
+            paciente.Id, paciente.Nombre, paciente.Apellido, paciente.Documento.Valor, paciente.Telefono,
+            paciente.FotoCedulaPath is not null, paciente.Edad, paciente.Condicion, paciente.Estado, paciente.UltimaVisita);
     }
 }

@@ -1,0 +1,110 @@
+.finanzas-resumen-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.finanzas-neto {
+  margin: 4px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.finanzas-neto-positivo {
+  color: var(--series-pacientes);
+}
+
+.finanzas-neto-negativo {
+  color: var(--danger);
+}
+
+.finanzas-crear-card,
+.finanzas-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.finanzas-crear-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.finanzas-crear-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.finanzas-crear-form input,
+.finanzas-crear-form select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 160px;
+}
+
+.finanzas-crear-form button {
+  background: var(--series-dinero);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.finanzas-crear-form button:hover {
+  filter: brightness(1.1);
+}
+
+.finanzas-crear-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.finanzas-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.finanzas-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.finanzas-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.finanzas-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.finanzas-tipo-ingreso {
+  color: var(--series-pacientes);
+  font-weight: 500;
+}
+
+.finanzas-tipo-egreso {
+  color: var(--danger);
+  font-weight: 500;
+}

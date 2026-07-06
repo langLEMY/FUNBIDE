@@ -1,3 +1,12 @@
+FROM node:22-alpine AS frontend-build
+WORKDIR /frontend
+
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+COPY frontend/ ./
+RUN npm run build
+
 FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 WORKDIR /src
 
@@ -27,6 +36,7 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
     ASPNETCORE_ENVIRONMENT=Production
 
 COPY --from=build /app/publish .
+COPY --from=frontend-build /frontend/dist ./wwwroot
 RUN mkdir -p /var/backups/funbide && chown -R funbide:funbide /app /var/backups/funbide
 
 USER funbide

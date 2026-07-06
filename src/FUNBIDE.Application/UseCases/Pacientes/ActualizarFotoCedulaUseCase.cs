@@ -26,6 +26,7 @@ public sealed class ActualizarFotoCedulaUseCase(
         await pacienteRepository.GuardarCambiosAsync(cancellationToken);
 
         return new PacienteDto(
-            paciente.Id, paciente.Nombre, paciente.Apellido, paciente.Documento.Valor, paciente.Telefono, paciente.FotoCedulaPath is not null);
+            paciente.Id, paciente.Nombre, paciente.Apellido, paciente.Documento.Valor, paciente.Telefono,
+            paciente.FotoCedulaPath is not null, paciente.Edad, paciente.Condicion, paciente.Estado, paciente.UltimaVisita);
     }
 }

@@ -1,29 +1,76 @@
 :root {
-  --page-plane: #0d0d0d;
-  --surface-1: #1a1a19;
-  --surface-2: #202020;
-  --surface-hover: #262626;
+  --page-plane: #12100c;
+  --surface-1: rgba(28, 26, 22, 0.72);
+  --surface-2: rgba(34, 31, 26, 0.6);
+  --surface-hover: rgba(41, 38, 31, 0.78);
 
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted: #898781;
+  --text-primary: #f3f2ee;
+  --text-secondary: rgba(243, 242, 238, 0.7);
+  --text-muted: rgba(243, 242, 238, 0.5);
 
-  --gridline: #2c2c2a;
-  --baseline: #383835;
-  --border-hairline: rgba(255, 255, 255, 0.1);
+  --gridline: rgba(243, 242, 238, 0.08);
+  --baseline: rgba(243, 242, 238, 0.16);
+  --border-hairline: rgba(255, 255, 255, 0.09);
+  --glass-chrome-bg: rgba(28, 26, 22, 0.72);
 
-  --series-dinero: #3987e5;
-  --series-dinero-fill: rgba(57, 135, 229, 0.1);
-  --series-pacientes: #199e70;
-  --series-pacientes-fill: rgba(25, 158, 112, 0.1);
+  --series-dinero: #d4a24e;
+  --series-dinero-fill: rgba(212, 162, 78, 0.12);
+  --series-pacientes: #2fbf8f;
+  --series-pacientes-fill: rgba(47, 191, 143, 0.12);
 
-  --danger: #e66767;
+  --danger: #e0705f;
+
+  --blob-mint: rgba(47, 191, 143, 0.28);
+  --blob-gold: rgba(212, 162, 78, 0.24);
 
   --radius-card: 14px;
   --radius-control: 8px;
 
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   color-scheme: dark;
+}
+
+:root[data-theme='claro'] {
+  --page-plane: #f3f1ec;
+  --surface-1: rgba(255, 255, 255, 0.72);
+  --surface-2: rgba(243, 241, 236, 0.6);
+  --surface-hover: rgba(236, 232, 224, 0.78);
+
+  --text-primary: #20221f;
+  --text-secondary: rgba(32, 34, 31, 0.7);
+  --text-muted: rgba(32, 34, 31, 0.5);
+
+  --gridline: rgba(32, 34, 31, 0.08);
+  --baseline: rgba(32, 34, 31, 0.16);
+  --border-hairline: rgba(0, 0, 0, 0.07);
+  --glass-chrome-bg: rgba(255, 255, 255, 0.72);
+
+  --series-dinero: #a9762e;
+  --series-dinero-fill: rgba(169, 118, 46, 0.1);
+  --series-pacientes: #2fbf8f;
+  --series-pacientes-fill: rgba(47, 191, 143, 0.12);
+
+  --danger: #c1483a;
+
+  color-scheme: light;
+}
+
+/* Entornos sin backdrop-filter (o donde sea muy costoso): las superficies caen a un
+   fondo sólido en vez de translúcido, sin perder legibilidad. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --surface-1: #1c1a16;
+    --surface-2: #221f1a;
+    --surface-hover: #29261f;
+    --glass-chrome-bg: #1c1a16;
+  }
+
+  :root[data-theme='claro'] {
+    --surface-1: #ffffff;
+    --surface-2: #f3f1ec;
+    --surface-hover: #ece8e0;
+    --glass-chrome-bg: #ffffff;
+  }
 }
 
 * {
@@ -41,10 +88,12 @@ body {
   background: var(--page-plane);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 button,
-input {
+input,
+select {
   font-family: inherit;
 }
 
@@ -65,6 +114,27 @@ input {
   text-align: center;
 }
 
+/* Tratamiento "glass" compartido por todas las tarjetas de contenido del panel
+   (stats, gráficos, filtros, tablas). Centralizado acá para no repetir el
+   backdrop-filter en cada archivo CSS de cada página. */
+.stat-card,
+.monthly-chart-card,
+.resumen-filtros,
+.resumen-grafico-card,
+.resumen-tabla-card,
+.equipo-tarjeta,
+.equipo-detalle-card,
+.pacientes-crear-card,
+.pacientes-tabla-card,
+.inventario-tabla-card,
+.directorio-crear-card,
+.directorio-tabla-card,
+.personal-crear-card,
+.personal-tabla-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
 /* Cualquier página puede marcar controles como .no-imprimir; esto además fuerza
    toda la paleta a un esquema claro para impresión, sin tocar cada componente. */
 @media print {
@@ -79,6 +149,24 @@ input {
     --gridline: #dddddd;
     --baseline: #cccccc;
     --border-hairline: #cccccc;
+  }
+
+  .stat-card,
+  .monthly-chart-card,
+  .resumen-filtros,
+  .resumen-grafico-card,
+  .resumen-tabla-card,
+  .equipo-tarjeta,
+  .equipo-detalle-card,
+  .pacientes-crear-card,
+  .pacientes-tabla-card,
+  .inventario-tabla-card,
+  .directorio-crear-card,
+  .directorio-tabla-card,
+  .personal-crear-card,
+  .personal-tabla-card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .sidebar,

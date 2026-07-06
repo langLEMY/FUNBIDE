@@ -1,4 +1,5 @@
 using FUNBIDE.Domain.Common;
+using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.Exceptions;
 
 namespace FUNBIDE.Domain.Entities;
@@ -12,10 +13,12 @@ public sealed class InventarioItem : Entity
     public string Codigo { get; private set; } = string.Empty;
     public string Nombre { get; private set; } = string.Empty;
     public int StockActual { get; private set; }
+    public CategoriaInventario Categoria { get; private set; }
+    public int StockMinimo { get; private set; }
 
     private InventarioItem() { }
 
-    public InventarioItem(string codigo, string nombre, int stockInicial)
+    public InventarioItem(string codigo, string nombre, int stockInicial, CategoriaInventario categoria, int stockMinimo)
     {
         if (string.IsNullOrWhiteSpace(codigo))
         {
@@ -27,9 +30,16 @@ public sealed class InventarioItem : Entity
             throw new ArgumentOutOfRangeException(nameof(stockInicial), "El stock inicial no puede ser negativo.");
         }
 
+        if (stockMinimo < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(stockMinimo), "El stock mínimo no puede ser negativo.");
+        }
+
         Codigo = codigo.Trim();
         Nombre = nombre.Trim();
         StockActual = stockInicial;
+        Categoria = categoria;
+        StockMinimo = stockMinimo;
     }
 
     /// <summary>

@@ -1,0 +1,112 @@
+.historial-volver {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.historial-volver:hover {
+  color: var(--text-primary);
+}
+
+.historial-encabezado-card,
+.historial-crear-card,
+.historial-lista-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.historial-encabezado-card h2 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+
+.historial-crear-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.historial-crear-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.historial-crear-form input,
+.historial-crear-form textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 200px;
+}
+
+.historial-crear-form textarea {
+  min-height: 38px;
+  resize: vertical;
+  flex-basis: 100%;
+}
+
+.historial-crear-form button {
+  background: var(--series-pacientes);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.historial-crear-form button:hover {
+  filter: brightness(1.1);
+}
+
+.historial-crear-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.historial-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.historial-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.historial-entrada {
+  border-bottom: 1px solid var(--border-hairline);
+  padding-bottom: 14px;
+  font-size: 14px;
+}
+
+.historial-entrada:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.historial-entrada p {
+  margin: 4px 0;
+}
+
+.historial-entrada-fecha {
+  font-size: 12px;
+  margin-bottom: 6px !important;
+}

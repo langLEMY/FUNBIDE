@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { api, ApiError } from '../lib/api'
-import { chartColors } from '../styles/colors'
+import { coloresParaTema } from '../styles/colors'
+import { useTheme } from '../theme/ThemeContext'
 import './ResumenPage.css'
 
 interface RegistroAuditoria {
@@ -65,6 +66,8 @@ const formateadorMoneda = new Intl.NumberFormat('es-DO', {
 })
 
 export function ResumenPage() {
+  const { tema } = useTheme()
+  const chartColors = coloresParaTema(tema)
   const hoy = inicioDeHoy()
   const [desde, setDesde] = useState(aFechaISO(sumarDias(hoy, -7)))
   const [hasta, setHasta] = useState(aFechaISO(hoy))

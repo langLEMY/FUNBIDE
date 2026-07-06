@@ -1,4 +1,5 @@
 using FUNBIDE.Domain.Common;
+using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.ValueObjects;
 
 namespace FUNBIDE.Domain.Entities;
@@ -9,6 +10,10 @@ public sealed class Paciente : Entity
     public string Apellido { get; private set; } = string.Empty;
     public DocumentoIdentidad Documento { get; private set; } = null!;
     public string? Telefono { get; private set; }
+    public int? Edad { get; private set; }
+    public string? Condicion { get; private set; }
+    public EstadoPaciente Estado { get; private set; } = EstadoPaciente.Activo;
+    public DateOnly? UltimaVisita { get; private set; }
 
     /// <summary>
     /// Ruta dentro del bucket privado de Supabase Storage, no una URL pública: la foto
@@ -22,7 +27,7 @@ public sealed class Paciente : Entity
 
     private Paciente() { }
 
-    public Paciente(string nombre, string apellido, DocumentoIdentidad documento, string? telefono)
+    public Paciente(string nombre, string apellido, DocumentoIdentidad documento, string? telefono, int? edad = null, string? condicion = null)
     {
         if (string.IsNullOrWhiteSpace(nombre))
         {
@@ -38,9 +43,13 @@ public sealed class Paciente : Entity
         Apellido = apellido.Trim();
         Documento = documento;
         Telefono = string.IsNullOrWhiteSpace(telefono) ? null : telefono.Trim();
+        Edad = edad;
+        Condicion = string.IsNullOrWhiteSpace(condicion) ? null : condicion.Trim();
+        Estado = EstadoPaciente.Activo;
     }
 
-    public void ActualizarDatos(string nombre, string apellido, DocumentoIdentidad documento, string? telefono)
+    public void ActualizarDatos(
+        string nombre, string apellido, DocumentoIdentidad documento, string? telefono, int? edad, string? condicion)
     {
         if (string.IsNullOrWhiteSpace(nombre))
         {
@@ -56,6 +65,19 @@ public sealed class Paciente : Entity
         Apellido = apellido.Trim();
         Documento = documento;
         Telefono = string.IsNullOrWhiteSpace(telefono) ? null : telefono.Trim();
+        Edad = edad;
+        Condicion = string.IsNullOrWhiteSpace(condicion) ? null : condicion.Trim();
+    }
+
+    public void CambiarEstado(EstadoPaciente estado)
+    {
+        Estado = estado;
+    }
+
+    /// <summary>Se invoca cuando una cita de este paciente se marca como completada.</summary>
+    public void RegistrarVisita(DateOnly fecha)
+    {
+        UltimaVisita = fecha;
     }
 
     public void ActualizarFotoCedula(string path)

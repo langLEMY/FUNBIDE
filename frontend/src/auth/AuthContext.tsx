@@ -13,6 +13,8 @@ interface AuthContextValue {
   iniciarSesion: (correo: string, contrasena: string) => Promise<void>
   cerrarSesion: () => Promise<void>
   recargarPerfil: () => Promise<void>
+  recuperarContrasena: (correo: string) => Promise<void>
+  restablecerContrasena: (nuevaContrasena: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -71,6 +73,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  const recuperarContrasena = async (correo: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(correo, {
+      redirectTo: `${window.location.origin}/restablecer-contrasena`,
+    })
+    if (error) {
+      throw error
+    }
+  }
+
+  const restablecerContrasena = async (nuevaContrasena: string) => {
+    const { error } = await supabase.auth.updateUser({ password: nuevaContrasena })
+    if (error) {
+      throw error
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -82,6 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         iniciarSesion,
         cerrarSesion,
         recargarPerfil: cargarPerfil,
+        recuperarContrasena,
+        restablecerContrasena,
       }}
     >
       {children}

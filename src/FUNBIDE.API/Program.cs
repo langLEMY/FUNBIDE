@@ -2,6 +2,7 @@ using FUNBIDE.API.Extensions;
 using FUNBIDE.Infrastructure;
 using FUNBIDE.Infrastructure.Logging;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,6 +30,17 @@ builder.Services.Configure<AuthorizationOptions>(options =>
         .RequireAuthenticatedUser()
         .Build());
 
+// Nginx (deploy/nginx/nginx.conf) reenvía X-Forwarded-For/-Proto desde un contenedor
+// vecino, no desde loopback: se limpian KnownNetworks/KnownProxies para que ASP.NET
+// confíe en ese salto y HttpContext.Connection.RemoteIpAddress refleje la IP real del
+// cliente (usada por el registro de intentos de inicio de sesión).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -41,10 +53,14 @@ else
     app.UseHsts();
 }
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.UseHttpsRedirection();
 app.UseFunbidePipeline();
 
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { estado = "ok" })).AllowAnonymous();
+app.MapFallbackToFile("index.html").AllowAnonymous();
 
 app.Run();

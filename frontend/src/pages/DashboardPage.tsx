@@ -4,7 +4,8 @@ import { StatCard } from '../components/dashboard/StatCard'
 import { MonthlyMetricChart } from '../components/dashboard/MonthlyMetricChart'
 import { api, ApiError } from '../lib/api'
 import type { ResumenDiario } from '../types/dashboard'
-import { chartColors } from '../styles/colors'
+import { coloresParaTema } from '../styles/colors'
+import { useTheme } from '../theme/ThemeContext'
 import './DashboardPage.css'
 
 const formateadorMoneda = new Intl.NumberFormat('es-DO', {
@@ -20,6 +21,8 @@ function capitalizar(texto: string) {
 }
 
 export function DashboardPage() {
+  const { tema } = useTheme()
+  const chartColors = coloresParaTema(tema)
   const [resumenHoy, setResumenHoy] = useState<ResumenDiario | null>(null)
   const [resumenMes, setResumenMes] = useState<ResumenDiario[]>([])
   const [cargando, setCargando] = useState(true)

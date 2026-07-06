@@ -54,6 +54,73 @@
   font-size: 12px;
 }
 
+.pacientes-buscador {
+  margin-bottom: 12px;
+}
+
+.pacientes-buscador input {
+  width: 100%;
+  max-width: 360px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 12px;
+  font-size: 14px;
+}
+
+.pacientes-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.pacientes-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pacientes-tab:hover {
+  color: var(--text-primary);
+}
+
+.pacientes-tab.activo {
+  color: var(--text-primary);
+  border-bottom-color: var(--series-dinero);
+}
+
+.pacientes-tabla-scroll {
+  overflow-x: auto;
+}
+
+.pacientes-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pacientes-badge-activo {
+  background: var(--series-pacientes-fill);
+  color: var(--series-pacientes);
+}
+
+.pacientes-badge-seguimiento {
+  background: var(--series-dinero-fill);
+  color: var(--series-dinero);
+}
+
 .pacientes-error {
   color: var(--danger);
   font-size: 13px;
@@ -82,7 +149,14 @@
   vertical-align: middle;
 }
 
-.pacientes-tabla td input {
+.pacientes-celda-doble {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pacientes-tabla td input,
+.pacientes-tabla td select {
   background: var(--surface-2);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-control);
@@ -98,7 +172,8 @@
   flex-wrap: wrap;
 }
 
-.pacientes-acciones button {
+.pacientes-acciones button,
+.pacientes-acciones a {
   background: var(--surface-2);
   color: var(--text-secondary);
   border: 1px solid var(--border-hairline);
@@ -106,9 +181,12 @@
   padding: 6px 10px;
   font-size: 12px;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
 }
 
-.pacientes-acciones button:hover {
+.pacientes-acciones button:hover,
+.pacientes-acciones a:hover {
   background: var(--surface-hover);
   color: var(--text-primary);
 }
