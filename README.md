@@ -82,7 +82,17 @@ La cobertura hoy es un punto de partida (invariantes de dominio más críticas y
 
 ## Notas de despliegue
 
-- El `Dockerfile` de `FUNBIDE.API` ahora incluye un stage de Node que construye el frontend y copia el resultado a `wwwroot`; ya no depende de una copia manual.
-- `docker-compose.yml` define un volumen `certbot_webroot` pero **no** incluye un servicio de certbot — hay que provisionar los certificados TLS de `deploy/nginx/ssl/` por fuera (certbot manual, u otro mecanismo) antes de exponer Nginx en producción.
-- Verificar antes de lanzar: `appsettings.json`'s `Cors:OrigenesPermitidos` lista `https://funbide.org` y `https://app.funbide.org`, pero `deploy/nginx/nginx.conf` solo tiene `server_name api.funbide.org` y sirve el SPA desde el mismo origen que la API. Si el plan es alojar el frontend en un dominio separado, falta configurar ese origen en Nginx; si no, esos orígenes CORS son innecesarios y se pueden limpiar.
+- El `Dockerfile` de `FUNBIDE.API` incluye un stage de Node que construye el frontend y copia el resultado a `wwwroot`; el SPA se sirve desde el mismo origen que la API (por eso `Cors:OrigenesPermitidos` en `appsettings.json` está vacío — no hace falta CORS cuando todo vive en `api.funbide.org`).
+- `docker-compose.yml` incluye un servicio `certbot` que renueva los certificados cada 12h contra el volumen `certbot_conf` (montado también en `nginx` como `/etc/letsencrypt`). La primera emisión del certificado en un servidor nuevo requiere el script `deploy/init-letsencrypt.sh` (ver runbook abajo) porque Nginx no arranca sin un certificado ya presente.
 - Los backups automáticos (`DatabaseBackupHostedService`) usan `pg_dump` (incluido en la imagen) y cifran con AES — la clave (`Backup:AesKeyBase64` / `FUNBIDE_BACKUP_AES_KEY`) debe guardarse en un lugar seguro fuera del repo.
+
+### Runbook: primer despliegue en un servidor nuevo
+
+1. Crear el proyecto Supabase de producción (Postgres + Auth) y anotar su URL, la clave de servicio (`service_role`) y la clave anónima.
+2. Apuntar el DNS de `api.funbide.org` (registro A) a la IP del servidor.
+3. En la raíz del proyecto, copiar `.env.example` a `.env` y completar los valores reales (conexión a Postgres, URL/clave de Supabase, clave AES de backups). Nunca commitear este archivo.
+4. Correr `deploy/init-letsencrypt.sh api.funbide.org tu-email@dominio.com` una sola vez para emitir el certificado TLS inicial.
+5. `docker compose up -d --build` para levantar API, Nginx y el renovador de certbot.
+6. Verificar `https://api.funbide.org/health` y revisar `docker compose logs -f` si algo falla.
+
+Las renovaciones posteriores del certificado son automáticas (el servicio `certbot` corre `certbot renew` cada 12h); no hace falta volver a correr el script de bootstrap salvo que se reconstruya el servidor desde cero.

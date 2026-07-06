@@ -4,13 +4,16 @@ obj/
 .vscode/
 *.user
 appsettings.*.local.json
-deploy/nginx/ssl/
 
 # Frontend
 node_modules/
 dist/
 dist-ssr/
 *.local
+
+# El build del frontend se genera dentro de la imagen Docker (ver el stage
+# frontend-build del Dockerfile) — no debe vivir en git.
+src/FUNBIDE.API/wwwroot/
 
 # Secretos y entornos locales — nunca se comitean, solo los .example
 .env
@@ -29,4 +32,10 @@ dist-ssr/
 *.tmp
 *.tmp.json
 .api-run.log
-.frontend-dev.log
+.api-dev*.log
+.api-dev.pid
+.frontend-dev*.log
+.frontend-dev.pid
+
+# Salida de "dotnet publish" usada por el lanzador local de Windows
+publish/
