@@ -92,7 +92,7 @@ La cobertura hoy es un punto de partida (invariantes de dominio más críticas y
 2. Apuntar el DNS de `api.funbide.org` (registro A) a la IP del servidor.
 3. En la raíz del proyecto, copiar `.env.example` a `.env` y completar los valores reales (conexión a Postgres, URL/clave de Supabase, clave AES de backups). Nunca commitear este archivo.
 4. Correr `deploy/init-letsencrypt.sh api.funbide.org tu-email@dominio.com` una sola vez para emitir el certificado TLS inicial.
-5. `docker compose up -d --build` para levantar API, Nginx y el renovador de certbot.
+5. `docker compose up -d --build` para levantar API, Nginx y el renovador de certbot. La API aplica automáticamente las migraciones pendientes de EF Core contra la base al arrancar (`Database.MigrateAsync()` en `Program.cs`), así que no hace falta correr `dotnet ef database update` a mano.
 6. Verificar `https://api.funbide.org/health` y revisar `docker compose logs -f` si algo falla.
 
 Las renovaciones posteriores del certificado son automáticas (el servicio `certbot` corre `certbot renew` cada 12h); no hace falta volver a correr el script de bootstrap salvo que se reconstruya el servidor desde cero.

@@ -1,8 +1,10 @@
 using FUNBIDE.API.Extensions;
 using FUNBIDE.Infrastructure;
 using FUNBIDE.Infrastructure.Logging;
+using FUNBIDE.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -42,6 +44,15 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 var app = builder.Build();
+
+// Despliegue de un solo contenedor sin paso de migración separado: aplica al
+// arrancar cualquier migración pendiente contra la base de datos, para que el
+// esquema nunca quede desincronizado con el código desplegado.
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<FunbideDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {
