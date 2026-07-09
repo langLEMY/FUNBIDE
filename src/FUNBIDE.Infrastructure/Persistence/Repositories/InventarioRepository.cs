@@ -34,8 +34,13 @@ public sealed class InventarioRepository(FunbideDbContext dbContext) : IInventar
     public Task<bool> ExisteCodigoAsync(string codigo, CancellationToken cancellationToken) =>
         dbContext.InventarioItems.AsNoTracking().AnyAsync(i => i.Codigo == codigo, cancellationToken);
 
+    public Task<bool> TieneMovimientosAsync(Guid inventarioItemId, CancellationToken cancellationToken) =>
+        dbContext.MovimientosInventario.AsNoTracking().AnyAsync(m => m.InventarioItemId == inventarioItemId, cancellationToken);
+
     public async Task AgregarAsync(InventarioItem item, CancellationToken cancellationToken) =>
         await dbContext.InventarioItems.AddAsync(item, cancellationToken);
+
+    public void Eliminar(InventarioItem item) => dbContext.InventarioItems.Remove(item);
 
     public async Task RegistrarMovimientoAsync(MovimientoInventario movimiento, CancellationToken cancellationToken) =>
         await dbContext.MovimientosInventario.AddAsync(movimiento, cancellationToken);

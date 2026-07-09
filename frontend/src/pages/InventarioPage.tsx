@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { InventarioRow } from '../components/inventario/InventarioRow'
 import { api, ApiError } from '../lib/api'
+import { exportarCsv } from '../lib/exportarCsv'
 import type { InventarioItem } from '../types/inventario'
 import { CATEGORIAS_INVENTARIO } from '../types/inventario'
 import './InventarioPage.css'
@@ -61,6 +62,24 @@ export function InventarioPage() {
 
   const actualizarEnLista = (item: InventarioItem) => {
     setItems((actual) => actual.map((existente) => (existente.id === item.id ? item : existente)))
+  }
+
+  const quitarDeLista = (itemId: string) => {
+    setItems((actual) => actual.filter((existente) => existente.id !== itemId))
+  }
+
+  const handleExportar = () => {
+    exportarCsv(
+      `inventario_${new Date().toISOString().slice(0, 10)}.csv`,
+      itemsFiltrados.map((item) => ({
+        codigo: item.codigo,
+        nombre: item.nombre,
+        categoria: item.categoria === 'Medicamento' ? 'Medicamentos' : 'Insumos',
+        stockActual: item.stockActual,
+        stockMinimo: item.stockMinimo,
+        estado: item.stockActual < item.stockMinimo ? 'Bajo' : 'OK',
+      })),
+    )
   }
 
   const handleCrear = async (event: FormEvent) => {
@@ -143,6 +162,9 @@ export function InventarioPage() {
           value={busqueda}
           onChange={(event) => setBusqueda(event.target.value)}
         />
+        <button type="button" onClick={handleExportar} disabled={itemsFiltrados.length === 0}>
+          Exportar Excel
+        </button>
       </div>
 
       <div className="inventario-tabs" role="tablist">
@@ -199,6 +221,7 @@ export function InventarioPage() {
                   item={item}
                   onDespachado={actualizarEnLista}
                   onEditado={actualizarEnLista}
+                  onEliminado={quitarDeLista}
                 />
               ))}
             </tbody>

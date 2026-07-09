@@ -20,6 +20,7 @@ public sealed class InventarioController(
     IListarInventarioUseCase listarInventario,
     ICrearInventarioItemUseCase crearInventarioItem,
     IEditarInventarioItemUseCase editarInventarioItem,
+    IEliminarInventarioItemUseCase eliminarInventarioItem,
     IDescargarInventarioUseCase descargarInventario) : ControllerBase
 {
     [HttpGet]
@@ -41,6 +42,14 @@ public sealed class InventarioController(
     public async Task<ActionResult<InventarioItemDto>> EditarAsync(
         EditarInventarioItemRequest request, CancellationToken cancellationToken) =>
         Ok(await editarInventarioItem.EjecutarAsync(request, cancellationToken));
+
+    [HttpDelete("{id:guid}")]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    public async Task<IActionResult> EliminarAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await eliminarInventarioItem.EjecutarAsync(id, cancellationToken);
+        return NoContent();
+    }
 
     [HttpPost("descargo")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]

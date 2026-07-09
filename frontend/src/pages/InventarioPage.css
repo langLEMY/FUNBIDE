@@ -50,11 +50,14 @@
 }
 
 .inventario-buscador {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
 .inventario-buscador input {
-  width: 100%;
+  flex: 1 1 260px;
   max-width: 360px;
   background: var(--surface-1);
   border: 1px solid var(--border-hairline);
@@ -62,6 +65,26 @@
   color: var(--text-primary);
   padding: 9px 12px;
   font-size: 14px;
+}
+
+.inventario-buscador button {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inventario-buscador button:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.inventario-buscador button:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .inventario-tabs {
@@ -171,6 +194,10 @@
 .inventario-acciones button:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.inventario-boton-peligro {
+  color: var(--danger) !important;
 }
 
 .inventario-despacho-form {

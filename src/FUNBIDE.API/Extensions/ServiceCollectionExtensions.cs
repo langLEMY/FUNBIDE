@@ -34,6 +34,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IListarInventarioUseCase, ListarInventarioUseCase>();
         services.AddScoped<ICrearInventarioItemUseCase, CrearInventarioItemUseCase>();
         services.AddScoped<IEditarInventarioItemUseCase, EditarInventarioItemUseCase>();
+        services.AddScoped<IEliminarInventarioItemUseCase, EliminarInventarioItemUseCase>();
 
         services.AddScoped<IObtenerLogsAuditoriaUseCase, ObtenerLogsAuditoriaUseCase>();
         services.AddScoped<IVerificarEstadoSistemaUseCase, VerificarEstadoSistemaUseCase>();

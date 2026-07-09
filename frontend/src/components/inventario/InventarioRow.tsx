@@ -6,9 +6,10 @@ interface InventarioRowProps {
   item: InventarioItem
   onDespachado: (item: InventarioItem) => void
   onEditado: (item: InventarioItem) => void
+  onEliminado: (itemId: string) => void
 }
 
-export function InventarioRow({ item, onDespachado, onEditado }: InventarioRowProps) {
+export function InventarioRow({ item, onDespachado, onEditado, onEliminado }: InventarioRowProps) {
   const [despachando, setDespachando] = useState(false)
   const [cantidad, setCantidad] = useState('')
   const [referencia, setReferencia] = useState('')
@@ -19,6 +20,7 @@ export function InventarioRow({ item, onDespachado, onEditado }: InventarioRowPr
   const [stockMinimoEdit, setStockMinimoEdit] = useState(item.stockMinimo.toString())
 
   const [enviando, setEnviando] = useState(false)
+  const [eliminando, setEliminando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const bajoMinimo = item.stockActual < item.stockMinimo
@@ -93,6 +95,22 @@ export function InventarioRow({ item, onDespachado, onEditado }: InventarioRowPr
       setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo guardar el cambio.')
     } finally {
       setEnviando(false)
+    }
+  }
+
+  const handleEliminar = async () => {
+    if (!window.confirm(`¿Eliminar "${item.nombre}" (${item.codigo}) del inventario?`)) {
+      return
+    }
+
+    setError(null)
+    setEliminando(true)
+    try {
+      await api.delete(`/api/inventario/${item.id}`)
+      onEliminado(item.id)
+    } catch (err) {
+      setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo eliminar el ítem.')
+      setEliminando(false)
     }
   }
 
@@ -172,11 +190,23 @@ export function InventarioRow({ item, onDespachado, onEditado }: InventarioRowPr
             </div>
           ) : (
             <>
-              <button type="button" onClick={() => setEditando(true)}>
+              <button type="button" onClick={() => setEditando(true)} disabled={eliminando}>
                 Editar
               </button>
-              <button type="button" onClick={() => setDespachando(true)} disabled={item.stockActual <= 0}>
+              <button
+                type="button"
+                onClick={() => setDespachando(true)}
+                disabled={item.stockActual <= 0 || eliminando}
+              >
                 Despachar
+              </button>
+              <button
+                type="button"
+                className="inventario-boton-peligro"
+                onClick={() => void handleEliminar()}
+                disabled={eliminando}
+              >
+                {eliminando ? 'Eliminando…' : 'Eliminar'}
               </button>
             </>
           )}

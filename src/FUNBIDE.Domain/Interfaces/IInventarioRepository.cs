@@ -17,7 +17,11 @@ public interface IInventarioRepository
 
     Task<bool> ExisteCodigoAsync(string codigo, CancellationToken cancellationToken);
 
+    Task<bool> TieneMovimientosAsync(Guid inventarioItemId, CancellationToken cancellationToken);
+
     Task AgregarAsync(InventarioItem item, CancellationToken cancellationToken);
+
+    void Eliminar(InventarioItem item);
 
     Task RegistrarMovimientoAsync(MovimientoInventario movimiento, CancellationToken cancellationToken);
 
