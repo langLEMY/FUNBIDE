@@ -194,7 +194,12 @@ export function InventarioPage() {
             </thead>
             <tbody>
               {itemsFiltrados.map((item) => (
-                <InventarioRow key={item.id} item={item} onDespachado={actualizarEnLista} />
+                <InventarioRow
+                  key={item.id}
+                  item={item}
+                  onDespachado={actualizarEnLista}
+                  onEditado={actualizarEnLista}
+                />
               ))}
             </tbody>
           </table>

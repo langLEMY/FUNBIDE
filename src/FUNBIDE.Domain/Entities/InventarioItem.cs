@@ -71,4 +71,35 @@ public sealed class InventarioItem : Entity
 
         StockActual += cantidad;
     }
+
+    /// <summary>
+    /// Corrige el stock registrado a un valor exacto (p. ej. tras un conteo físico
+    /// que revela una discrepancia), en vez de aplicar un movimiento relativo como
+    /// <see cref="DescargarStock"/>/<see cref="Reingresar"/>.
+    /// </summary>
+    public void AjustarStock(int nuevoStock)
+    {
+        if (nuevoStock < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(nuevoStock), "El stock no puede ser negativo.");
+        }
+
+        StockActual = nuevoStock;
+    }
+
+    public void ActualizarDatos(string nombre, int stockMinimo)
+    {
+        if (string.IsNullOrWhiteSpace(nombre))
+        {
+            throw new ArgumentException("El nombre del ítem es obligatorio.", nameof(nombre));
+        }
+
+        if (stockMinimo < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(stockMinimo), "El stock mínimo no puede ser negativo.");
+        }
+
+        Nombre = nombre.Trim();
+        StockMinimo = stockMinimo;
+    }
 }

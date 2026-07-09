@@ -19,6 +19,13 @@ export interface CrearInventarioItemRequest {
   stockMinimo: number
 }
 
+export interface EditarInventarioItemRequest {
+  inventarioItemId: string
+  nombre: string
+  stockActual: number
+  stockMinimo: number
+}
+
 export interface DescargarInventarioRequest {
   inventarioItemId: string
   cantidad: number

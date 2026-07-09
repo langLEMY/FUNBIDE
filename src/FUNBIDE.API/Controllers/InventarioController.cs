@@ -19,6 +19,7 @@ namespace FUNBIDE.API.Controllers;
 public sealed class InventarioController(
     IListarInventarioUseCase listarInventario,
     ICrearInventarioItemUseCase crearInventarioItem,
+    IEditarInventarioItemUseCase editarInventarioItem,
     IDescargarInventarioUseCase descargarInventario) : ControllerBase
 {
     [HttpGet]
@@ -34,6 +35,12 @@ public sealed class InventarioController(
         var item = await crearInventarioItem.EjecutarAsync(request, cancellationToken);
         return Created("api/inventario", item);
     }
+
+    [HttpPatch]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    public async Task<ActionResult<InventarioItemDto>> EditarAsync(
+        EditarInventarioItemRequest request, CancellationToken cancellationToken) =>
+        Ok(await editarInventarioItem.EjecutarAsync(request, cancellationToken));
 
     [HttpPost("descargo")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]

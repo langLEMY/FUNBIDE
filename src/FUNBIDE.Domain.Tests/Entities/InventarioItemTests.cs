@@ -72,4 +72,41 @@ public class InventarioItemTests
 
         Assert.Throws<ArgumentOutOfRangeException>(() => item.Reingresar(0));
     }
+
+    [Fact]
+    public void AjustarStock_ValorValido_FijaElStockExacto()
+    {
+        var item = CrearItem(stockInicial: 10);
+
+        item.AjustarStock(3);
+
+        Assert.Equal(3, item.StockActual);
+    }
+
+    [Fact]
+    public void AjustarStock_ValorNegativo_LanzaArgumentOutOfRangeException()
+    {
+        var item = CrearItem();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => item.AjustarStock(-1));
+    }
+
+    [Fact]
+    public void ActualizarDatos_ValoresValidos_ActualizaNombreYStockMinimo()
+    {
+        var item = CrearItem();
+
+        item.ActualizarDatos("Acetaminofén", 5);
+
+        Assert.Equal("Acetaminofén", item.Nombre);
+        Assert.Equal(5, item.StockMinimo);
+    }
+
+    [Fact]
+    public void ActualizarDatos_NombreVacio_LanzaArgumentException()
+    {
+        var item = CrearItem();
+
+        Assert.Throws<ArgumentException>(() => item.ActualizarDatos("  ", 5));
+    }
 }

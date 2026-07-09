@@ -147,6 +147,12 @@
   vertical-align: middle;
 }
 
+.inventario-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .inventario-acciones button {
   background: var(--surface-2);
   color: var(--text-secondary);
@@ -182,6 +188,29 @@
   padding: 6px 8px;
   font-size: 13px;
   width: 110px;
+}
+
+.inventario-celda-doble {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inventario-tabla td input {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.inventario-row-error-inline {
+  color: var(--danger);
+  font-size: 12px;
+  margin: 6px 0 0;
+  width: 100%;
 }
 
 .inventario-row-error {
