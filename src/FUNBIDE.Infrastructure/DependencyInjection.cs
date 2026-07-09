@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using FUNBIDE.Application.Common.Interfaces;
 using FUNBIDE.Domain.Interfaces;
 using FUNBIDE.Infrastructure.BackgroundServices;
+using FUNBIDE.Infrastructure.Files;
 using FUNBIDE.Infrastructure.Logging;
 using FUNBIDE.Infrastructure.Persistence;
 using FUNBIDE.Infrastructure.Persistence.Repositories;
@@ -43,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditoriaLogService, AuditoriaLogService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IEstadoBaseDeDatosService, EstadoBaseDeDatosService>();
+        services.AddScoped<IExcelLectorService, ExcelLectorService>();
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
         services.AddSupabaseJwtAuthentication(configuration);

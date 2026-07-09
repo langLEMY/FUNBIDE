@@ -25,7 +25,8 @@ public sealed class PacientesController(
     IEditarPacienteUseCase editarPaciente,
     IEliminarPacienteUseCase eliminarPaciente,
     IActualizarFotoCedulaUseCase actualizarFotoCedula,
-    IObtenerUrlFotoCedulaUseCase obtenerUrlFotoCedula) : ControllerBase
+    IObtenerUrlFotoCedulaUseCase obtenerUrlFotoCedula,
+    IImportarPacientesUseCase importarPacientes) : ControllerBase
 {
     [HttpGet]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
@@ -77,4 +78,18 @@ public sealed class PacientesController(
     public async Task<ActionResult<UrlFotoCedulaDto>> ObtenerUrlFotoCedulaAsync(
         Guid id, CancellationToken cancellationToken) =>
         Ok(await obtenerUrlFotoCedula.EjecutarAsync(id, cancellationToken));
+
+    [HttpPost("importar")]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
+    public async Task<ActionResult<ImportarPacientesResultDto>> ImportarAsync(
+        IFormFile archivo, CancellationToken cancellationToken)
+    {
+        if (!archivo.EsExcelValido(out var error))
+        {
+            return BadRequest(new { titulo = "Solicitud inválida", detalle = error });
+        }
+
+        await using var contenido = archivo.OpenReadStream();
+        return Ok(await importarPacientes.EjecutarAsync(contenido, cancellationToken));
+    }
 }

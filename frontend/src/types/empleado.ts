@@ -14,3 +14,10 @@ export interface EditarEmpleadoRequest {
   nombreCompleto: string
   cargo: string | null
 }
+
+export interface ImportarEmpleadosResultado {
+  totalFilas: number
+  creados: number
+  omitidos: number
+  omisiones: string[]
+}

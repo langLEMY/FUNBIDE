@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
+import { ImportarExcel } from '../components/ImportarExcel'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
-import type { Empleado } from '../types/empleado'
+import type { Empleado, ImportarEmpleadosResultado } from '../types/empleado'
 import './DirectorioPage.css'
 
 export function DirectorioPage() {
@@ -12,6 +13,7 @@ export function DirectorioPage() {
   const [empleados, setEmpleados] = useState<Empleado[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [resultadoImportacion, setResultadoImportacion] = useState<ImportarEmpleadosResultado | null>(null)
 
   const [nombreNuevo, setNombreNuevo] = useState('')
   const [cargoNuevo, setCargoNuevo] = useState('')
@@ -26,6 +28,7 @@ export function DirectorioPage() {
   useEffect(() => {
     let cancelado = false
 
+    setCargando(true)
     api
       .get<Empleado[]>('/api/empleados')
       .then((datos) => {
@@ -43,7 +46,7 @@ export function DirectorioPage() {
     return () => {
       cancelado = true
     }
-  }, [])
+  }, [resultadoImportacion])
 
   const ordenarPorNombre = (lista: Empleado[]) =>
     [...lista].sort((a, b) => a.nombreCompleto.localeCompare(b.nombreCompleto))
@@ -107,6 +110,31 @@ export function DirectorioPage() {
 
   return (
     <DashboardLayout titulo="Directorio">
+      {puedeAdministrar && (
+        <section className="directorio-crear-card">
+          <h2>Importar personal desde Excel</h2>
+          <ImportarExcel<ImportarEmpleadosResultado>
+            endpoint="/api/empleados/importar"
+            onImportado={setResultadoImportacion}
+          />
+          {resultadoImportacion && (
+            <div className="directorio-importar-resumen">
+              <p>
+                {resultadoImportacion.creados} de {resultadoImportacion.totalFilas} filas importadas.
+                {resultadoImportacion.omitidos > 0 && ` ${resultadoImportacion.omitidos} filas omitidas.`}
+              </p>
+              {resultadoImportacion.omisiones.length > 0 && (
+                <ul className="directorio-importar-omisiones">
+                  {resultadoImportacion.omisiones.map((omision, indice) => (
+                    <li key={indice}>{omision}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
       {puedeAdministrar && (
         <section className="directorio-crear-card">
           <h2>Agregar persona</h2>

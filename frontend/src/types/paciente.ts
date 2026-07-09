@@ -38,3 +38,11 @@ export interface EditarPacienteRequest {
 export interface UrlFotoCedula {
   url: string
 }
+
+export interface ImportarPacientesResultado {
+  totalFilas: number
+  creados: number
+  omitidos: number
+  identificacionesAjustadas: number
+  omisiones: string[]
+}

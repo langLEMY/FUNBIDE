@@ -62,6 +62,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICrearEmpleadoUseCase, CrearEmpleadoUseCase>();
         services.AddScoped<IEditarEmpleadoUseCase, EditarEmpleadoUseCase>();
         services.AddScoped<IEliminarEmpleadoUseCase, EliminarEmpleadoUseCase>();
+        services.AddScoped<IImportarEmpleadosUseCase, ImportarEmpleadosUseCase>();
 
         services.AddScoped<IListarPacientesUseCase, ListarPacientesUseCase>();
         services.AddScoped<ICrearPacienteUseCase, CrearPacienteUseCase>();
@@ -69,6 +70,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEliminarPacienteUseCase, EliminarPacienteUseCase>();
         services.AddScoped<IActualizarFotoCedulaUseCase, ActualizarFotoCedulaUseCase>();
         services.AddScoped<IObtenerUrlFotoCedulaUseCase, ObtenerUrlFotoCedulaUseCase>();
+        services.AddScoped<IImportarPacientesUseCase, ImportarPacientesUseCase>();
 
         return services;
     }

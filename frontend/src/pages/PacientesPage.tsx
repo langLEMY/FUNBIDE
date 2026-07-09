@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { PacienteRow } from '../components/pacientes/PacienteRow'
+import { ImportarExcel } from '../components/ImportarExcel'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
-import type { Paciente } from '../types/paciente'
+import type { Paciente, ImportarPacientesResultado } from '../types/paciente'
 import { ESTADOS_PACIENTE, type EstadoPaciente } from '../types/paciente'
 import './PacientesPage.css'
 
@@ -15,10 +16,12 @@ export function PacientesPage() {
   const puedeEliminar = perfil?.rol === 'Lemy' || perfil?.rol === 'Admin' || perfil?.rol === 'Doctor'
   const puedeVerHistorial = perfil?.rol === 'Doctor'
   const puedeCrear = Boolean(perfil)
+  const puedeImportar = perfil?.rol === 'Lemy' || perfil?.rol === 'Admin'
 
   const [pacientes, setPacientes] = useState<Paciente[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [resultadoImportacion, setResultadoImportacion] = useState<ImportarPacientesResultado | null>(null)
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState<EstadoPaciente | typeof FILTRO_TODOS>(FILTRO_TODOS)
@@ -33,6 +36,7 @@ export function PacientesPage() {
   useEffect(() => {
     let cancelado = false
 
+    setCargando(true)
     api
       .get<Paciente[]>('/api/pacientes')
       .then((datos) => {
@@ -50,7 +54,7 @@ export function PacientesPage() {
     return () => {
       cancelado = true
     }
-  }, [])
+  }, [resultadoImportacion])
 
   const ordenar = (lista: Paciente[]) =>
     [...lista].sort((a, b) => a.nombre.localeCompare(b.nombre) || a.apellido.localeCompare(b.apellido))
@@ -101,6 +105,33 @@ export function PacientesPage() {
 
   return (
     <DashboardLayout titulo="Pacientes">
+      {puedeImportar && (
+        <section className="pacientes-crear-card">
+          <h2>Importar pacientes desde Excel</h2>
+          <ImportarExcel<ImportarPacientesResultado>
+            endpoint="/api/pacientes/importar"
+            onImportado={setResultadoImportacion}
+          />
+          {resultadoImportacion && (
+            <div className="pacientes-importar-resumen">
+              <p>
+                {resultadoImportacion.creados} de {resultadoImportacion.totalFilas} filas importadas.
+                {resultadoImportacion.identificacionesAjustadas > 0 &&
+                  ` ${resultadoImportacion.identificacionesAjustadas} identificaciones se ajustaron automáticamente (muy cortas o duplicadas).`}
+                {resultadoImportacion.omitidos > 0 && ` ${resultadoImportacion.omitidos} filas omitidas.`}
+              </p>
+              {resultadoImportacion.omisiones.length > 0 && (
+                <ul className="pacientes-importar-omisiones">
+                  {resultadoImportacion.omisiones.map((omision, indice) => (
+                    <li key={indice}>{omision}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
       {puedeCrear && (
         <section className="pacientes-crear-card">
           <h2>Agregar paciente</h2>

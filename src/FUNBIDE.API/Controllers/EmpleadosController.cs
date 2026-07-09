@@ -1,8 +1,10 @@
 using FUNBIDE.API.Authorization;
+using FUNBIDE.API.Extensions;
 using FUNBIDE.Application.DTOs.Empleados;
 using FUNBIDE.Application.UseCases.Empleados;
 using FUNBIDE.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FUNBIDE.API.Controllers;
@@ -20,7 +22,8 @@ public sealed class EmpleadosController(
     IListarEmpleadosUseCase listarEmpleados,
     ICrearEmpleadoUseCase crearEmpleado,
     IEditarEmpleadoUseCase editarEmpleado,
-    IEliminarEmpleadoUseCase eliminarEmpleado) : ControllerBase
+    IEliminarEmpleadoUseCase eliminarEmpleado,
+    IImportarEmpleadosUseCase importarEmpleados) : ControllerBase
 {
     [HttpGet]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
@@ -48,5 +51,19 @@ public sealed class EmpleadosController(
     {
         await eliminarEmpleado.EjecutarAsync(id, cancellationToken);
         return NoContent();
+    }
+
+    [HttpPost("importar")]
+    [RequiereRol(RolUsuario.Lemy)]
+    public async Task<ActionResult<ImportarEmpleadosResultDto>> ImportarAsync(
+        IFormFile archivo, CancellationToken cancellationToken)
+    {
+        if (!archivo.EsExcelValido(out var error))
+        {
+            return BadRequest(new { titulo = "Solicitud inválida", detalle = error });
+        }
+
+        await using var contenido = archivo.OpenReadStream();
+        return Ok(await importarEmpleados.EjecutarAsync(contenido, cancellationToken));
     }
 }
