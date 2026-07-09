@@ -5,7 +5,7 @@ import { EstadoBloqueado } from '../components/EstadoBloqueado'
 const RUTA_POR_ROL: Partial<Record<string, string>> = {
   Admin: '/dashboard',
   Lemy: '/personal',
-  Doctor: '/pacientes',
+  Doctor: '/dashboard-doctor',
   Fondos: '/finanzas',
   Farmacia: '/inventario',
 }

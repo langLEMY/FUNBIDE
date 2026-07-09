@@ -13,8 +13,10 @@ import { PersonalPage } from './pages/PersonalPage'
 import { DirectorioPage } from './pages/DirectorioPage'
 import { PacientesPage } from './pages/PacientesPage'
 import { InventarioPage } from './pages/InventarioPage'
+import { DashboardDoctorPage } from './pages/DashboardDoctorPage'
 import { EquipoPage } from './pages/EquipoPage'
 import { EquipoDetallePage } from './pages/EquipoDetallePage'
+import { MiPerfilPage } from './pages/MiPerfilPage'
 import { HomeRedirect } from './pages/HomeRedirect'
 
 function App() {
@@ -24,6 +26,14 @@ function App() {
       <Route path="/recuperar-contrasena" element={<RecuperarContrasenaPage />} />
       <Route path="/restablecer-contrasena" element={<RestablecerContrasenaPage />} />
       <Route path="/" element={<HomeRedirect />} />
+      <Route
+        path="/mi-perfil"
+        element={
+          <ProtectedRoute>
+            <MiPerfilPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/dashboard"
         element={
@@ -69,6 +79,14 @@ function App() {
         element={
           <ProtectedRoute rolesPermitidos="Doctor">
             <CitasPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard-doctor"
+        element={
+          <ProtectedRoute rolesPermitidos="Doctor">
+            <DashboardDoctorPage />
           </ProtectedRoute>
         }
       />

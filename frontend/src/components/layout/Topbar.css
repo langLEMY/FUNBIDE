@@ -41,4 +41,9 @@
 
 .topbar-tema-boton:hover {
   background: var(--surface-2);
+  transform: scale(1.05);
+}
+
+.topbar-tema-boton svg {
+  animation: funbide-desplegar var(--duracion-base) var(--ease-entrada);
 }

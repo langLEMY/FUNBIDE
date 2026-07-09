@@ -7,6 +7,7 @@
   gap: 8px;
   padding: 24px;
   text-align: center;
+  animation: funbide-aparecer var(--duracion-lenta) var(--ease-entrada);
 }
 
 .estado-bloqueado-mensaje {

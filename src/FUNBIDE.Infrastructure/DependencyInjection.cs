@@ -42,6 +42,7 @@ public static class DependencyInjection
 
         services.AddScoped<IAuditoriaLogService, AuditoriaLogService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IEstadoBaseDeDatosService, EstadoBaseDeDatosService>();
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
         services.AddSupabaseJwtAuthentication(configuration);

@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { api, ApiError } from '../../lib/api'
 import { iniciales } from '../../lib/iniciales'
@@ -7,8 +8,8 @@ import './ProfileMenu.css'
 
 export function ProfileMenu() {
   const { perfil, cerrarSesion, recargarPerfil } = useAuth()
+  const navigate = useNavigate()
   const [abierto, setAbierto] = useState(false)
-  const [verPerfilAbierto, setVerPerfilAbierto] = useState(false)
   const [subiendo, setSubiendo] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const inputArchivoRef = useRef<HTMLInputElement>(null)
@@ -72,7 +73,7 @@ export function ProfileMenu() {
               className="profile-menu-item"
               onClick={() => {
                 setAbierto(false)
-                setVerPerfilAbierto(true)
+                navigate('/mi-perfil')
               }}
             >
               Ver perfil
@@ -94,25 +95,6 @@ export function ProfileMenu() {
       <input ref={inputArchivoRef} type="file" accept="image/*" hidden onChange={handleArchivoSeleccionado} />
 
       {error && <p className="profile-menu-error">{error}</p>}
-
-      {verPerfilAbierto && (
-        <div className="profile-modal-overlay" onClick={() => setVerPerfilAbierto(false)}>
-          <div className="profile-modal" onClick={(event) => event.stopPropagation()}>
-            <h2>Mi perfil</h2>
-            <dl>
-              <dt className="text-muted">Nombre</dt>
-              <dd>{perfil.nombreCompleto}</dd>
-              <dt className="text-muted">Correo</dt>
-              <dd>{perfil.correo}</dd>
-              <dt className="text-muted">Rol</dt>
-              <dd>{perfil.rol}</dd>
-            </dl>
-            <button type="button" className="profile-modal-cerrar" onClick={() => setVerPerfilAbierto(false)}>
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

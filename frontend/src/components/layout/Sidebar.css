@@ -63,4 +63,10 @@
   border-radius: 50%;
   background: currentColor;
   opacity: 0.6;
+  transition: opacity var(--duracion-rapida) var(--ease-suave), transform var(--duracion-rapida) var(--ease-suave);
+}
+
+.sidebar-nav-item.activo .sidebar-nav-punto {
+  opacity: 1;
+  transform: scale(1.3);
 }

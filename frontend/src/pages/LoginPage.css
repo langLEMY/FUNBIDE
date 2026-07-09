@@ -45,6 +45,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: funbide-aparecer var(--duracion-lenta) var(--ease-entrada);
 }
 
 .login-ventana-barra {
@@ -211,6 +212,7 @@
   font-size: 13px;
   padding: 8px 12px;
   margin: -6px 0 16px;
+  animation: funbide-desplegar var(--duracion-base) var(--ease-entrada);
 }
 
 .login-boton {

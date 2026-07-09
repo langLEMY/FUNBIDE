@@ -19,6 +19,7 @@ const ITEMS_POR_ROL: Partial<Record<RolUsuario, { to: string; etiqueta: string }
     { to: '/actividad', etiqueta: 'Actividad' },
   ],
   Doctor: [
+    { to: '/dashboard-doctor', etiqueta: 'Dashboard' },
     { to: '/pacientes', etiqueta: 'Pacientes' },
     { to: '/citas', etiqueta: 'Citas' },
     { to: '/inventario', etiqueta: 'Inventario' },
@@ -36,7 +37,8 @@ const ITEMS_POR_ROL: Partial<Record<RolUsuario, { to: string; etiqueta: string }
 
 export function Sidebar() {
   const { perfil } = useAuth()
-  const items = (perfil && ITEMS_POR_ROL[perfil.rol]) || []
+  const itemsDelRol = (perfil && ITEMS_POR_ROL[perfil.rol]) || []
+  const items = perfil ? [...itemsDelRol, { to: '/mi-perfil', etiqueta: 'Mi perfil' }] : itemsDelRol
 
   return (
     <aside className="sidebar">

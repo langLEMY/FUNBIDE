@@ -6,6 +6,7 @@
   align-items: center;
   justify-content: center;
   z-index: 40;
+  animation: funbide-desvanecer var(--duracion-rapida) var(--ease-suave);
 }
 
 .editar-personal-modal {
@@ -16,6 +17,7 @@
   width: 340px;
   display: flex;
   flex-direction: column;
+  animation: funbide-aparecer var(--duracion-base) var(--ease-entrada);
 }
 
 .editar-personal-modal h2 {

@@ -9,6 +9,7 @@ using FUNBIDE.Application.UseCases.HistorialClinico;
 using FUNBIDE.Application.UseCases.Inventario;
 using FUNBIDE.Application.UseCases.Pacientes;
 using FUNBIDE.Application.UseCases.Personal;
+using FUNBIDE.Application.UseCases.Sistema;
 
 namespace FUNBIDE.API.Extensions;
 
@@ -34,6 +35,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICrearInventarioItemUseCase, CrearInventarioItemUseCase>();
 
         services.AddScoped<IObtenerLogsAuditoriaUseCase, ObtenerLogsAuditoriaUseCase>();
+        services.AddScoped<IVerificarEstadoSistemaUseCase, VerificarEstadoSistemaUseCase>();
 
         services.AddScoped<IRegistrarEventoLoginUseCase, RegistrarEventoLoginUseCase>();
 

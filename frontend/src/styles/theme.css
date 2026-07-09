@@ -26,6 +26,15 @@
   --radius-card: 14px;
   --radius-control: 8px;
 
+  /* Motion tipo iOS/macOS: easing "out" pronunciado al inicio y que frena suave,
+     nunca lineal ni con rebote exagerado. Duraciones cortas para que se sientan
+     como respuesta inmediata de la interfaz, no como una animación decorativa. */
+  --ease-suave: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-entrada: cubic-bezier(0.16, 1, 0.3, 1);
+  --duracion-rapida: 140ms;
+  --duracion-base: 220ms;
+  --duracion-lenta: 320ms;
+
   font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   color-scheme: dark;
 }
@@ -88,13 +97,153 @@ body {
   background: var(--page-plane);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color var(--duracion-base) var(--ease-suave), color var(--duracion-base) var(--ease-suave);
 }
 
 button,
 input,
 select {
   font-family: inherit;
+}
+
+/* Respuesta táctil consistente en toda la app: cualquier control interactivo
+   transiciona sus propiedades visuales con el mismo ritmo, y cede levemente al
+   presionarlo (como un botón de iOS), sin necesidad de animarlo a mano en cada
+   componente. */
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    background-color var(--duracion-rapida) var(--ease-suave),
+    border-color var(--duracion-rapida) var(--ease-suave),
+    color var(--duracion-rapida) var(--ease-suave),
+    box-shadow var(--duracion-rapida) var(--ease-suave),
+    opacity var(--duracion-rapida) var(--ease-suave),
+    transform var(--duracion-rapida) var(--ease-suave);
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+/* Anillo de foco consistente en toda la app, en vez del outline por defecto de
+   cada navegador (que no respeta el tema ni la paleta). Solo aparece con
+   navegación por teclado (:focus-visible), no al hacer clic con el mouse. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--series-pacientes) 35%, transparent);
+  border-color: var(--series-pacientes);
+}
+
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* Tarjetas que además son botones (equipo, ítems clickeables): leve elevación
+   al pasar el mouse, coherente con el resto de la respuesta táctil. */
+.equipo-tarjeta {
+  transition:
+    background-color var(--duracion-rapida) var(--ease-suave),
+    border-color var(--duracion-rapida) var(--ease-suave),
+    transform var(--duracion-base) var(--ease-suave),
+    box-shadow var(--duracion-base) var(--ease-suave);
+}
+
+.equipo-tarjeta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+}
+
+.equipo-tarjeta:active {
+  transform: translateY(-2px) scale(0.98);
+}
+
+/* Aparición escalonada de filas de tabla y tarjetas en grilla: cada elemento
+   entra un poco después que el anterior, en vez de todos a la vez de golpe. */
+table tbody tr,
+.equipo-grilla > * {
+  animation: funbide-aparecer var(--duracion-base) var(--ease-entrada) both;
+}
+
+table tbody tr:nth-child(2),
+.equipo-grilla > *:nth-child(2) {
+  animation-delay: 25ms;
+}
+table tbody tr:nth-child(3),
+.equipo-grilla > *:nth-child(3) {
+  animation-delay: 50ms;
+}
+table tbody tr:nth-child(4),
+.equipo-grilla > *:nth-child(4) {
+  animation-delay: 75ms;
+}
+table tbody tr:nth-child(5),
+.equipo-grilla > *:nth-child(5) {
+  animation-delay: 100ms;
+}
+table tbody tr:nth-child(6),
+.equipo-grilla > *:nth-child(6) {
+  animation-delay: 125ms;
+}
+table tbody tr:nth-child(n + 7),
+.equipo-grilla > *:nth-child(n + 7) {
+  animation-delay: 150ms;
+}
+
+@keyframes funbide-aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes funbide-desvanecer {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes funbide-desplegar {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Respeta la preferencia del sistema operativo: quien pidió menos movimiento no
+   debería ver ninguna de las animaciones de arriba, sin tener que tocar cada regla. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .equipo-tarjeta:hover,
+  .equipo-tarjeta:active,
+  button:not(:disabled):active {
+    transform: none !important;
+  }
 }
 
 .text-secondary {
@@ -130,7 +279,8 @@ select {
 .directorio-crear-card,
 .directorio-tabla-card,
 .personal-crear-card,
-.personal-tabla-card {
+.personal-tabla-card,
+.mi-perfil-card {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
@@ -164,7 +314,8 @@ select {
   .directorio-crear-card,
   .directorio-tabla-card,
   .personal-crear-card,
-  .personal-tabla-card {
+  .personal-tabla-card,
+  .mi-perfil-card {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }

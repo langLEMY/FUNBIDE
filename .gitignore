@@ -4,6 +4,10 @@ obj/
 .vscode/
 *.user
 appsettings.*.local.json
+# Contiene la cadena de conexión real y claves de Supabase para desarrollo local
+# y para las copias de escritorio distribuidas al equipo — nunca secretos reales
+# en git, solo appsettings.json (con placeholders) queda commiteado.
+src/FUNBIDE.API/appsettings.Development.json
 
 # Frontend
 node_modules/
@@ -24,8 +28,7 @@ src/FUNBIDE.API/wwwroot/
 .claude/settings.local.json
 
 # Acceso directo de Windows: formato binario atado a rutas absolutas de esta
-# máquina, no portable. El script Iniciar-FUNBIDE.ps1 que sí abre sí se comitea
-# (usa $PSScriptRoot, portable).
+# máquina, no portable. Se recrea apuntando a FUNBIDE.exe (ver launcher/).
 *.lnk
 
 # Archivos de trabajo temporales de sesiones de desarrollo
@@ -36,6 +39,13 @@ src/FUNBIDE.API/wwwroot/
 .api-dev.pid
 .frontend-dev*.log
 .frontend-dev.pid
+.publish-run*.log
+.publish-run.pid
 
 # Salida de "dotnet publish" usada por el lanzador local de Windows
 publish/
+
+# Build publicado del launcher de escritorio (launcher/) — binario grande
+# atado a esta máquina, se regenera con "dotnet publish launcher -c Release -o .".
+/FUNBIDE.exe
+/FUNBIDE.pdb

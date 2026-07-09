@@ -19,4 +19,5 @@
   flex: 1;
   overflow-y: auto;
   padding: 28px;
+  animation: funbide-aparecer var(--duracion-lenta) var(--ease-entrada);
 }
