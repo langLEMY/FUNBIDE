@@ -10,6 +10,7 @@ import './PacientesPage.css'
 
 const FILTRO_TODOS = 'Todos'
 const TAMANO_PAGINA = 50
+const TAMANO_VENTANA_PAGINACION = 10
 
 function construirQuery(pagina: number, busqueda: string, filtroEstado: EstadoPaciente | typeof FILTRO_TODOS): string {
   const params = new URLSearchParams()
@@ -130,6 +131,9 @@ export function PacientesPage() {
   }
 
   const totalPaginas = Math.max(1, Math.ceil(total / TAMANO_PAGINA))
+  const inicioVentana = Math.floor((pagina - 1) / TAMANO_VENTANA_PAGINACION) * TAMANO_VENTANA_PAGINACION + 1
+  const finVentana = Math.min(inicioVentana + TAMANO_VENTANA_PAGINACION - 1, totalPaginas)
+  const numerosPagina = Array.from({ length: finVentana - inicioVentana + 1 }, (_, i) => inicioVentana + i)
 
   return (
     <DashboardLayout titulo="Pacientes">
@@ -272,19 +276,38 @@ export function PacientesPage() {
               </table>
             </div>
             <div className="pacientes-paginacion">
-              <button type="button" onClick={() => setPagina((p) => p - 1)} disabled={pagina <= 1}>
-                Anterior
-              </button>
-              <span className="text-secondary">
-                Página {pagina} de {totalPaginas} · {total} pacientes
-              </span>
               <button
                 type="button"
+                className="pacientes-paginacion-salto"
+                onClick={() => setPagina((p) => p - 1)}
+                disabled={pagina <= 1}
+              >
+                ‹ Anterior
+              </button>
+              <div className="pacientes-paginacion-numeros">
+                {numerosPagina.map((numero) => (
+                  <button
+                    key={numero}
+                    type="button"
+                    className={`pacientes-paginacion-numero${numero === pagina ? ' activo' : ''}`}
+                    aria-current={numero === pagina ? 'page' : undefined}
+                    onClick={() => setPagina(numero)}
+                  >
+                    {numero}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="pacientes-paginacion-salto"
                 onClick={() => setPagina((p) => p + 1)}
                 disabled={pagina >= totalPaginas}
               >
-                Siguiente
+                Siguiente ›
               </button>
+            </div>
+            <div className="pacientes-paginacion-info text-secondary">
+              Página {pagina} de {totalPaginas} · {total} pacientes
             </div>
           </>
         )}
