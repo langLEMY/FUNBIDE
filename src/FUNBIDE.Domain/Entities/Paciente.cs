@@ -69,6 +69,18 @@ public sealed class Paciente : Entity
         Condicion = string.IsNullOrWhiteSpace(condicion) ? null : condicion.Trim();
     }
 
+    /// <summary>
+    /// Completa con datos de una reimportación solo los campos que estén vacíos, sin
+    /// sobrescribir los que el paciente ya tuviera cargados (a diferencia de
+    /// <see cref="ActualizarDatos"/>, pensado para una edición manual completa).
+    /// </summary>
+    public void CompletarDesdeImportacion(string? telefono, int? edad, string? condicion)
+    {
+        Telefono ??= string.IsNullOrWhiteSpace(telefono) ? null : telefono.Trim();
+        Edad ??= edad;
+        Condicion ??= string.IsNullOrWhiteSpace(condicion) ? null : condicion.Trim();
+    }
+
     public void CambiarEstado(EstadoPaciente estado)
     {
         Estado = estado;

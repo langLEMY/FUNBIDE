@@ -42,7 +42,15 @@ export interface UrlFotoCedula {
 export interface ImportarPacientesResultado {
   totalFilas: number
   creados: number
+  actualizados: number
   omitidos: number
   identificacionesAjustadas: number
   omisiones: string[]
+}
+
+export interface PacientesPaginados {
+  items: Paciente[]
+  total: number
+  pagina: number
+  tamanoPagina: number
 }

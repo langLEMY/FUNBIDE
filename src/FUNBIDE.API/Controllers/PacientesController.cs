@@ -30,8 +30,11 @@ public sealed class PacientesController(
 {
     [HttpGet]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
-    public async Task<ActionResult<IReadOnlyList<PacienteDto>>> ListarAsync(CancellationToken cancellationToken) =>
-        Ok(await listarPacientes.EjecutarAsync(cancellationToken));
+    public async Task<ActionResult<PacientesPaginadosDto>> ListarAsync(
+        [FromQuery] int pagina, [FromQuery] int tamanoPagina, [FromQuery] string? busqueda,
+        [FromQuery] EstadoPaciente? estado, CancellationToken cancellationToken) =>
+        Ok(await listarPacientes.EjecutarAsync(
+            new ListarPacientesRequest(pagina, tamanoPagina, busqueda, estado), cancellationToken));
 
     [HttpPost]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]

@@ -1,14 +1,24 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { PacienteRow } from '../components/pacientes/PacienteRow'
 import { ImportarExcel } from '../components/ImportarExcel'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
-import type { Paciente, ImportarPacientesResultado } from '../types/paciente'
+import type { Paciente, PacientesPaginados, ImportarPacientesResultado } from '../types/paciente'
 import { ESTADOS_PACIENTE, type EstadoPaciente } from '../types/paciente'
 import './PacientesPage.css'
 
 const FILTRO_TODOS = 'Todos'
+const TAMANO_PAGINA = 50
+
+function construirQuery(pagina: number, busqueda: string, filtroEstado: EstadoPaciente | typeof FILTRO_TODOS): string {
+  const params = new URLSearchParams()
+  params.set('pagina', String(pagina))
+  params.set('tamanoPagina', String(TAMANO_PAGINA))
+  if (busqueda.trim()) params.set('busqueda', busqueda.trim())
+  if (filtroEstado !== FILTRO_TODOS) params.set('estado', filtroEstado)
+  return params.toString()
+}
 
 export function PacientesPage() {
   const { perfil } = useAuth()
@@ -19,11 +29,15 @@ export function PacientesPage() {
   const puedeImportar = perfil?.rol === 'Lemy' || perfil?.rol === 'Admin'
 
   const [pacientes, setPacientes] = useState<Paciente[]>([])
+  const [total, setTotal] = useState(0)
+  const [pagina, setPagina] = useState(1)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [resultadoImportacion, setResultadoImportacion] = useState<ImportarPacientesResultado | null>(null)
+  const [recargarClave, setRecargarClave] = useState(0)
 
   const [busqueda, setBusqueda] = useState('')
+  const [busquedaDebounced, setBusquedaDebounced] = useState('')
   const [filtroEstado, setFiltroEstado] = useState<EstadoPaciente | typeof FILTRO_TODOS>(FILTRO_TODOS)
 
   const [nombre, setNombre] = useState('')
@@ -34,13 +48,28 @@ export function PacientesPage() {
   const [errorCrear, setErrorCrear] = useState<string | null>(null)
 
   useEffect(() => {
+    const temporizador = setTimeout(() => setBusquedaDebounced(busqueda), 300)
+    return () => clearTimeout(temporizador)
+  }, [busqueda])
+
+  useEffect(() => {
+    setPagina(1)
+  }, [busquedaDebounced, filtroEstado])
+
+  useEffect(() => {
     let cancelado = false
 
     setCargando(true)
     api
-      .get<Paciente[]>('/api/pacientes')
+      .get<PacientesPaginados>(`/api/pacientes?${construirQuery(pagina, busquedaDebounced, filtroEstado)}`)
       .then((datos) => {
-        if (!cancelado) setPacientes(datos)
+        if (cancelado) return
+        if (datos.items.length === 0 && datos.pagina > 1) {
+          setPagina((actual) => actual - 1)
+          return
+        }
+        setPacientes(datos.items)
+        setTotal(datos.total)
       })
       .catch((err) => {
         if (!cancelado) {
@@ -54,25 +83,20 @@ export function PacientesPage() {
     return () => {
       cancelado = true
     }
-  }, [resultadoImportacion])
+  }, [pagina, busquedaDebounced, filtroEstado, recargarClave])
 
-  const ordenar = (lista: Paciente[]) =>
-    [...lista].sort((a, b) => a.nombre.localeCompare(b.nombre) || a.apellido.localeCompare(b.apellido))
+  const recargar = () => setRecargarClave((clave) => clave + 1)
 
-  const actualizarEnLista = (paciente: Paciente) => {
-    setPacientes((actual) => ordenar(actual.map((p) => (p.id === paciente.id ? paciente : p))))
-  }
+  const actualizarEnLista = (_paciente: Paciente) => recargar()
 
-  const quitarDeLista = (pacienteId: string) => {
-    setPacientes((actual) => actual.filter((p) => p.id !== pacienteId))
-  }
+  const quitarDeLista = (_pacienteId: string) => recargar()
 
   const handleCrear = async (event: FormEvent) => {
     event.preventDefault()
     setErrorCrear(null)
     setCreando(true)
     try {
-      const nuevo = await api.post<Paciente>('/api/pacientes', {
+      await api.post<Paciente>('/api/pacientes', {
         nombre,
         apellido,
         cedula,
@@ -80,11 +104,15 @@ export function PacientesPage() {
         edad: null,
         condicion: null,
       })
-      setPacientes((actual) => ordenar([...actual, nuevo]))
       setNombre('')
       setApellido('')
       setCedula('')
       setTelefono('')
+      if (pagina === 1) {
+        recargar()
+      } else {
+        setPagina(1)
+      }
     } catch (err) {
       setErrorCrear(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo agregar al paciente.')
     } finally {
@@ -92,16 +120,16 @@ export function PacientesPage() {
     }
   }
 
-  const pacientesFiltrados = useMemo(() => {
-    const busquedaNormalizada = busqueda.trim().toLowerCase()
-    return pacientes.filter((paciente) => {
-      const coincideEstado = filtroEstado === FILTRO_TODOS || paciente.estado === filtroEstado
-      if (!coincideEstado) return false
-      if (!busquedaNormalizada) return true
-      const campos = [paciente.nombre, paciente.apellido, paciente.condicion ?? ''].join(' ').toLowerCase()
-      return campos.includes(busquedaNormalizada)
-    })
-  }, [pacientes, busqueda, filtroEstado])
+  const handleImportado = (resultado: ImportarPacientesResultado) => {
+    setResultadoImportacion(resultado)
+    if (pagina === 1) {
+      recargar()
+    } else {
+      setPagina(1)
+    }
+  }
+
+  const totalPaginas = Math.max(1, Math.ceil(total / TAMANO_PAGINA))
 
   return (
     <DashboardLayout titulo="Pacientes">
@@ -110,12 +138,13 @@ export function PacientesPage() {
           <h2>Importar pacientes desde Excel</h2>
           <ImportarExcel<ImportarPacientesResultado>
             endpoint="/api/pacientes/importar"
-            onImportado={setResultadoImportacion}
+            onImportado={handleImportado}
           />
           {resultadoImportacion && (
             <div className="pacientes-importar-resumen">
               <p>
-                {resultadoImportacion.creados} de {resultadoImportacion.totalFilas} filas importadas.
+                {resultadoImportacion.creados} pacientes creados y {resultadoImportacion.actualizados} actualizados
+                de {resultadoImportacion.totalFilas} filas.
                 {resultadoImportacion.identificacionesAjustadas > 0 &&
                   ` ${resultadoImportacion.identificacionesAjustadas} identificaciones se ajustaron automáticamente (muy cortas o duplicadas).`}
                 {resultadoImportacion.omitidos > 0 && ` ${resultadoImportacion.omitidos} filas omitidas.`}
@@ -205,42 +234,59 @@ export function PacientesPage() {
 
         {cargando ? (
           <p className="text-secondary">Cargando pacientes…</p>
-        ) : pacientesFiltrados.length === 0 ? (
+        ) : pacientes.length === 0 ? (
           <p className="text-secondary">
-            {pacientes.length === 0
+            {total === 0 && !busqueda.trim() && filtroEstado === FILTRO_TODOS
               ? 'Todavía no hay pacientes registrados.'
               : 'No hay pacientes que coincidan con la búsqueda o el filtro.'}
           </p>
         ) : (
-          <div className="pacientes-tabla-scroll">
-            <table className="pacientes-tabla">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Edad</th>
-                  <th>Condición</th>
-                  <th>Última visita</th>
-                  <th>Estado</th>
-                  <th>Cédula</th>
-                  <th>Teléfono</th>
-                  {(puedeEditar || puedeEliminar || puedeVerHistorial) && <th>Acciones</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {pacientesFiltrados.map((paciente) => (
-                  <PacienteRow
-                    key={paciente.id}
-                    paciente={paciente}
-                    puedeEditar={puedeEditar}
-                    puedeEliminar={puedeEliminar}
-                    puedeVerHistorial={puedeVerHistorial}
-                    onActualizado={actualizarEnLista}
-                    onEliminado={quitarDeLista}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="pacientes-tabla-scroll">
+              <table className="pacientes-tabla">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Edad</th>
+                    <th>Condición</th>
+                    <th>Última visita</th>
+                    <th>Estado</th>
+                    <th>Cédula</th>
+                    <th>Teléfono</th>
+                    {(puedeEditar || puedeEliminar || puedeVerHistorial) && <th>Acciones</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pacientes.map((paciente) => (
+                    <PacienteRow
+                      key={paciente.id}
+                      paciente={paciente}
+                      puedeEditar={puedeEditar}
+                      puedeEliminar={puedeEliminar}
+                      puedeVerHistorial={puedeVerHistorial}
+                      onActualizado={actualizarEnLista}
+                      onEliminado={quitarDeLista}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="pacientes-paginacion">
+              <button type="button" onClick={() => setPagina((p) => p - 1)} disabled={pagina <= 1}>
+                Anterior
+              </button>
+              <span className="text-secondary">
+                Página {pagina} de {totalPaginas} · {total} pacientes
+              </span>
+              <button
+                type="button"
+                onClick={() => setPagina((p) => p + 1)}
+                disabled={pagina >= totalPaginas}
+              >
+                Siguiente
+              </button>
+            </div>
+          </>
         )}
       </section>
     </DashboardLayout>

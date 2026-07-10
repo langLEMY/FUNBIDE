@@ -224,3 +224,32 @@
   font-size: 12px;
   padding-top: 0 !important;
 }
+
+.pacientes-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 16px;
+  font-size: 13px;
+}
+
+.pacientes-paginacion button {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pacientes-paginacion button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.pacientes-paginacion button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

@@ -13,10 +13,15 @@ public interface IImportarPacientesUseCase : IUseCase<Stream, ImportarPacientesR
 
 /// <summary>
 /// Importa pacientes desde un Excel de un sistema anterior. A diferencia de
-/// <see cref="CrearPacienteUseCase"/>, no rechaza identificaciones cortas ni
-/// duplicadas — las ajusta automáticamente (ver <see cref="NormalizarIdentificacion"/>)
-/// para poder migrar datos históricos imperfectos sin perder pacientes, en vez de
-/// exigir que el archivo esté impecable antes de poder importarlo.
+/// <see cref="CrearPacienteUseCase"/>, no rechaza identificaciones cortas — las ajusta
+/// automáticamente (ver <see cref="NormalizarIdentificacion"/>) para poder migrar datos
+/// históricos imperfectos sin perder pacientes, en vez de exigir que el archivo esté
+/// impecable antes de poder importarlo.
+///
+/// Cada fila se reconcilia primero por nombre y apellido (normalizados) contra los
+/// pacientes ya existentes: si hay coincidencia, se completan los campos vacíos en vez
+/// de crear un paciente nuevo. Reimportar el mismo archivo (o uno con las mismas personas)
+/// ya no duplica pacientes con una identificación "-2", "-3"... por cada reimportación.
 /// </summary>
 public sealed class ImportarPacientesUseCase(
     IExcelLectorService excelLector,
@@ -26,13 +31,20 @@ public sealed class ImportarPacientesUseCase(
     {
         var filas = excelLector.LeerFilas(request);
 
-        var existentes = await pacienteRepository.ObtenerTodosAsync(cancellationToken);
+        var existentes = await pacienteRepository.ObtenerTodosParaImportarAsync(cancellationToken);
         var identificacionesUsadas = existentes
             .Select(p => p.Documento.Valor)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+        var pacientesPorNombre = new Dictionary<(string Nombre, string Apellido), Paciente>();
+        foreach (var paciente in existentes)
+        {
+            pacientesPorNombre.TryAdd(ClaveNombre(paciente.Nombre, paciente.Apellido), paciente);
+        }
+
         var omisiones = new List<string>();
         var creados = 0;
+        var actualizados = 0;
         var ajustadas = 0;
 
         for (var i = 0; i < filas.Count; i++)
@@ -45,16 +57,6 @@ public sealed class ImportarPacientesUseCase(
             {
                 omisiones.Add($"Fila {numeroFila}: sin nombre, omitida.");
                 continue;
-            }
-
-            var identificacionOriginal =
-                fila.Buscar("Identificación", "Identificacion", "Cédula", "Cedula", "Documento")
-                ?? $"SIN-ID-{numeroFila}";
-
-            var identificacionFinal = NormalizarIdentificacion(identificacionOriginal, identificacionesUsadas);
-            if (!string.Equals(identificacionFinal, identificacionOriginal.Trim(), StringComparison.OrdinalIgnoreCase))
-            {
-                ajustadas++;
             }
 
             var partesNombre = nombreCompleto.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
@@ -71,22 +73,48 @@ public sealed class ImportarPacientesUseCase(
                 edad = (int)edadNumero;
             }
 
+            if (pacientesPorNombre.TryGetValue(ClaveNombre(nombre, apellido), out var pacienteExistente))
+            {
+                pacienteExistente.CompletarDesdeImportacion(telefono, edad, condicion);
+                actualizados++;
+                continue;
+            }
+
+            var identificacionOriginal =
+                fila.Buscar("Identificación", "Identificacion", "Cédula", "Cedula", "Documento")
+                ?? $"SIN-ID-{numeroFila}";
+
+            var identificacionFinal = NormalizarIdentificacion(identificacionOriginal, identificacionesUsadas);
+            if (!string.Equals(identificacionFinal, identificacionOriginal.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                ajustadas++;
+            }
+
             var documento = DocumentoIdentidad.Crear(identificacionFinal);
             var paciente = new Paciente(nombre, apellido, documento, telefono, edad, condicion);
 
             await pacienteRepository.AgregarAsync(paciente, cancellationToken);
+            pacientesPorNombre[ClaveNombre(nombre, apellido)] = paciente;
             creados++;
         }
 
         await pacienteRepository.GuardarCambiosAsync(cancellationToken);
 
-        return new ImportarPacientesResultDto(filas.Count, creados, omisiones.Count, ajustadas, omisiones.Take(50).ToList());
+        return new ImportarPacientesResultDto(
+            filas.Count, creados, actualizados, omisiones.Count, ajustadas, omisiones.Take(50).ToList());
     }
+
+    private static (string Nombre, string Apellido) ClaveNombre(string nombre, string apellido) =>
+        (nombre.Trim().ToLowerInvariant(), apellido.Trim().ToLowerInvariant());
 
     /// <summary>
     /// Antepone "LEG-" a identificaciones demasiado cortas para pasar
     /// <see cref="DocumentoIdentidad.Crear"/> (mínimo 5 caracteres), y agrega un
     /// sufijo "-2", "-3"... a las que ya están en uso, sin superar los 20 caracteres.
+    /// Solo se llega acá cuando la fila no coincidió con ningún paciente existente por
+    /// nombre y apellido, así que un choque de identificación en este punto es una
+    /// coincidencia real de dos personas distintas con el mismo número registrado, no
+    /// una reimportación de la misma persona.
     /// </summary>
     private static string NormalizarIdentificacion(string valorOriginal, HashSet<string> usadas)
     {
