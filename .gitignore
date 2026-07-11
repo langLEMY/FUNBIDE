@@ -55,3 +55,8 @@ publish/
 # atado a esta máquina, se regenera con "dotnet publish launcher -c Release -o .".
 /FUNBIDE.exe
 /FUNBIDE.pdb
+
+# Paquete offline/USB generado por scripts/publicar-offline.ps1 — binarios grandes
+# autocontenidos, se regeneran corriendo el script, nunca se commitean.
+/dist-offline/
+/dist-offline.zip

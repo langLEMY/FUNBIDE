@@ -1,23 +1,28 @@
 <#
 .SYNOPSIS
-    Genera el paquete offline/USB de FUNBIDE (Auth:Provider=Local).
+    Genera el paquete offline/USB de FUNBIDE (Auth:Provider=Local) listo para copiar a
+    otra máquina, sin necesitar el repositorio ni el SDK de .NET/Node instalados ahí.
 
 .DESCRIPTION
-    Compila el frontend en modo local (VITE_AUTH_MODE=local), publica el backend y lo
-    copia dentro de wwwroot, y publica el launcher de escritorio — todo en el layout que
-    launcher/Program.cs espera (FUNBIDE.exe en la raíz del repo + publish/ al lado).
+    Compila el frontend en modo local (VITE_AUTH_MODE=local), publica el backend como un
+    único .exe autocontenido (incluye el runtime de .NET — la PC destino no necesita
+    instalar nada aparte de PostgreSQL), copia el frontend dentro de wwwroot, publica el
+    launcher de escritorio, y deja todo empaquetado en dist-offline\ (+ un .zip) — una
+    carpeta aparte del repo, no la mezcla con el código fuente.
 
 .EXAMPLE
     pwsh scripts/publicar-offline.ps1
 
 .NOTES
     Después de correrlo:
-      1. Copiar publish/appsettings.Local.json.example a publish/appsettings.Local.json
-         y completar los CHANGE_ME (connection string del Postgres local, claves
-         generadas — el propio .example trae el comando para generarlas).
-      2. Copiar FUNBIDE.exe, funbide.ico y la carpeta publish/ a la USB.
-      3. En la PC destino: crear la base 'funbide' en el PostgreSQL local antes de
-         abrir FUNBIDE.exe (el esquema se migra solo al arrancar).
+      1. Copiar publish\appsettings.Local.json.example a publish\appsettings.Local.json
+         (dentro de dist-offline\) y completar los CHANGE_ME (connection string del
+         Postgres local, claves generadas — el propio .example trae el comando para
+         generarlas).
+      2. Llevar dist-offline.zip a la USB / a la PC destino. Ese .zip es autocontenido:
+         no hace falta .NET, Node ni el repositorio ahí — solo PostgreSQL instalado.
+      3. En la PC destino: crear la base 'funbide' en el PostgreSQL local, descomprimir
+         el .zip, y abrir FUNBIDE.exe.
 #>
 
 $ErrorActionPreference = "Stop"
@@ -34,19 +39,37 @@ function Invoke-Paso {
 $raiz = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Set-Location $raiz
 
+$paqueteDir = Join-Path $raiz "dist-offline"
+$publishDir = Join-Path $paqueteDir "publish"
+$zipPath = Join-Path $raiz "dist-offline.zip"
+
+if (Test-Path $paqueteDir) {
+    Remove-Item $paqueteDir -Recurse -Force
+}
+if (Test-Path $zipPath) {
+    Remove-Item $zipPath -Force
+}
+New-Item -ItemType Directory -Force -Path $publishDir | Out-Null
+
 Invoke-Paso "Compilando frontend en modo offline (VITE_AUTH_MODE=local)" {
     Push-Location (Join-Path $raiz "frontend")
     try { npm run build:offline } finally { Pop-Location }
 }
 
-$publishDir = Join-Path $raiz "publish"
-if (Test-Path $publishDir) {
-    Remove-Item $publishDir -Recurse -Force
+Invoke-Paso "Publicando backend autocontenido (FUNBIDE.API.exe, win-x64, sin depender de que el runtime de .NET esté instalado en destino)" {
+    dotnet publish (Join-Path $raiz "src\FUNBIDE.API") -c Release -o $publishDir `
+        -r win-x64 --self-contained true `
+        -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 }
 
-Invoke-Paso "Publicando backend (FUNBIDE.API)" {
-    dotnet publish (Join-Path $raiz "src\FUNBIDE.API") -c Release -o $publishDir
-}
+# "dotnet publish" copia cualquier appsettings.*.json que encuentre en el proyecto,
+# incluido appsettings.Development.json — que en la máquina de un desarrollador puede
+# tener secretos reales (cadena de conexión a la base cloud). Nunca debe viajar en un
+# paquete que se entrega a un cliente: se borra todo excepto el appsettings.json base
+# (solo placeholders, ya está en git tal cual).
+Get-ChildItem $publishDir -Filter "appsettings.*.json" |
+    Where-Object { $_.Name -ne "appsettings.json" } |
+    Remove-Item -Force
 
 Write-Host "==> Copiando el build del frontend a publish\wwwroot" -ForegroundColor Cyan
 $wwwroot = Join-Path $publishDir "wwwroot"
@@ -54,16 +77,44 @@ New-Item -ItemType Directory -Force -Path $wwwroot | Out-Null
 Copy-Item (Join-Path $raiz "frontend\dist\*") $wwwroot -Recurse -Force
 
 Invoke-Paso "Publicando el launcher (FUNBIDE.exe)" {
-    dotnet publish (Join-Path $raiz "launcher") -c Release -o $raiz
+    dotnet publish (Join-Path $raiz "launcher") -c Release -o $paqueteDir
 }
 
 Copy-Item (Join-Path $raiz "src\FUNBIDE.API\appsettings.Local.json.example") `
     (Join-Path $publishDir "appsettings.Local.json.example") -Force
 
+$leeme = @'
+FUNBIDE — instalación offline/USB
+==================================
+
+Requisito único en la PC destino: PostgreSQL instalado y corriendo. No hace
+falta instalar .NET, Node ni nada más — FUNBIDE.exe y publish\FUNBIDE.API.exe
+ya traen todo lo que necesitan.
+
+Pasos:
+  1. Crear una base de datos vacía llamada "funbide" en el PostgreSQL local
+     (y un usuario con permisos sobre ella).
+  2. Copiar publish\appsettings.Local.json.example a publish\appsettings.Local.json
+     y completar ahí los CHANGE_ME: la cadena de conexión a esa base, y dos
+     claves generadas (el propio archivo trae el comando de PowerShell para
+     generarlas).
+  3. Abrir FUNBIDE.exe. La primera vez crea el esquema solo y una cuenta
+     administradora ("Lemy") con una contraseña temporal que se muestra en
+     pantalla una única vez — cámbiala apenas entres, desde tu perfil.
+  4. Las siguientes veces, FUNBIDE.exe simplemente abre la app en el navegador.
+'@
+Set-Content -Path (Join-Path $paqueteDir "LEEME.txt") -Value $leeme -Encoding utf8
+
+Invoke-Paso "Comprimiendo dist-offline.zip" {
+    Compress-Archive -Path (Join-Path $paqueteDir "*") -DestinationPath $zipPath -Force
+    $global:LASTEXITCODE = 0
+}
+
 Write-Host ""
-Write-Host "Paquete listo en '$raiz' (FUNBIDE.exe + publish\)." -ForegroundColor Green
-Write-Host "Antes de copiarlo a la USB:" -ForegroundColor Green
-Write-Host "  1. Copia publish\appsettings.Local.json.example a publish\appsettings.Local.json"
-Write-Host "     y completa los CHANGE_ME (connection string del Postgres local, claves generadas)."
-Write-Host "  2. Copia FUNBIDE.exe, funbide.ico y la carpeta publish\ a la USB."
-Write-Host "  3. En la PC destino: crea la base 'funbide' en el PostgreSQL local antes de abrir FUNBIDE.exe."
+Write-Host "Paquete listo:" -ForegroundColor Green
+Write-Host "  Carpeta: $paqueteDir"
+Write-Host "  Zip:     $zipPath  <- esto es lo único que hay que llevar a la USB/PC destino"
+Write-Host ""
+Write-Host "Antes de instalar en destino:" -ForegroundColor Yellow
+Write-Host "  1. Completar publish\appsettings.Local.json (ver LEEME.txt dentro del paquete)."
+Write-Host "  2. Confirmar que la PC destino tiene PostgreSQL instalado."
