@@ -42,6 +42,10 @@ public sealed class ExceptionHandlingMiddleware(
         {
             await EscribirProblemaAsync(context, StatusCodes.Status409Conflict, "Cédula en uso", ex.Message);
         }
+        catch (CredencialesInvalidasException ex)
+        {
+            await EscribirProblemaAsync(context, StatusCodes.Status401Unauthorized, "Credenciales inválidas", ex.Message);
+        }
         catch (CodigoInventarioEnUsoException ex)
         {
             await EscribirProblemaAsync(context, StatusCodes.Status409Conflict, "Código en uso", ex.Message);

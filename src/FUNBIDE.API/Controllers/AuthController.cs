@@ -2,6 +2,7 @@ using FUNBIDE.Application.DTOs.Auth;
 using FUNBIDE.Application.UseCases.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FUNBIDE.API.Controllers;
 
@@ -14,7 +15,9 @@ namespace FUNBIDE.API.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(IRegistrarEventoLoginUseCase registrarEventoLogin) : ControllerBase
+public sealed class AuthController(
+    IRegistrarEventoLoginUseCase registrarEventoLogin,
+    IIniciarSesionLocalUseCase iniciarSesionLocal) : ControllerBase
 {
     [HttpPost("eventos-login")]
     [AllowAnonymous]
@@ -30,6 +33,18 @@ public sealed class AuthController(IRegistrarEventoLoginUseCase registrarEventoL
         await registrarEventoLogin.EjecutarAsync(comando, cancellationToken);
         return NoContent();
     }
+
+    /// <summary>
+    /// Login del modo Auth:Provider=Local únicamente (ver <c>IniciarSesionLocalUseCase</c>).
+    /// En modo Supabase (producción) este endpoint no se usa: el frontend inicia sesión
+    /// directo contra Supabase Auth y nunca llama acá.
+    /// </summary>
+    [HttpPost("login")]
+    [AllowAnonymous]
+    [EnableRateLimiting("login-local")]
+    public async Task<ActionResult<IniciarSesionLocalResultDto>> LoginAsync(
+        IniciarSesionLocalRequest cuerpo, CancellationToken cancellationToken) =>
+        Ok(await iniciarSesionLocal.EjecutarAsync(cuerpo, cancellationToken));
 
     /// <summary>
     /// Heurística simple de "Navegador · SO" a partir del User-Agent, sin depender de

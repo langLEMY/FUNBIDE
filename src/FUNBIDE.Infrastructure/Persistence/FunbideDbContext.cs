@@ -1,4 +1,5 @@
 using FUNBIDE.Domain.Entities;
+using FUNBIDE.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 
 namespace FUNBIDE.Infrastructure.Persistence;
@@ -6,6 +7,7 @@ namespace FUNBIDE.Infrastructure.Persistence;
 public sealed class FunbideDbContext(DbContextOptions<FunbideDbContext> options) : DbContext(options)
 {
     public DbSet<Usuario> Usuarios => Set<Usuario>();
+    public DbSet<CredencialLocal> CredencialesLocales => Set<CredencialLocal>();
     public DbSet<Paciente> Pacientes => Set<Paciente>();
     public DbSet<Cita> Citas => Set<Cita>();
     public DbSet<EntradaHistorialClinico> HistorialClinico => Set<EntradaHistorialClinico>();

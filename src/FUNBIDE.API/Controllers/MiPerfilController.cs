@@ -19,11 +19,24 @@ namespace FUNBIDE.API.Controllers;
 [Authorize]
 public sealed class MiPerfilController(
     IVerPerfilPropioUseCase verPerfil,
-    IActualizarFotoPerfilPropiaUseCase actualizarFotoPropia) : ControllerBase
+    IActualizarFotoPerfilPropiaUseCase actualizarFotoPropia,
+    ICambiarMiContrasenaUseCase cambiarMiContrasena) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<UsuarioDto>> VerAsync(CancellationToken cancellationToken) =>
         Ok(await verPerfil.EjecutarAsync(cancellationToken));
+
+    /// <summary>
+    /// Solo la usa el shim de autenticación local (ver frontend/src/auth/localAuthClient.ts):
+    /// en modo Supabase, el cambio de contraseña propio va directo por supabase.auth.updateUser.
+    /// </summary>
+    [HttpPost("contrasena")]
+    public async Task<IActionResult> CambiarContrasenaAsync(
+        CambiarMiContrasenaRequest request, CancellationToken cancellationToken)
+    {
+        await cambiarMiContrasena.EjecutarAsync(request, cancellationToken);
+        return NoContent();
+    }
 
     [HttpPost("foto")]
     public async Task<ActionResult<UsuarioDto>> ActualizarFotoAsync(

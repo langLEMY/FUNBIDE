@@ -47,38 +47,71 @@ public static class DependencyInjection
         services.AddScoped<IExcelLectorService, ExcelLectorService>();
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
-        services.AddSupabaseJwtAuthentication(configuration);
         services.AddFunbideCors(configuration);
 
-        services
-            .AddOptions<SupabaseAdminOptions>()
-            .Bind(configuration.GetSection(SupabaseAdminOptions.SeccionConfiguracion))
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
-        services
-            .AddOptions<SupabaseStorageOptions>()
-            .Bind(configuration.GetSection(SupabaseStorageOptions.SeccionConfiguracion));
+        // Auth:Provider elige entre Supabase (nube, producción) y Local (JWT emitido
+        // por esta misma API sin red, para la copia offline/USB de demo). Ver
+        // AuthOptions/JwtAuthenticationExtensions/LocalAuthAdminService.
+        var proveedorAuth = configuration.GetSection(AuthOptions.SeccionConfiguracion).Get<AuthOptions>()?.Provider
+            ?? ProveedorAutenticacion.Supabase;
 
-        services.AddHttpClient<ISupabaseAdminService, SupabaseAdminService>((sp, client) =>
+        if (proveedorAuth == ProveedorAutenticacion.Local)
         {
-            var opciones = sp.GetRequiredService<IOptions<SupabaseAdminOptions>>().Value;
-            client.BaseAddress = new Uri($"{opciones.ProjectUrl.TrimEnd('/')}/auth/v1/admin/");
-            ConfigurarAutenticacionServiceRole(client, opciones.ServiceRoleKey);
-        });
+            services.AddLocalJwtAuthentication(configuration);
+            services.AddScoped<ISupabaseAdminService, LocalAuthAdminService>();
+            services.AddScoped<IAutenticacionLocalService, AutenticacionLocalService>();
+            services.AddScoped<ISembradorUsuarioInicialLocalService, SembradorUsuarioInicialLocalService>();
 
-        services.AddHttpClient<ISupabaseStorageService, SupabaseStorageService>((sp, client) =>
+            services
+                .AddOptions<LocalStorageOptions>()
+                .Bind(configuration.GetSection(LocalStorageOptions.SeccionConfiguracion))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+            services.AddScoped<ISupabaseStorageService, LocalDiskStorageService>();
+            services.AddScoped<IArchivoLocalService, ArchivoLocalService>();
+        }
+        else
         {
-            var opciones = sp.GetRequiredService<IOptions<SupabaseAdminOptions>>().Value;
-            client.BaseAddress = new Uri($"{opciones.ProjectUrl.TrimEnd('/')}/storage/v1/");
-            ConfigurarAutenticacionServiceRole(client, opciones.ServiceRoleKey);
-        });
+            services.AddSupabaseJwtAuthentication(configuration);
+            services.AddScoped<IAutenticacionLocalService, AutenticacionLocalNoDisponibleService>();
+            services.AddScoped<IArchivoLocalService, ArchivoLocalNoDisponibleService>();
 
-        services
-            .AddOptions<BackupOptions>()
-            .Bind(configuration.GetSection(BackupOptions.SeccionConfiguracion))
-            .ValidateOnStart();
-        services.AddSingleton<AesBackupEncryptor>();
-        services.AddHostedService<DatabaseBackupHostedService>();
+            services
+                .AddOptions<SupabaseAdminOptions>()
+                .Bind(configuration.GetSection(SupabaseAdminOptions.SeccionConfiguracion))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+            services
+                .AddOptions<SupabaseStorageOptions>()
+                .Bind(configuration.GetSection(SupabaseStorageOptions.SeccionConfiguracion));
+
+            services.AddHttpClient<ISupabaseAdminService, SupabaseAdminService>((sp, client) =>
+            {
+                var opciones = sp.GetRequiredService<IOptions<SupabaseAdminOptions>>().Value;
+                client.BaseAddress = new Uri($"{opciones.ProjectUrl.TrimEnd('/')}/auth/v1/admin/");
+                ConfigurarAutenticacionServiceRole(client, opciones.ServiceRoleKey);
+            });
+
+            services.AddHttpClient<ISupabaseStorageService, SupabaseStorageService>((sp, client) =>
+            {
+                var opciones = sp.GetRequiredService<IOptions<SupabaseAdminOptions>>().Value;
+                client.BaseAddress = new Uri($"{opciones.ProjectUrl.TrimEnd('/')}/storage/v1/");
+                ConfigurarAutenticacionServiceRole(client, opciones.ServiceRoleKey);
+            });
+        }
+
+        // Backup:Habilitado permite apagar el respaldo automático por pg_dump en la
+        // copia offline/USB (no tiene sentido ni pg_dump.exe ni destino de backup ahí).
+        var backupHabilitado = configuration.GetValue("Backup:Habilitado", true);
+        if (backupHabilitado)
+        {
+            services
+                .AddOptions<BackupOptions>()
+                .Bind(configuration.GetSection(BackupOptions.SeccionConfiguracion))
+                .ValidateOnStart();
+            services.AddSingleton<AesBackupEncryptor>();
+            services.AddHostedService<DatabaseBackupHostedService>();
+        }
 
         return services;
     }

@@ -17,6 +17,7 @@ public static class ApplicationBuilderExtensions
         app.UseForwardedHeaders();
 
         app.UseRouting();
+        app.UseRateLimiter();
         app.UseCors(FUNBIDE.Infrastructure.Security.CorsExtensions.PoliticaFrontend);
 
         app.UseAuthentication();

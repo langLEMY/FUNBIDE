@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import type { Session } from '@supabase/supabase-js'
+import type { SesionMinima as Session } from './tiposSesion'
 import { supabase } from '../lib/supabaseClient'
 import { api, ApiError } from '../lib/api'
 import type { Usuario } from '../types/usuario'

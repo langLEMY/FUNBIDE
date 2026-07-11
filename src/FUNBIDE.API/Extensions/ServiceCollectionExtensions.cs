@@ -40,6 +40,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IVerificarEstadoSistemaUseCase, VerificarEstadoSistemaUseCase>();
 
         services.AddScoped<IRegistrarEventoLoginUseCase, RegistrarEventoLoginUseCase>();
+        services.AddScoped<IIniciarSesionLocalUseCase, IniciarSesionLocalUseCase>();
 
         services.AddScoped<IListarPersonalUseCase, ListarPersonalUseCase>();
         services.AddScoped<ICrearUsuarioUseCase, CrearUsuarioUseCase>();
@@ -52,6 +53,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IReactivarUsuarioUseCase, ReactivarUsuarioUseCase>();
         services.AddScoped<IVerPerfilPropioUseCase, VerPerfilPropioUseCase>();
         services.AddScoped<IActualizarFotoPerfilPropiaUseCase, ActualizarFotoPerfilPropiaUseCase>();
+        services.AddScoped<ICambiarMiContrasenaUseCase, CambiarMiContrasenaUseCase>();
 
         services.AddScoped<IRegistrarMovimientoFinancieroUseCase, RegistrarMovimientoFinancieroUseCase>();
         services.AddScoped<IListarMovimientosFinancierosUseCase, ListarMovimientosFinancierosUseCase>();

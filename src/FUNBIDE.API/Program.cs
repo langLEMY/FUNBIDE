@@ -2,8 +2,10 @@ using FUNBIDE.API.Extensions;
 using FUNBIDE.Infrastructure;
 using FUNBIDE.Infrastructure.Logging;
 using FUNBIDE.Infrastructure.Persistence;
+using FUNBIDE.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -43,6 +45,16 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
+// Frena fuerza bruta contra POST /api/auth/login (modo Auth:Provider=Local: es el único
+// endpoint anónimo que verifica una contraseña). Por IP porque no hay usuario todavía.
+builder.Services.AddRateLimiter(options =>
+    options.AddFixedWindowLimiter("login-local", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 10;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueLimit = 0;
+    }));
+
 var app = builder.Build();
 
 // Despliegue de un solo contenedor sin paso de migración separado: aplica al
@@ -52,6 +64,14 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<FunbideDbContext>();
     await dbContext.Database.MigrateAsync();
+
+    // Solo registrado en modo Auth:Provider=Local (ver DependencyInjection). En modo
+    // Supabase no hay nada que sembrar: el primer usuario se crea desde el dashboard.
+    var sembrador = scope.ServiceProvider.GetService<ISembradorUsuarioInicialLocalService>();
+    if (sembrador is not null)
+    {
+        await sembrador.SembrarSiNecesarioAsync(CancellationToken.None);
+    }
 }
 
 if (app.Environment.IsDevelopment())

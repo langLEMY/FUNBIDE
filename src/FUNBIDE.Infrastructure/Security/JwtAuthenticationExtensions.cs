@@ -70,6 +70,56 @@ public static class JwtAuthenticationExtensions
         return services;
     }
 
+    /// <summary>
+    /// Configura la autenticación JWT del modo Auth:Provider=Local: sin Authority ni
+    /// descubrimiento OIDC, valida con la misma clave simétrica con la que
+    /// <see cref="AutenticacionLocalService"/> firma el token al iniciar sesión. No
+    /// hace falta el truco de <see cref="ProyectarRolDeAppMetadataAsync"/> porque acá
+    /// no existe un segundo claim "role" de Postgres con el que choque: el único
+    /// claim "role" es el que esta misma API puso, y el mapeo entrante por defecto de
+    /// ASP.NET Core ya lo proyecta a <see cref="ClaimTypes.Role"/>.
+    /// </summary>
+    public static IServiceCollection AddLocalJwtAuthentication(
+        this IServiceCollection services, IConfiguration configuration)
+    {
+        services
+            .AddOptions<LocalJwtOptions>()
+            .Bind(configuration.GetSection(LocalJwtOptions.SeccionConfiguracion))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                var jwtOptions = configuration
+                    .GetSection(LocalJwtOptions.SeccionConfiguracion)
+                    .Get<LocalJwtOptions>()
+                    ?? throw new InvalidOperationException(
+                        $"Falta la sección de configuración '{LocalJwtOptions.SeccionConfiguracion}'.");
+
+                var signingKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtOptions.SigningKeyBase64));
+
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtOptions.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwtOptions.Audience,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = signingKey,
+                    NameClaimType = "sub",
+                    ClockSkew = TimeSpan.FromSeconds(30)
+                };
+            });
+
+        services.AddAuthorization();
+        services.AddHttpContextAccessor();
+
+        return services;
+    }
+
     private static Task ProyectarRolDeAppMetadataAsync(TokenValidatedContext context)
     {
         var identity = context.Principal?.Identity as ClaimsIdentity;
