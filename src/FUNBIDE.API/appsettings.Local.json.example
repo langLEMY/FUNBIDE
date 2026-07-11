@@ -1,5 +1,5 @@
 {
-  "_LEEME": "Plantilla para la instalación offline/USB (Auth:Provider=Local). Copiar este archivo como 'appsettings.Local.json' junto al ejecutable publicado y completar los CHANGE_ME. 'appsettings.Local.json' está en .gitignore: nunca se commitea con valores reales. Para generar una clave: powershell -Command \"[Convert]::ToBase64String((New-Object byte[] 32 | %{ $_ = [byte[]]::new(32); [Security.Cryptography.RandomNumberGenerator]::Fill($_); $_ }))\"",
+  "_LEEME": "Plantilla para la instalación offline/USB (Auth:Provider=Local). Copiar este archivo como 'appsettings.Local.json' junto al ejecutable publicado y completar los CHANGE_ME. 'appsettings.Local.json' está en .gitignore: nunca se commitea con valores reales. Para generar una clave (funciona en Windows PowerShell 5.1 y en PowerShell 7): powershell -Command \"$b=New-Object byte[] 32; (New-Object Security.Cryptography.RNGCryptoServiceProvider).GetBytes($b); [Convert]::ToBase64String($b)\"",
 
   "Logging": {
     "LogLevel": {

@@ -56,7 +56,7 @@ Invoke-Paso "Compilando frontend en modo offline (VITE_AUTH_MODE=local)" {
     try { npm run build:offline } finally { Pop-Location }
 }
 
-Invoke-Paso "Publicando backend autocontenido (FUNBIDE.API.exe, win-x64, sin depender de que el runtime de .NET esté instalado en destino)" {
+Invoke-Paso "Publicando backend autocontenido (FUNBIDE.API.exe, win-x64, sin depender de que el runtime de .NET este instalado en destino)" {
     dotnet publish (Join-Path $raiz "src\FUNBIDE.API") -c Release -o $publishDir `
         -r win-x64 --self-contained true `
         -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
@@ -83,24 +83,29 @@ Invoke-Paso "Publicando el launcher (FUNBIDE.exe)" {
 Copy-Item (Join-Path $raiz "src\FUNBIDE.API\appsettings.Local.json.example") `
     (Join-Path $publishDir "appsettings.Local.json.example") -Force
 
+# Texto en ASCII puro a propósito (sin tildes/ni/em-dash): Windows PowerShell 5.1 (el
+# que trae Windows por defecto) lee este .ps1 con la codepage del sistema si el archivo
+# no tiene BOM, y corrompe cualquier caracter no-ASCII embebido en un literal antes de
+# llegar a Set-Content — visto en la práctica (tildes convertidas en "Ã³" etc.). Evitarlo
+# de raíz es más confiable que depender de que el .ps1 conserve un BOM UTF-8.
 $leeme = @'
-FUNBIDE — instalación offline/USB
+FUNBIDE - instalacion offline/USB
 ==================================
 
-Requisito único en la PC destino: PostgreSQL instalado y corriendo. No hace
-falta instalar .NET, Node ni nada más — FUNBIDE.exe y publish\FUNBIDE.API.exe
+Requisito unico en la PC destino: PostgreSQL instalado y corriendo. No hace
+falta instalar .NET, Node ni nada mas - FUNBIDE.exe y publish\FUNBIDE.API.exe
 ya traen todo lo que necesitan.
 
 Pasos:
-  1. Crear una base de datos vacía llamada "funbide" en el PostgreSQL local
+  1. Crear una base de datos vacia llamada "funbide" en el PostgreSQL local
      (y un usuario con permisos sobre ella).
   2. Copiar publish\appsettings.Local.json.example a publish\appsettings.Local.json
-     y completar ahí los CHANGE_ME: la cadena de conexión a esa base, y dos
+     y completar ahi los CHANGE_ME: la cadena de conexion a esa base, y dos
      claves generadas (el propio archivo trae el comando de PowerShell para
      generarlas).
   3. Abrir FUNBIDE.exe. La primera vez crea el esquema solo y una cuenta
-     administradora ("Lemy") con una contraseña temporal que se muestra en
-     pantalla una única vez — cámbiala apenas entres, desde tu perfil.
+     administradora ("Lemy") con una contrasena temporal que se muestra en
+     pantalla una unica vez - cambiala apenas entres, desde tu perfil.
   4. Las siguientes veces, FUNBIDE.exe simplemente abre la app en el navegador.
 '@
 Set-Content -Path (Join-Path $paqueteDir "LEEME.txt") -Value $leeme -Encoding utf8
@@ -113,7 +118,7 @@ Invoke-Paso "Comprimiendo dist-offline.zip" {
 Write-Host ""
 Write-Host "Paquete listo:" -ForegroundColor Green
 Write-Host "  Carpeta: $paqueteDir"
-Write-Host "  Zip:     $zipPath  <- esto es lo único que hay que llevar a la USB/PC destino"
+Write-Host "  Zip:     $zipPath  <- esto es lo unico que hay que llevar a la USB/PC destino"
 Write-Host ""
 Write-Host "Antes de instalar en destino:" -ForegroundColor Yellow
 Write-Host "  1. Completar publish\appsettings.Local.json (ver LEEME.txt dentro del paquete)."
