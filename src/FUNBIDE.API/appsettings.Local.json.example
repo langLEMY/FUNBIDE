@@ -1,0 +1,38 @@
+{
+  "_LEEME": "Plantilla para la instalación offline/USB (Auth:Provider=Local). Copiar este archivo como 'appsettings.Local.json' junto al ejecutable publicado y completar los CHANGE_ME. 'appsettings.Local.json' está en .gitignore: nunca se commitea con valores reales. Para generar una clave: powershell -Command \"[Convert]::ToBase64String((New-Object byte[] 32 | %{ $_ = [byte[]]::new(32); [Security.Cryptography.RandomNumberGenerator]::Fill($_); $_ }))\"",
+
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Microsoft.EntityFrameworkCore": "Warning"
+    }
+  },
+
+  "ConnectionStrings": {
+    "FunbideDatabase": "Host=localhost;Port=5432;Database=funbide;Username=funbide;Password=CHANGE_ME;SSL Mode=Disable"
+  },
+
+  "Auth": {
+    "Provider": "Local",
+    "Local": {
+      "SigningKeyBase64": "CHANGE_ME_GENERAR_32_BYTES_EN_BASE64",
+      "DuracionToken": "12:00:00"
+    }
+  },
+
+  "Storage": {
+    "Local": {
+      "DirectorioBase": "almacenamiento-local",
+      "FirmaKeyBase64": "CHANGE_ME_GENERAR_OTROS_32_BYTES_EN_BASE64"
+    }
+  },
+
+  "Backup": {
+    "Habilitado": false
+  },
+
+  "Cors": {
+    "OrigenesPermitidos": []
+  }
+}

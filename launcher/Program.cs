@@ -12,7 +12,7 @@ var apiExe = Path.Combine(raiz, "publish", "FUNBIDE.API.exe");
 if (!File.Exists(apiExe))
 {
     MessageBox.Show(
-        $"No se encontró {apiExe}.\nHay que publicar el backend primero (dotnet publish src/FUNBIDE.API -c Release -o publish).",
+        $"No se encontró {apiExe}.\nHay que generar el paquete offline primero (scripts/publicar-offline.ps1 desde la raíz del repo).",
         "FUNBIDE",
         MessageBoxButtons.OK,
         MessageBoxIcon.Error);
@@ -29,8 +29,13 @@ if (!PuertoEnUso(Puerto))
         CreateNoWindow = true,
         UseShellExecute = false,
     };
-    psi.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "Development";
-    psi.EnvironmentVariables["ASPNETCORE_URLS"] = $"http://0.0.0.0:{Puerto}";
+    // "Local": instalación offline/USB de un solo puesto (Auth:Provider=Local, ver
+    // appsettings.Local.json.example) — nunca "Development", que carga
+    // appsettings.Development.json (apunta a la base de Supabase en la nube).
+    psi.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "Local";
+    // Solo loopback: es una instalación de un solo puesto, no hay razón para exponer
+    // HTTP plano (con bearer tokens viajando en claro) al resto de la red local.
+    psi.EnvironmentVariables["ASPNETCORE_URLS"] = $"http://127.0.0.1:{Puerto}";
     Process.Start(psi);
 
     if (!await EsperarListoAsync(url))
@@ -41,10 +46,38 @@ if (!PuertoEnUso(Puerto))
             MessageBoxButtons.OK,
             MessageBoxIcon.Warning);
     }
+
+    MostrarCredencialesInicialesSiExisten(raiz);
 }
 
 Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
 return;
+
+static void MostrarCredencialesInicialesSiExisten(string raiz)
+{
+    // Lo escribe SembradorUsuarioInicialLocalService la primera vez que arranca con la
+    // base vacía (ver src/FUNBIDE.Infrastructure/Security). Se muestra una única vez.
+    var rutaCredenciales = Path.Combine(raiz, "publish", "credenciales-iniciales.txt");
+    if (!File.Exists(rutaCredenciales))
+    {
+        return;
+    }
+
+    try
+    {
+        MessageBox.Show(
+            File.ReadAllText(rutaCredenciales),
+            "FUNBIDE — cuenta inicial",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
+        File.Delete(rutaCredenciales);
+    }
+    catch
+    {
+        // Mejor esfuerzo: si no se puede leer/borrar (permisos, archivo en uso), no
+        // bloquea el arranque — se vuelve a intentar mostrar la próxima vez.
+    }
+}
 
 static bool PuertoEnUso(int puerto)
 {

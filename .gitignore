@@ -9,6 +9,10 @@ appsettings.*.local.json
 # en git, solo appsettings.json (con placeholders) queda commiteado.
 src/FUNBIDE.API/appsettings.Development.json
 
+# Configuración real de la instalación offline/USB (Auth:Provider=Local) — se genera a
+# partir de appsettings.Local.json.example en cada instalación, nunca se commitea.
+src/FUNBIDE.API/appsettings.Local.json
+
 # Frontend
 node_modules/
 dist/
@@ -23,6 +27,8 @@ src/FUNBIDE.API/wwwroot/
 .env
 .env.*
 !.env.example
+# Sin secretos (solo VITE_AUTH_MODE/VITE_API_BASE_URL): se commitea para el build offline.
+!.env.offline
 
 # Configuración local del usuario de Claude Code (no es del equipo)
 .claude/settings.local.json
