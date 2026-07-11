@@ -1,0 +1,43 @@
+FUNBIDE - servidor Linux (Auth:Provider=Local, sin Supabase)
+==============================================================
+
+Requisito unico: Docker (con el plugin "docker compose") instalado en el
+servidor Linux. No hace falta .NET, Node, ni PostgreSQL instalado a mano -
+docker-compose.local.yml levanta un contenedor de Postgres 17 propio.
+
+Pasos:
+  1. Copiar .env.local.example a .env.local y completar los CHANGE_ME
+     (contrasena de la base y dos claves de firma). El propio archivo
+     trae el comando para generarlas. Sin esto, "docker compose up" falla
+     con un error claro (las variables estan marcadas como obligatorias).
+
+  2. Levantar todo:
+       docker compose -f docker-compose.local.yml --env-file .env.local up -d --build
+
+  3. Esperar a que el healthcheck del contenedor "funbide-api" pase a
+     "healthy" (docker compose ps), y abrir http://<ip-del-servidor>:8080
+     (o el puerto que hayas puesto en FUNBIDE_PUERTO).
+
+  4. La primera vez que arranca con la base vacia, FUNBIDE crea sola una
+     cuenta administradora ("Lemy") con una contrasena temporal, y la deja
+     en el log (no hay ventana en un servidor headless para mostrarla). Para
+     verla:
+       docker compose -f docker-compose.local.yml logs api | grep "cuenta inicial"
+     Cambiala apenas entres, desde tu perfil (arriba a la derecha).
+
+Datos y fotos quedan en volumenes de Docker con nombre (funbide_pgdata,
+funbide_storage) - sobreviven a "docker compose down" y a reinicios del
+servidor. Solo se pierden con "docker compose down -v" (borra volumenes).
+
+Para actualizar a una version nueva del codigo:
+  docker compose -f docker-compose.local.yml --env-file .env.local up -d --build
+
+Para parar:
+  docker compose -f docker-compose.local.yml down
+
+Este modo (Auth:Provider=Local) es para una instalacion propia/aislada, sin
+Supabase ni internet: no tiene recuperacion de contrasena por correo (la
+cambia un administrador rol Lemy desde Personal) y no tiene backup
+automatico por pg_dump (el volumen de Docker de Postgres ya persiste los
+datos; si queres backups periodicos, es un "pg_dump" del contenedor
+"funbide-postgres" agendado aparte).

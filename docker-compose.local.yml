@@ -1,0 +1,53 @@
+networks:
+  default:
+    name: funbide-local
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: funbide-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: funbide
+      POSTGRES_USER: funbide
+      POSTGRES_PASSWORD: ${FUNBIDE_DB_PASSWORD:?falta FUNBIDE_DB_PASSWORD en .env.local}
+    volumes:
+      - funbide_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U funbide -d funbide"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: src/FUNBIDE.API/Dockerfile
+      args:
+        FRONTEND_BUILD_SCRIPT: build:offline
+    container_name: funbide-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__FunbideDatabase: Host=postgres;Port=5432;Database=funbide;Username=funbide;Password=${FUNBIDE_DB_PASSWORD:?falta FUNBIDE_DB_PASSWORD en .env.local};SSL Mode=Disable
+      Auth__Provider: Local
+      Auth__Local__SigningKeyBase64: ${FUNBIDE_JWT_SIGNING_KEY:?falta FUNBIDE_JWT_SIGNING_KEY en .env.local}
+      Auth__Local__DuracionToken: "12:00:00"
+      Storage__Local__DirectorioBase: almacenamiento-local
+      Storage__Local__FirmaKeyBase64: ${FUNBIDE_STORAGE_SIGNING_KEY:?falta FUNBIDE_STORAGE_SIGNING_KEY en .env.local}
+      Backup__Habilitado: "false"
+    volumes:
+      - funbide_storage:/app/almacenamiento-local
+    ports:
+      - "${FUNBIDE_PUERTO:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  funbide_pgdata:
+  funbide_storage:

@@ -1,0 +1,27 @@
+name: funbide-supabase-local
+
+networks:
+  default:
+    name: funbide-supabase-local
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/FUNBIDE.API/Dockerfile
+    image: funbide-supabase-api:latest
+    container_name: funbide-supabase-api
+    restart: unless-stopped
+    environment:
+      ConnectionStrings__FunbideDatabase: Host=aws-0-us-east-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.ynrxsqkvkkhpkqgeawpt;Password=${FUNBIDE_DB_PASSWORD:?falta FUNBIDE_DB_PASSWORD en .env.supabase-local};SSL Mode=Require;Trust Server Certificate=true
+      Supabase__Jwt__ProjectUrl: https://ynrxsqkvkkhpkqgeawpt.supabase.co
+      Supabase__Admin__ProjectUrl: https://ynrxsqkvkkhpkqgeawpt.supabase.co
+      Supabase__Admin__ServiceRoleKey: ${SUPABASE_SERVICE_ROLE_KEY:?falta SUPABASE_SERVICE_ROLE_KEY en .env.supabase-local}
+      Backup__Habilitado: "false"
+    ports:
+      - "${FUNBIDE_PUERTO:-8082}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10

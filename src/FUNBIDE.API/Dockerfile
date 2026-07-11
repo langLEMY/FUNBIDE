@@ -1,11 +1,16 @@
 FROM node:22-alpine AS frontend-build
 WORKDIR /frontend
 
+# "offline" arma el frontend con VITE_AUTH_MODE=local (ver frontend/.env.offline y
+# frontend/src/lib/supabaseClient.ts) para instalaciones con Auth:Provider=Local -
+# sin esto el frontend queda compilado contra Supabase real sin importar el backend.
+ARG FRONTEND_BUILD_SCRIPT=build
+
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 
 COPY frontend/ ./
-RUN npm run build
+RUN npm run ${FRONTEND_BUILD_SCRIPT}
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0-alpine AS build
 WORKDIR /src
@@ -37,7 +42,11 @@ ENV DOTNET_RUNNING_IN_CONTAINER=true \
 
 COPY --from=build /app/publish .
 COPY --from=frontend-build /frontend/dist ./wwwroot
-RUN mkdir -p /var/backups/funbide && chown -R funbide:funbide /app /var/backups/funbide
+# almacenamiento-local solo se usa en Auth:Provider=Local (ver LocalDiskStorageService) —
+# se crea igual en toda imagen para que un volumen montado ahí no quede owned por root
+# (Docker crea el punto de montaje como root si el directorio no existe ya en la imagen).
+RUN mkdir -p /var/backups/funbide /app/almacenamiento-local \
+    && chown -R funbide:funbide /app /var/backups/funbide
 
 USER funbide
 EXPOSE 8080
