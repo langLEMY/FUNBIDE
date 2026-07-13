@@ -29,12 +29,18 @@ RUN dotnet publish "src/FUNBIDE.API/FUNBIDE.API.csproj" \
     --no-restore \
     /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0-alpine AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 
+# Debian/glibc en vez de Alpine/musl: musl falla la resolucion DNS combinada
+# IPv4+IPv6 que usa .NET por defecto contra hosts sin registro AAAA (como el
+# pooler de Supabase, un ELB de AWS solo-IPv4), devolviendo "Name does not
+# resolve" aunque el registro A exista. glibc no tiene ese bug.
 # postgresql-client aporta pg_dump, requerido por DatabaseBackupHostedService.
-RUN apk add --no-cache postgresql-client icu-libs \
-    && addgroup -S funbide && adduser -S funbide -G funbide
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r funbide && useradd -r -g funbide funbide
 
 ENV DOTNET_RUNNING_IN_CONTAINER=true \
     ASPNETCORE_URLS=http://+:8080 \
@@ -52,6 +58,6 @@ USER funbide
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1
+    CMD curl --fail --silent http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "FUNBIDE.API.dll"]
