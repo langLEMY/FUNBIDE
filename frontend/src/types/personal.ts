@@ -24,3 +24,8 @@ export interface CambiarContrasenaRequest {
 }
 
 export const ROLES_ASIGNABLES: RolUsuario[] = ['Admin', 'Doctor', 'Fondos', 'Farmacia', 'Lemy']
+
+/** Solo una cuenta Lemy puede asignar el rol Lemy a otra cuenta (ver PersonalController). */
+export function rolesAsignablesPara(rolActor: RolUsuario | undefined): RolUsuario[] {
+  return rolActor === 'Lemy' ? ROLES_ASIGNABLES : ROLES_ASIGNABLES.filter((rol) => rol !== 'Lemy')
+}

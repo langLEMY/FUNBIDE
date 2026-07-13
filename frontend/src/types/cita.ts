@@ -1,4 +1,4 @@
-export type EstadoCita = 'Pendiente' | 'Programada' | 'Completada' | 'Cancelada'
+export type EstadoCita = 'Pendiente' | 'Programada' | 'EnEspera' | 'Completada' | 'Cancelada'
 
 export interface Cita {
   id: string
@@ -25,4 +25,40 @@ export interface ProgramarCitaRequest {
 export interface CompletarCitaRequest {
   citaId: string
   notasCierre: string
+}
+
+export interface CancelarCitaRequest {
+  citaId: string
+}
+
+export interface AgendarCitaRequest {
+  pacienteId: string
+  doctorId: string
+  motivo: string
+  inicio: string
+  fin: string
+}
+
+export interface RegistrarLlegadaRequest {
+  citaId: string
+}
+
+export interface RegistrarLlegadaSinCitaRequest {
+  pacienteId: string
+  doctorId: string
+  motivo: string
+}
+
+// Variante de Cita enriquecida con nombres, para Agenda/Recepción (listan citas de todos los doctores).
+export interface CitaAgenda {
+  id: string
+  pacienteId: string
+  pacienteNombre: string
+  doctorId: string
+  doctorNombre: string
+  motivo: string
+  estado: EstadoCita
+  inicio: string | null
+  fin: string | null
+  deudaPendiente: number
 }

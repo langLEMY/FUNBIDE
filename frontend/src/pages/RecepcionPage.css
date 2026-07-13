@@ -1,0 +1,164 @@
+.recepcion-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+
+.recepcion-llegada-card,
+.recepcion-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.recepcion-llegada-card h2,
+.recepcion-tabla-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.recepcion-buscador {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.recepcion-buscador input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+}
+
+.recepcion-resultados-lista {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  margin: 4px 0 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  backdrop-filter: blur(20px);
+}
+
+.recepcion-resultados-lista button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: var(--radius-control);
+}
+
+.recepcion-resultados-lista button:hover {
+  background: var(--surface-hover);
+}
+
+.recepcion-llegada-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.recepcion-llegada-form select,
+.recepcion-llegada-form input {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 200px;
+}
+
+.recepcion-llegada-form button {
+  background: var(--series-dinero);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.recepcion-llegada-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.recepcion-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.recepcion-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.recepcion-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.recepcion-tabla td button {
+  background: var(--series-pacientes);
+  color: var(--page-plane);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.recepcion-tabla td button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.recepcion-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.recepcion-badge-programada {
+  background: color-mix(in srgb, var(--series-dinero) 20%, transparent);
+  color: var(--series-dinero);
+}
+
+.recepcion-badge-en-espera {
+  background: color-mix(in srgb, var(--series-pacientes) 20%, transparent);
+  color: var(--series-pacientes);
+}
+
+.recepcion-badge-deuda {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--danger) 20%, transparent);
+  color: var(--danger);
+}

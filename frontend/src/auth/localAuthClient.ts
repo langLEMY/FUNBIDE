@@ -84,6 +84,8 @@ export const localAuthClient: ClienteAutenticacion = {
     },
 
     async signOut() {
+      // Ignora `opciones.scope`: en modo local no hay multi-dispositivo, así que
+      // "cerrar todas las sesiones" y "cerrar sesión" son la misma operación.
       localStorage.removeItem(CLAVE_STORAGE)
       notificar('SIGNED_OUT', null)
       return { error: null }

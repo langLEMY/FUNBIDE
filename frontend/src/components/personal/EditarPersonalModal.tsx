@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
+import { useAuth } from '../../auth/AuthContext'
 import { api, ApiError } from '../../lib/api'
 import type { Usuario, RolUsuario } from '../../types/usuario'
-import { ROLES_ASIGNABLES } from '../../types/personal'
+import { rolesAsignablesPara } from '../../types/personal'
 import './EditarPersonalModal.css'
 
 interface EditarPersonalModalProps {
@@ -11,6 +12,8 @@ interface EditarPersonalModalProps {
 }
 
 export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPersonalModalProps) {
+  const { perfil } = useAuth()
+  const rolesAsignables = useMemo(() => rolesAsignablesPara(perfil?.rol), [perfil?.rol])
   const [nombreCompleto, setNombreCompleto] = useState(usuario.nombreCompleto)
   const [correo, setCorreo] = useState(usuario.correo)
   const [rol, setRol] = useState<RolUsuario>(usuario.rol)
@@ -77,7 +80,7 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
 
         <label htmlFor="ep-rol">Rol</label>
         <select id="ep-rol" value={rol} onChange={(event) => setRol(event.target.value as RolUsuario)}>
-          {ROLES_ASIGNABLES.map((opcion) => (
+          {rolesAsignables.map((opcion) => (
             <option key={opcion} value={opcion}>
               {opcion}
             </option>

@@ -1,4 +1,46 @@
-.finanzas-resumen-card {
+.finanzas-admin-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+
+.finanzas-admin-exito {
+  color: var(--series-pacientes);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.finanzas-admin-filtros {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.finanzas-admin-filtros select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 12px;
+  font-size: 14px;
+}
+
+.finanzas-admin-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 800px) {
+  .finanzas-admin-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+.finanzas-admin-kpi-card,
+.finanzas-admin-grafico-card,
+.finanzas-admin-tabla-card {
   background: var(--surface-1);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-card);
@@ -6,85 +48,56 @@
   margin-bottom: 20px;
 }
 
-.finanzas-neto {
+.finanzas-admin-kpi-card {
+  margin-bottom: 0;
+}
+
+.finanzas-admin-kpi-monto {
   margin: 4px 0 0;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
 }
 
-.finanzas-neto-positivo {
-  color: var(--series-pacientes);
-}
-
-.finanzas-neto-negativo {
+.finanzas-admin-kpi-negativo {
   color: var(--danger);
 }
 
-.finanzas-crear-card,
-.finanzas-tabla-card {
-  background: var(--surface-1);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-card);
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-.finanzas-crear-card h2 {
+.finanzas-admin-grafico-titulo,
+.finanzas-admin-tabla-titulo {
   margin: 0 0 14px;
   font-size: 15px;
   font-weight: 600;
 }
 
-.finanzas-crear-form {
+.finanzas-admin-tabla-header {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
+  margin-bottom: 14px;
 }
 
-.finanzas-crear-form input,
-.finanzas-crear-form select {
+.finanzas-admin-tabla-header .finanzas-admin-tabla-titulo {
+  margin: 0;
+}
+
+.finanzas-admin-limpiar-mes {
   background: var(--surface-2);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-control);
-  color: var(--text-primary);
-  padding: 9px 10px;
-  font-size: 14px;
-  flex: 1 1 160px;
-}
-
-.finanzas-crear-form button {
-  background: var(--series-dinero);
-  color: var(--text-primary);
-  border: none;
-  border-radius: var(--radius-control);
-  padding: 9px 18px;
-  font-size: 14px;
-  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 7px 14px;
+  font-size: 13px;
   cursor: pointer;
 }
 
-.finanzas-crear-form button:hover {
-  filter: brightness(1.1);
-}
-
-.finanzas-crear-form button:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.finanzas-error {
-  color: var(--danger);
-  font-size: 13px;
-  margin: 10px 0 0;
-}
-
-.finanzas-tabla {
+.finanzas-admin-tabla {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
 
-.finanzas-tabla th {
+.finanzas-admin-tabla th {
   text-align: left;
   font-size: 12px;
   text-transform: uppercase;
@@ -94,17 +107,17 @@
   border-bottom: 1px solid var(--border-hairline);
 }
 
-.finanzas-tabla td {
+.finanzas-admin-tabla td {
   padding: 12px 10px;
   border-bottom: 1px solid var(--border-hairline);
 }
 
-.finanzas-tipo-ingreso {
+.finanzas-admin-tipo-ingreso {
   color: var(--series-pacientes);
   font-weight: 500;
 }
 
-.finanzas-tipo-egreso {
+.finanzas-admin-tipo-egreso {
   color: var(--danger);
   font-weight: 500;
 }

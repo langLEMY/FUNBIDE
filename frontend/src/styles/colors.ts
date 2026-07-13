@@ -19,6 +19,7 @@ export const chartColorsPorTema = {
     dinero: '#d4a24e',
     pacientes: '#2fbf8f',
     actividad: '#2fbf8f',
+    gasto: '#e0705f',
   },
   claro: {
     surface1: 'rgba(255, 255, 255, 0.92)',
@@ -30,6 +31,7 @@ export const chartColorsPorTema = {
     dinero: '#a9762e',
     pacientes: '#2fbf8f',
     actividad: '#2fbf8f',
+    gasto: '#c1483a',
   },
 } as const
 

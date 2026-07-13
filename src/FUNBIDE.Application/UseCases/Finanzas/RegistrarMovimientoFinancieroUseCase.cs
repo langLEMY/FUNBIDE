@@ -14,10 +14,13 @@ public interface IRegistrarMovimientoFinancieroUseCase : IUseCase<RegistrarMovim
 /// Registra un ingreso o egreso de forma atómica y acumula su monto (con signo) sobre
 /// el <see cref="ResumenDiario"/> del día en curso, dentro de la misma transacción que
 /// bloquea la fila del resumen — mismo patrón que <c>DescargarInventarioUseCase</c>.
+/// Exige un turno de caja abierto (<see cref="TurnoCaja"/>) y lo adjunta al movimiento,
+/// igual que <c>RegistrarCobroUseCase</c>, para que el arqueo de cierre pueda sumarlo.
 /// </summary>
 public sealed class RegistrarMovimientoFinancieroUseCase(
     IMovimientoFinancieroRepository movimientoRepository,
     IResumenDiarioRepository resumenDiarioRepository,
+    ITurnoCajaRepository turnoCajaRepository,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
     IDateTimeProvider dateTimeProvider,
@@ -28,8 +31,11 @@ public sealed class RegistrarMovimientoFinancieroUseCase(
     {
         return unitOfWork.EjecutarEnTransaccionAsync(async ct =>
         {
+            var turno = await turnoCajaRepository.ObtenerAbiertoAsync(ct)
+                ?? throw new InvalidOperationException("No hay una caja abierta. Abre la caja antes de registrar un movimiento.");
+
             var movimiento = new MovimientoFinanciero(
-                request.Tipo, request.Monto, request.Concepto, currentUser.UsuarioId, request.CitaId);
+                request.Tipo, request.Monto, request.Concepto, currentUser.UsuarioId, request.CitaId, turno.Id);
 
             await movimientoRepository.RegistrarAsync(movimiento, ct);
             await movimientoRepository.GuardarCambiosAsync(ct);
@@ -49,7 +55,7 @@ public sealed class RegistrarMovimientoFinancieroUseCase(
 
             return new MovimientoFinancieroDto(
                 movimiento.Id, movimiento.Tipo, movimiento.Monto, movimiento.Concepto,
-                movimiento.CitaId, movimiento.RegistradoEn);
+                movimiento.CitaId, movimiento.TurnoCajaId, movimiento.RegistradoEn);
         }, cancellationToken);
     }
 }

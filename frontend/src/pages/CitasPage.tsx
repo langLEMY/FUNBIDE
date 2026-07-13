@@ -3,15 +3,16 @@ import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { CitaRow } from '../components/citas/CitaRow'
 import { api, ApiError } from '../lib/api'
 import type { Cita } from '../types/cita'
-import type { Paciente } from '../types/paciente'
+import type { Paciente, PacientesPaginados } from '../types/paciente'
 import './CitasPage.css'
 
-type Tab = 'Pendientes' | 'Programadas' | 'Completadas'
-const TABS: Tab[] = ['Pendientes', 'Programadas', 'Completadas']
+type Tab = 'Pendientes' | 'Programadas' | 'En espera' | 'Completadas'
+const TABS: Tab[] = ['Pendientes', 'Programadas', 'En espera', 'Completadas']
 
 export function CitasPage() {
   const [pendientes, setPendientes] = useState<Cita[]>([])
   const [programadas, setProgramadas] = useState<Cita[]>([])
+  const [enEspera, setEnEspera] = useState<Cita[]>([])
   const [completadas, setCompletadas] = useState<Cita[]>([])
   const [pacientes, setPacientes] = useState<Paciente[]>([])
   const [tab, setTab] = useState<Tab>('Pendientes')
@@ -29,15 +30,17 @@ export function CitasPage() {
     Promise.all([
       api.get<Cita[]>('/api/citas/pendientes'),
       api.get<Cita[]>('/api/citas/programadas'),
+      api.get<Cita[]>('/api/citas/en-espera'),
       api.get<Cita[]>('/api/citas/completadas'),
-      api.get<Paciente[]>('/api/pacientes'),
+      api.get<PacientesPaginados>('/api/pacientes?pagina=1&tamanoPagina=100'),
     ])
-      .then(([datosPendientes, datosProgramadas, datosCompletadas, datosPacientes]) => {
+      .then(([datosPendientes, datosProgramadas, datosEnEspera, datosCompletadas, datosPacientes]) => {
         if (cancelado) return
         setPendientes(datosPendientes)
         setProgramadas(datosProgramadas)
+        setEnEspera(datosEnEspera)
         setCompletadas(datosCompletadas)
-        setPacientes(datosPacientes)
+        setPacientes(datosPacientes.items)
       })
       .catch((err) => {
         if (!cancelado) {
@@ -97,10 +100,18 @@ export function CitasPage() {
 
   const moverACompletadas = (cita: Cita) => {
     setProgramadas((actual) => actual.filter((c) => c.id !== cita.id))
+    setEnEspera((actual) => actual.filter((c) => c.id !== cita.id))
     setCompletadas((actual) => [cita, ...actual])
   }
 
-  const listaActiva = tab === 'Pendientes' ? pendientes : tab === 'Programadas' ? programadas : completadas
+  const listaActiva =
+    tab === 'Pendientes'
+      ? pendientes
+      : tab === 'Programadas'
+        ? programadas
+        : tab === 'En espera'
+          ? enEspera
+          : completadas
 
   return (
     <DashboardLayout titulo="Citas">

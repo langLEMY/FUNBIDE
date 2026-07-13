@@ -43,11 +43,35 @@ public sealed class Cita : Entity
         Estado = EstadoCita.Programada;
     }
 
+    /// <summary>
+    /// El paciente llegó físicamente y pasa a la sala de espera: desde una cita agendada
+    /// (<see cref="EstadoCita.Programada"/>) o desde un walk-in recién creado sin agendar
+    /// (<see cref="EstadoCita.Pendiente"/>), que es como recepción registra una llegada
+    /// directa sin cita previa.
+    /// </summary>
+    public void RegistrarLlegada()
+    {
+        if (Estado != EstadoCita.Pendiente && Estado != EstadoCita.Programada)
+        {
+            throw new InvalidOperationException(
+                $"Solo una cita pendiente o programada puede pasar a en espera. Estado actual: {Estado}.");
+        }
+
+        Estado = EstadoCita.EnEspera;
+    }
+
+    /// <summary>
+    /// Acepta completarse desde <see cref="EstadoCita.Programada"/> o
+    /// <see cref="EstadoCita.EnEspera"/>: el paso por recepción (<see cref="RegistrarLlegada"/>)
+    /// es un enriquecimiento del flujo, no un requisito — un doctor debe poder seguir
+    /// completando una cita que nunca pasó por el check-in de recepción.
+    /// </summary>
     public void Completar(string notasCierre)
     {
-        if (Estado != EstadoCita.Programada)
+        if (Estado != EstadoCita.Programada && Estado != EstadoCita.EnEspera)
         {
-            throw new InvalidOperationException($"Solo una cita programada puede completarse. Estado actual: {Estado}.");
+            throw new InvalidOperationException(
+                $"Solo una cita programada o en espera puede completarse. Estado actual: {Estado}.");
         }
 
         NotasCierre = notasCierre;

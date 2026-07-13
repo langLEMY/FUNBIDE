@@ -6,7 +6,7 @@ const RUTA_POR_ROL: Partial<Record<string, string>> = {
   Admin: '/dashboard',
   Lemy: '/personal',
   Doctor: '/dashboard-doctor',
-  Fondos: '/finanzas',
+  Fondos: '/caja',
   Farmacia: '/inventario',
 }
 

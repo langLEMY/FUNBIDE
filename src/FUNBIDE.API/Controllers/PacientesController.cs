@@ -21,6 +21,7 @@ namespace FUNBIDE.API.Controllers;
 [Authorize]
 public sealed class PacientesController(
     IListarPacientesUseCase listarPacientes,
+    IObtenerPacientePorIdUseCase obtenerPacientePorId,
     ICrearPacienteUseCase crearPaciente,
     IEditarPacienteUseCase editarPaciente,
     IEliminarPacienteUseCase eliminarPaciente,
@@ -35,6 +36,11 @@ public sealed class PacientesController(
         [FromQuery] EstadoPaciente? estado, CancellationToken cancellationToken) =>
         Ok(await listarPacientes.EjecutarAsync(
             new ListarPacientesRequest(pagina, tamanoPagina, busqueda, estado), cancellationToken));
+
+    [HttpGet("{id:guid}")]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    public async Task<ActionResult<PacienteDto>> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken) =>
+        Ok(await obtenerPacientePorId.EjecutarAsync(id, cancellationToken));
 
     [HttpPost]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]

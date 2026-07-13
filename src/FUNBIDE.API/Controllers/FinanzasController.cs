@@ -23,8 +23,8 @@ public sealed class FinanzasController(
 {
     [HttpGet("movimientos")]
     public async Task<ActionResult<IReadOnlyList<MovimientoFinancieroDto>>> ListarAsync(
-        CancellationToken cancellationToken) =>
-        Ok(await listarMovimientos.EjecutarAsync(cancellationToken));
+        [FromQuery] Guid? turnoCajaId, CancellationToken cancellationToken) =>
+        Ok(await listarMovimientos.EjecutarAsync(turnoCajaId, cancellationToken));
 
     [HttpPost("movimientos")]
     public async Task<ActionResult<MovimientoFinancieroDto>> RegistrarAsync(

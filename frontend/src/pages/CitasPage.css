@@ -130,6 +130,11 @@
   color: #5d94e0;
 }
 
+.citas-badge-en-espera {
+  background: var(--series-pacientes-fill);
+  color: var(--series-pacientes);
+}
+
 .citas-badge-completada {
   background: var(--series-pacientes-fill);
   color: var(--series-pacientes);

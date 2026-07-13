@@ -1,0 +1,190 @@
+.agenda-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+
+.agenda-crear-card,
+.agenda-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.agenda-crear-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.agenda-buscador {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.agenda-buscador input {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+}
+
+.agenda-resultados-lista {
+  position: absolute;
+  z-index: 5;
+  left: 0;
+  right: 0;
+  margin: 4px 0 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  backdrop-filter: blur(20px);
+}
+
+.agenda-resultados-lista button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: var(--radius-control);
+}
+
+.agenda-resultados-lista button:hover {
+  background: var(--surface-hover);
+}
+
+.agenda-crear-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.agenda-crear-form input,
+.agenda-crear-form select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 160px;
+}
+
+.agenda-crear-form button {
+  background: var(--series-dinero);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.agenda-crear-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.agenda-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.agenda-filtros select,
+.agenda-filtros input {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+}
+
+.agenda-filtros-limpiar {
+  background: transparent;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  padding: 9px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.agenda-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.agenda-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.agenda-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.agenda-tabla td button {
+  background: var(--danger);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.agenda-tabla td button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.agenda-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.agenda-badge-programada {
+  background: color-mix(in srgb, var(--series-dinero) 20%, transparent);
+  color: var(--series-dinero);
+}
+
+.agenda-badge-en-espera {
+  background: color-mix(in srgb, var(--series-pacientes) 20%, transparent);
+  color: var(--series-pacientes);
+}
+
+.agenda-badge-completada {
+  background: color-mix(in srgb, var(--text-muted) 25%, transparent);
+  color: var(--text-secondary);
+}
+
+.agenda-badge-cancelada {
+  background: color-mix(in srgb, var(--danger) 20%, transparent);
+  color: var(--danger);
+}

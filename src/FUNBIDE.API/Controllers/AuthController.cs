@@ -21,6 +21,7 @@ public sealed class AuthController(
 {
     [HttpPost("eventos-login")]
     [AllowAnonymous]
+    [EnableRateLimiting("eventos-login")]
     public async Task<IActionResult> RegistrarEventoLoginAsync(
         RegistrarEventoLoginRequest cuerpo, CancellationToken cancellationToken)
     {

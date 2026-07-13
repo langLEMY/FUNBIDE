@@ -26,6 +26,13 @@ public sealed class ProgramarCitaUseCase(
             throw new OperacionNoPermitidaException($"La cita '{cita.Id}' no pertenece al doctor autenticado.");
         }
 
+        var hayChoque = await citaRepository.TieneChoqueDeHorarioAsync(
+            cita.DoctorId, request.Inicio, request.Fin, excluirCitaId: cita.Id, cancellationToken);
+        if (hayChoque)
+        {
+            throw new HorarioNoDisponibleException(cita.DoctorId, request.Inicio, request.Fin);
+        }
+
         var intervalo = IntervaloCita.Crear(request.Inicio, request.Fin);
         cita.Programar(intervalo);
 

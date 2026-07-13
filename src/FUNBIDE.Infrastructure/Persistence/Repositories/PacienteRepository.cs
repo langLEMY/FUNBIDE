@@ -20,11 +20,19 @@ public sealed class PacienteRepository(FunbideDbContext dbContext) : IPacienteRe
 
         if (!string.IsNullOrWhiteSpace(busqueda))
         {
-            var patron = $"%{busqueda.Trim()}%";
+            // Escapar los comodines de LIKE (%, _) y el propio carácter de escape antes de
+            // envolver en %...%: sin esto, alguien que busca "50%" o "a_b" literal recibe
+            // coincidencias más amplias de las esperadas (% y _ se interpretan como
+            // comodines reales en vez de texto literal).
+            var textoEscapado = busqueda.Trim()
+                .Replace("\\", "\\\\")
+                .Replace("%", "\\%")
+                .Replace("_", "\\_");
+            var patron = $"%{textoEscapado}%";
             query = query.Where(p =>
-                EF.Functions.ILike(p.Nombre, patron) ||
-                EF.Functions.ILike(p.Apellido, patron) ||
-                (p.Condicion != null && EF.Functions.ILike(p.Condicion, patron)));
+                EF.Functions.ILike(p.Nombre, patron, "\\") ||
+                EF.Functions.ILike(p.Apellido, patron, "\\") ||
+                (p.Condicion != null && EF.Functions.ILike(p.Condicion, patron, "\\")));
         }
 
         var total = await query.CountAsync(cancellationToken);
@@ -54,6 +62,26 @@ public sealed class PacienteRepository(FunbideDbContext dbContext) : IPacienteRe
         var documentoIdentidad = DocumentoIdentidad.Crear(documento);
         return dbContext.Pacientes.AsNoTracking()
             .FirstOrDefaultAsync(p => p.Documento == documentoIdentidad, cancellationToken);
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, string>> ObtenerNombresPorIdsAsync(
+        IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken)
+    {
+        if (ids.Count == 0)
+        {
+            return new Dictionary<Guid, string>();
+        }
+
+        // Se proyectan Nombre/Apellido (columnas reales) y se concatenan en memoria: la
+        // interpolación de Paciente.NombreCompleto es una propiedad calculada en C#, no
+        // una columna, y EF Core no puede traducirla dentro de la consulta.
+        var pacientes = await dbContext.Pacientes
+            .AsNoTracking()
+            .Where(p => ids.Contains(p.Id))
+            .Select(p => new { p.Id, p.Nombre, p.Apellido })
+            .ToListAsync(cancellationToken);
+
+        return pacientes.ToDictionary(p => p.Id, p => $"{p.Nombre} {p.Apellido}");
     }
 
     public async Task AgregarAsync(Paciente paciente, CancellationToken cancellationToken) =>

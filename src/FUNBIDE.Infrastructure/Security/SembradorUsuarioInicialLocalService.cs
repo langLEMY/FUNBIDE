@@ -53,10 +53,17 @@ public sealed class SembradorUsuarioInicialLocalService(
 
         EscribirArchivoCredenciales(CorreoAdminInicial, contrasenaTemporal);
 
+        // La contraseña va también en el log (no solo en el archivo): en el launcher de
+        // escritorio el archivo alcanza (la muestra en un MessageBox y la borra), pero en
+        // una instalación en contenedor no hay ventana ni acceso fácil al filesystem del
+        // contenedor — "docker compose logs" es la única vía práctica ahí. Instalación de
+        // un solo puesto/tenant (ver AuthOptions), no es un secreto de vida larga: la
+        // primera acción esperada del administrador es cambiarla.
         logger.LogWarning(
-            "Instalación local sin usuarios: se creó la cuenta inicial {Correo} (rol Lemy). " +
-            "La contraseña temporal quedó en {Archivo}, junto al ejecutable — se borra sola la próxima vez que abras la app.",
-            CorreoAdminInicial, NombreArchivoCredenciales);
+            "Instalación local sin usuarios: se creó la cuenta inicial {Correo} (rol Lemy) con contraseña " +
+            "temporal {ContrasenaTemporal} — también quedó en {Archivo}, junto al ejecutable. Cámbiala apenas " +
+            "entres; el archivo se borra solo la próxima vez que abras la app.",
+            CorreoAdminInicial, contrasenaTemporal, NombreArchivoCredenciales);
     }
 
     private static void EscribirArchivoCredenciales(string correo, string contrasena)

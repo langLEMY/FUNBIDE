@@ -19,12 +19,18 @@ namespace FUNBIDE.API.Controllers;
 [Authorize]
 public sealed class MiPerfilController(
     IVerPerfilPropioUseCase verPerfil,
+    IActualizarMiPerfilUseCase actualizarMiPerfil,
     IActualizarFotoPerfilPropiaUseCase actualizarFotoPropia,
     ICambiarMiContrasenaUseCase cambiarMiContrasena) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<UsuarioDto>> VerAsync(CancellationToken cancellationToken) =>
         Ok(await verPerfil.EjecutarAsync(cancellationToken));
+
+    [HttpPatch]
+    public async Task<ActionResult<UsuarioDto>> ActualizarAsync(
+        ActualizarMiPerfilRequest request, CancellationToken cancellationToken) =>
+        Ok(await actualizarMiPerfil.EjecutarAsync(request, cancellationToken));
 
     /// <summary>
     /// Solo la usa el shim de autenticación local (ver frontend/src/auth/localAuthClient.ts):

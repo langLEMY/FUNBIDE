@@ -17,6 +17,8 @@ function claseBadgeEstado(estado: Cita['estado']): string {
       return 'citas-badge citas-badge-pendiente'
     case 'Programada':
       return 'citas-badge citas-badge-programada'
+    case 'EnEspera':
+      return 'citas-badge citas-badge-en-espera'
     case 'Completada':
       return 'citas-badge citas-badge-completada'
     case 'Cancelada':
@@ -125,7 +127,7 @@ export function CitaRow({ cita, nombrePaciente, onProgramada, onCompletada }: Ci
               </button>
             ))}
 
-          {cita.estado === 'Programada' &&
+          {(cita.estado === 'Programada' || cita.estado === 'EnEspera') &&
             (mostrandoAccion ? (
               <div className="citas-accion-form">
                 <textarea

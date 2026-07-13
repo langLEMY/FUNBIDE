@@ -65,6 +65,49 @@ public class CitaTests
     }
 
     [Fact]
+    public void RegistrarLlegada_DesdeCitaProgramada_CambiaEstadoAEnEspera()
+    {
+        var cita = CrearCita();
+        cita.Programar(CrearIntervaloFuturo());
+
+        cita.RegistrarLlegada();
+
+        Assert.Equal(EstadoCita.EnEspera, cita.Estado);
+    }
+
+    [Fact]
+    public void RegistrarLlegada_DesdeCitaPendiente_CambiaEstadoAEnEspera()
+    {
+        var cita = CrearCita();
+
+        cita.RegistrarLlegada();
+
+        Assert.Equal(EstadoCita.EnEspera, cita.Estado);
+    }
+
+    [Fact]
+    public void RegistrarLlegada_DesdeCitaCompletada_LanzaInvalidOperationException()
+    {
+        var cita = CrearCita();
+        cita.Programar(CrearIntervaloFuturo());
+        cita.Completar("Notas de cierre");
+
+        Assert.Throws<InvalidOperationException>(() => cita.RegistrarLlegada());
+    }
+
+    [Fact]
+    public void Completar_DesdeCitaEnEspera_CambiaEstadoACompletada()
+    {
+        var cita = CrearCita();
+        cita.Programar(CrearIntervaloFuturo());
+        cita.RegistrarLlegada();
+
+        cita.Completar("Paciente estable, se receta reposo.");
+
+        Assert.Equal(EstadoCita.Completada, cita.Estado);
+    }
+
+    [Fact]
     public void Cancelar_DesdeCitaCompletada_LanzaInvalidOperationException()
     {
         var cita = CrearCita();

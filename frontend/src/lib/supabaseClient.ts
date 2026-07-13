@@ -4,6 +4,9 @@ import type { ClienteAutenticacion } from '../auth/tiposSesion'
 
 const authMode = import.meta.env.VITE_AUTH_MODE as string | undefined
 
+/** Para páginas que necesitan avisar de una limitación real de la instalación offline (ver MiPerfilPage). */
+export const esModoLocal = authMode === 'local'
+
 /**
  * VITE_AUTH_MODE=local activa la instalación offline/USB (sin Supabase, ver
  * localAuthClient.ts). Cualquier otro valor (o ausente) usa el cliente real de
@@ -11,7 +14,7 @@ const authMode = import.meta.env.VITE_AUTH_MODE as string | undefined
  * detrás: ambos implementan la misma interfaz `auth.*` (ver tiposSesion.ts).
  */
 export const supabase: ClienteAutenticacion =
-  authMode === 'local' ? localAuthClient : crearClienteSupabase()
+  esModoLocal ? localAuthClient : crearClienteSupabase()
 
 function crearClienteSupabase(): ClienteAutenticacion {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string

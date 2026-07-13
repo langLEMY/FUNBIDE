@@ -16,6 +16,7 @@ public sealed class MovimientoFinancieroConfiguration : IEntityTypeConfiguration
         builder.Property(m => m.Concepto).HasMaxLength(300).IsRequired();
         builder.Property(m => m.UsuarioId).IsRequired();
         builder.Property(m => m.CitaId);
+        builder.Property(m => m.TurnoCajaId);
         builder.Property(m => m.RegistradoEn).IsRequired();
 
         // Columna real "Monto" (PascalCase, sin HasColumnName): debe ir entre comillas
@@ -23,5 +24,9 @@ public sealed class MovimientoFinancieroConfiguration : IEntityTypeConfiguration
         builder.ToTable(t => t.HasCheckConstraint("ck_movimiento_financiero_monto_positivo", "\"Monto\" > 0"));
 
         builder.HasIndex(m => m.RegistradoEn);
+
+        // ObtenerPorTurnoAsync filtra por esta columna en cada carga del resumen de Caja
+        // (ObtenerResumenCajaUseCase) — sin índice, full scan de toda la tabla histórica.
+        builder.HasIndex(m => m.TurnoCajaId);
     }
 }

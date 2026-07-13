@@ -56,6 +56,17 @@ export function InventarioRow({ item, onDespachado, onEditado, onEliminado }: In
     }
   }
 
+  // Resincroniza los campos con el item vigente al ENTRAR a edición (no solo al montar el
+  // componente): sin esto, despachar stock desde esta misma fila y después abrir "Editar"
+  // sin recargar la página mostraba el stock viejo, y guardar sin tocarlo lo revertía en
+  // silencio (AjustarStock toma stockActual como valor absoluto, no como delta).
+  const iniciarEdicion = () => {
+    setNombreEdit(item.nombre)
+    setStockActualEdit(item.stockActual.toString())
+    setStockMinimoEdit(item.stockMinimo.toString())
+    setEditando(true)
+  }
+
   const cancelarEdicion = () => {
     setNombreEdit(item.nombre)
     setStockActualEdit(item.stockActual.toString())
@@ -190,7 +201,7 @@ export function InventarioRow({ item, onDespachado, onEditado, onEliminado }: In
             </div>
           ) : (
             <>
-              <button type="button" onClick={() => setEditando(true)} disabled={eliminando}>
+              <button type="button" onClick={iniciarEdicion} disabled={eliminando}>
                 Editar
               </button>
               <button

@@ -2,6 +2,8 @@ using FUNBIDE.Application.Common;
 using FUNBIDE.Application.Common.Interfaces;
 using FUNBIDE.Application.DTOs.Personal;
 using FUNBIDE.Application.Exceptions;
+using FUNBIDE.Domain.Enums;
+using FUNBIDE.Domain.Exceptions;
 using FUNBIDE.Domain.Interfaces;
 
 namespace FUNBIDE.Application.UseCases.Personal;
@@ -20,6 +22,11 @@ public sealed class CambiarContrasenaUsuarioUseCase(
     {
         var usuario = await usuarioRepository.ObtenerPorIdAsync(request.UsuarioId, cancellationToken)
             ?? throw new RecursoNoEncontradoException(nameof(Domain.Entities.Usuario), request.UsuarioId);
+
+        if (usuario.Rol == RolUsuario.Lemy && currentUser.Rol != RolUsuario.Lemy)
+        {
+            throw new OperacionNoPermitidaException("Solo una cuenta Lemy puede administrar cuentas con rol Lemy.");
+        }
 
         await supabaseAdmin.CambiarContrasenaAsync(usuario.SupabaseUserId, request.NuevaContrasena, cancellationToken);
 

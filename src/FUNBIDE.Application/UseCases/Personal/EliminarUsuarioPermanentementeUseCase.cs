@@ -2,6 +2,7 @@ using FUNBIDE.Application.Common;
 using FUNBIDE.Application.Common.Interfaces;
 using FUNBIDE.Application.DTOs.Personal;
 using FUNBIDE.Application.Exceptions;
+using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.Exceptions;
 using FUNBIDE.Domain.Interfaces;
 
@@ -33,6 +34,11 @@ public sealed class EliminarUsuarioPermanentementeUseCase(
         if (usuario.SupabaseUserId == currentUser.UsuarioId)
         {
             throw new OperacionNoPermitidaException("No puedes eliminar permanentemente tu propio perfil.");
+        }
+
+        if (usuario.Rol == RolUsuario.Lemy && currentUser.Rol != RolUsuario.Lemy)
+        {
+            throw new OperacionNoPermitidaException("Solo una cuenta Lemy puede administrar cuentas con rol Lemy.");
         }
 
         await supabaseAdmin.EliminarPermanentementeAsync(usuario.SupabaseUserId, cancellationToken);

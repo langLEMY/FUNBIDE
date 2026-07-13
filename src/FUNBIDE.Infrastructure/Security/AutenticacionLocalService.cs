@@ -20,6 +20,14 @@ public sealed class AutenticacionLocalService(
 {
     private readonly PasswordHasher<CredencialLocal> hasher = new();
 
+    // Hash ficticio de una contraseña aleatoria fija, calculado una sola vez: cuando el
+    // correo no existe (o la cuenta está inactiva/borrada), igual corremos un
+    // VerifyHashedPassword contra esto antes de devolver null. Sin esto, "correo no
+    // existe" devolvía al instante mientras "correo existe" tardaba lo que tarda hashear
+    // — una diferencia de tiempo medible que permite enumerar correos válidos por fuerza bruta.
+    private static readonly string HashFicticio =
+        new PasswordHasher<CredencialLocal>().HashPassword(new CredencialLocal(Guid.Empty, string.Empty), Guid.NewGuid().ToString());
+
     public async Task<TokenLocalResultado?> IniciarSesionAsync(
         string correo, string contrasena, CancellationToken cancellationToken)
     {
@@ -28,17 +36,19 @@ public sealed class AutenticacionLocalService(
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Correo == correoNormalizado, cancellationToken);
 
-        if (usuario is null || !usuario.Activo || usuario.EliminadoPermanentemente)
+        CredencialLocal? credencial = null;
+        if (usuario is not null && usuario.Activo && !usuario.EliminadoPermanentemente)
         {
-            return null;
+            credencial = await dbContext.CredencialesLocales
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.UsuarioId == usuario.SupabaseUserId, cancellationToken);
         }
 
-        var credencial = await dbContext.CredencialesLocales
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.UsuarioId == usuario.SupabaseUserId, cancellationToken);
+        var resultado = hasher.VerifyHashedPassword(
+            credencial ?? new CredencialLocal(Guid.Empty, string.Empty), credencial?.PasswordHash ?? HashFicticio, contrasena);
 
-        if (credencial is null ||
-            hasher.VerifyHashedPassword(credencial, credencial.PasswordHash, contrasena) == PasswordVerificationResult.Failed)
+        if (usuario is null || !usuario.Activo || usuario.EliminadoPermanentemente ||
+            credencial is null || resultado == PasswordVerificationResult.Failed)
         {
             return null;
         }

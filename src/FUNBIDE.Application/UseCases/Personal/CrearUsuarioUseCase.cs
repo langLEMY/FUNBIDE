@@ -2,6 +2,7 @@ using FUNBIDE.Application.Common;
 using FUNBIDE.Application.Common.Interfaces;
 using FUNBIDE.Application.DTOs.Personal;
 using FUNBIDE.Domain.Entities;
+using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.Exceptions;
 using FUNBIDE.Domain.Interfaces;
 
@@ -25,6 +26,11 @@ public sealed class CrearUsuarioUseCase(
 {
     public async Task<UsuarioDto> EjecutarAsync(CrearUsuarioRequest request, CancellationToken cancellationToken)
     {
+        if (request.Rol == RolUsuario.Lemy && currentUser.Rol != RolUsuario.Lemy)
+        {
+            throw new OperacionNoPermitidaException("Solo una cuenta Lemy puede crear otra cuenta con rol Lemy.");
+        }
+
         var correoNormalizado = request.Correo.Trim().ToLowerInvariant();
         if (await usuarioRepository.ObtenerPorCorreoAsync(correoNormalizado, cancellationToken) is not null)
         {

@@ -1,9 +1,16 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { api, ApiError } from '../lib/api'
-import type { MovimientoFinanciero, TipoMovimientoFinanciero } from '../types/finanzas'
-import { TIPOS_MOVIMIENTO_FINANCIERO } from '../types/finanzas'
+import { coloresParaTema } from '../styles/colors'
+import { useTheme } from '../theme/ThemeContext'
+import type { MovimientoImportante, ResumenMensual } from '../types/finanzasAdmin'
 import './FinanzasPage.css'
+
+const NOMBRES_MES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+const NOMBRES_MES_COMPLETO = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+]
 
 const formateadorMoneda = new Intl.NumberFormat('es-DO', {
   style: 'currency',
@@ -12,147 +19,238 @@ const formateadorMoneda = new Intl.NumberFormat('es-DO', {
 })
 const formateadorFechaHora = new Intl.DateTimeFormat('es-DO', { dateStyle: 'short', timeStyle: 'short' })
 
-export function FinanzasPage() {
-  const [movimientos, setMovimientos] = useState<MovimientoFinanciero[]>([])
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+function construirRango(anio: number, mes: number | null): { desde: string; hasta: string } {
+  if (mes) {
+    return {
+      desde: new Date(Date.UTC(anio, mes - 1, 1)).toISOString(),
+      hasta: new Date(Date.UTC(anio, mes, 1)).toISOString(),
+    }
+  }
+  return {
+    desde: new Date(Date.UTC(anio, 0, 1)).toISOString(),
+    hasta: new Date(Date.UTC(anio + 1, 0, 1)).toISOString(),
+  }
+}
 
-  const [tipo, setTipo] = useState<TipoMovimientoFinanciero>('Ingreso')
-  const [monto, setMonto] = useState('')
-  const [concepto, setConcepto] = useState('')
-  const [registrando, setRegistrando] = useState(false)
-  const [errorRegistrar, setErrorRegistrar] = useState<string | null>(null)
+export function FinanzasPage() {
+  const { tema } = useTheme()
+  const chartColors = coloresParaTema(tema)
+  const anioActual = new Date().getFullYear()
+
+  const [anio, setAnio] = useState(anioActual)
+  const [mes, setMes] = useState<number | null>(null)
+  const [resumenAnual, setResumenAnual] = useState<ResumenMensual[]>([])
+  const [movimientos, setMovimientos] = useState<MovimientoImportante[]>([])
+  const [cargandoResumen, setCargandoResumen] = useState(true)
+  const [cargandoMovimientos, setCargandoMovimientos] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelado = false
-
+    setCargandoResumen(true)
     api
-      .get<MovimientoFinanciero[]>('/api/finanzas/movimientos')
+      .get<ResumenMensual[]>(`/api/finanzas-admin/resumen-anual?anio=${anio}`)
       .then((datos) => {
-        if (!cancelado) setMovimientos(datos)
+        if (!cancelado) setResumenAnual(datos)
       })
       .catch((err) => {
-        if (!cancelado) {
-          setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar los movimientos.')
-        }
+        if (!cancelado) setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar el resumen anual.')
       })
       .finally(() => {
-        if (!cancelado) setCargando(false)
+        if (!cancelado) setCargandoResumen(false)
       })
-
     return () => {
       cancelado = true
     }
-  }, [])
+  }, [anio])
 
-  const neto = useMemo(
-    () => movimientos.reduce((acumulado, m) => acumulado + (m.tipo === 'Ingreso' ? m.monto : -m.monto), 0),
-    [movimientos],
+  const cargarMovimientos = () => {
+    const { desde, hasta } = construirRango(anio, mes)
+    setCargandoMovimientos(true)
+    api
+      .get<MovimientoImportante[]>(
+        `/api/finanzas-admin/movimientos?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`,
+      )
+      .then((datos) => setMovimientos(datos))
+      .catch((err) => {
+        setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar los movimientos.')
+      })
+      .finally(() => setCargandoMovimientos(false))
+  }
+
+  useEffect(cargarMovimientos, [anio, mes])
+
+  const datosGrafico = useMemo(
+    () =>
+      resumenAnual.map((m) => ({
+        mes: NOMBRES_MES[m.mes - 1],
+        mesNumero: m.mes,
+        ingresos: m.ingresos,
+        gastos: m.gastos,
+        ganancia: m.ganancia,
+      })),
+    [resumenAnual],
   )
 
-  const handleRegistrar = async (event: FormEvent) => {
-    event.preventDefault()
-    setErrorRegistrar(null)
+  const kpis = useMemo(() => {
+    const filas = mes ? resumenAnual.filter((m) => m.mes === mes) : resumenAnual
+    return filas.reduce(
+      (acumulado, fila) => ({
+        ingresos: acumulado.ingresos + fila.ingresos,
+        gastos: acumulado.gastos + fila.gastos,
+        ganancia: acumulado.ganancia + fila.ganancia,
+      }),
+      { ingresos: 0, gastos: 0, ganancia: 0 },
+    )
+  }, [resumenAnual, mes])
 
-    const montoNumero = Number(monto)
-    if (!monto.trim() || !Number.isFinite(montoNumero) || montoNumero <= 0) {
-      setErrorRegistrar('Ingresa un monto válido, mayor que cero.')
-      return
-    }
-    if (!concepto.trim()) {
-      setErrorRegistrar('El concepto es obligatorio.')
-      return
-    }
-
-    setRegistrando(true)
-    try {
-      const nuevo = await api.post<MovimientoFinanciero>('/api/finanzas/movimientos', {
-        tipo,
-        monto: montoNumero,
-        concepto,
-        citaId: null,
-      })
-      setMovimientos((actual) => [nuevo, ...actual])
-      setMonto('')
-      setConcepto('')
-    } catch (err) {
-      setErrorRegistrar(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo registrar el movimiento.')
-    } finally {
-      setRegistrando(false)
-    }
-  }
+  const aniosDisponibles = Array.from({ length: 5 }, (_, i) => anioActual - i)
 
   return (
     <DashboardLayout titulo="Finanzas">
-      <section className="finanzas-resumen-card">
-        <p className="text-secondary">Neto acumulado</p>
-        <p className={`finanzas-neto ${neto < 0 ? 'finanzas-neto-negativo' : 'finanzas-neto-positivo'}`}>
-          {formateadorMoneda.format(neto)}
+      {error && <p className="finanzas-admin-error">{error}</p>}
+
+      <div className="finanzas-admin-filtros">
+        <select value={anio} onChange={(event) => setAnio(Number(event.target.value))}>
+          {aniosDisponibles.map((opcion) => (
+            <option key={opcion} value={opcion}>
+              {opcion}
+            </option>
+          ))}
+        </select>
+        <select value={mes ?? ''} onChange={(event) => setMes(event.target.value ? Number(event.target.value) : null)}>
+          <option value="">Todo el año</option>
+          {NOMBRES_MES_COMPLETO.map((nombre, indice) => (
+            <option key={nombre} value={indice + 1}>
+              {nombre}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="finanzas-admin-kpis">
+        <section className="finanzas-admin-kpi-card">
+          <p className="text-secondary">Ingresos</p>
+          <p className="finanzas-admin-kpi-monto" style={{ color: chartColors.pacientes }}>
+            {formateadorMoneda.format(kpis.ingresos)}
+          </p>
+        </section>
+        <section className="finanzas-admin-kpi-card">
+          <p className="text-secondary">Gastos</p>
+          <p className="finanzas-admin-kpi-monto" style={{ color: chartColors.gasto }}>
+            {formateadorMoneda.format(kpis.gastos)}
+          </p>
+        </section>
+        <section className="finanzas-admin-kpi-card">
+          <p className="text-secondary">Ganancia neta</p>
+          <p className={`finanzas-admin-kpi-monto ${kpis.ganancia < 0 ? 'finanzas-admin-kpi-negativo' : ''}`}>
+            {formateadorMoneda.format(kpis.ganancia)}
+          </p>
+        </section>
+      </div>
+
+      <section className="finanzas-admin-grafico-card">
+        <p className="finanzas-admin-grafico-titulo text-secondary">
+          Ganancias de {anio} por mes — click en un mes para filtrar el detalle
         </p>
-      </section>
-
-      <section className="finanzas-crear-card">
-        <h2>Registrar movimiento</h2>
-        <form className="finanzas-crear-form" onSubmit={(event) => void handleRegistrar(event)}>
-          <select value={tipo} onChange={(event) => setTipo(event.target.value as TipoMovimientoFinanciero)}>
-            {TIPOS_MOVIMIENTO_FINANCIERO.map((opcion) => (
-              <option key={opcion} value={opcion}>
-                {opcion}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            min={0.01}
-            step="0.01"
-            placeholder="Monto"
-            value={monto}
-            onChange={(event) => setMonto(event.target.value)}
-            required
-          />
-          <input
-            placeholder="Concepto"
-            value={concepto}
-            onChange={(event) => setConcepto(event.target.value)}
-            required
-          />
-          <button type="submit" disabled={registrando}>
-            {registrando ? 'Registrando…' : 'Registrar'}
-          </button>
-        </form>
-        {errorRegistrar && <p className="finanzas-error">{errorRegistrar}</p>}
-      </section>
-
-      <section className="finanzas-tabla-card">
-        {error && <p className="finanzas-error">{error}</p>}
-
-        {cargando ? (
-          <p className="text-secondary">Cargando movimientos…</p>
-        ) : movimientos.length === 0 ? (
-          <p className="text-secondary">Todavía no hay movimientos registrados.</p>
+        {cargandoResumen ? (
+          <p className="text-secondary">Cargando…</p>
         ) : (
-          <table className="finanzas-tabla">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Monto</th>
-                <th>Concepto</th>
-              </tr>
-            </thead>
-            <tbody>
-              {movimientos.map((movimiento) => (
-                <tr key={movimiento.id}>
-                  <td className="text-muted">{formateadorFechaHora.format(new Date(movimiento.registradoEn))}</td>
-                  <td className={movimiento.tipo === 'Egreso' ? 'finanzas-tipo-egreso' : 'finanzas-tipo-ingreso'}>
-                    {movimiento.tipo}
-                  </td>
-                  <td>{formateadorMoneda.format(movimiento.monto)}</td>
-                  <td className="text-muted">{movimiento.concepto}</td>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={datosGrafico} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid stroke={chartColors.gridline} vertical={false} />
+              <XAxis
+                dataKey="mes"
+                tickLine={false}
+                axisLine={{ stroke: chartColors.baseline }}
+                tick={{ fill: chartColors.textMuted, fontSize: 12 }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                width={64}
+                tick={{ fill: chartColors.textMuted, fontSize: 12 }}
+                tickFormatter={(valor: number) => formateadorMoneda.format(valor)}
+              />
+              <Tooltip
+                cursor={{ fill: chartColors.surface2 }}
+                contentStyle={{
+                  background: chartColors.surface2,
+                  border: `1px solid ${chartColors.borderHairline}`,
+                  borderRadius: 8,
+                  fontSize: 13,
+                }}
+                labelStyle={{ color: chartColors.textMuted }}
+                formatter={(valor, nombre) => [formateadorMoneda.format(Number(valor)), nombre]}
+              />
+              <Legend wrapperStyle={{ fontSize: 12, color: chartColors.textMuted }} />
+              <Bar
+                dataKey="ingresos"
+                name="Ingresos"
+                fill={chartColors.pacientes}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={28}
+                onClick={(_datos: unknown, indice: number) => setMes(datosGrafico[indice]?.mesNumero ?? null)}
+                cursor="pointer"
+              />
+              <Bar
+                dataKey="gastos"
+                name="Gastos"
+                fill={chartColors.gasto}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={28}
+                onClick={(_datos: unknown, indice: number) => setMes(datosGrafico[indice]?.mesNumero ?? null)}
+                cursor="pointer"
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </section>
+
+      <section className="finanzas-admin-tabla-card">
+        <div className="finanzas-admin-tabla-header">
+          <p className="finanzas-admin-tabla-titulo">
+            Movimientos importantes — {mes ? NOMBRES_MES_COMPLETO[mes - 1] : 'todo el año'} {anio}
+          </p>
+          {mes && (
+            <button type="button" className="finanzas-admin-limpiar-mes" onClick={() => setMes(null)}>
+              Ver todo el año
+            </button>
+          )}
+        </div>
+        {cargandoMovimientos ? (
+          <p className="text-secondary">Cargando…</p>
+        ) : movimientos.length === 0 ? (
+          <p className="text-secondary">No hay movimientos en este período.</p>
+        ) : (
+          <div className="finanzas-admin-tabla-scroll">
+            <table className="finanzas-admin-tabla">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Origen</th>
+                  <th>Tipo</th>
+                  <th>Concepto</th>
+                  <th>Paciente</th>
+                  <th>Monto</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {movimientos.map((movimiento) => (
+                  <tr key={movimiento.id}>
+                    <td className="text-muted">{formateadorFechaHora.format(new Date(movimiento.fecha))}</td>
+                    <td className="text-muted">{movimiento.origen === 'Cobro' ? 'Cobro' : 'Manual'}</td>
+                    <td className={movimiento.tipo === 'Egreso' ? 'finanzas-admin-tipo-egreso' : 'finanzas-admin-tipo-ingreso'}>
+                      {movimiento.tipo}
+                    </td>
+                    <td>{movimiento.concepto}</td>
+                    <td className="text-muted">{movimiento.pacienteNombre ?? '—'}</td>
+                    <td>{formateadorMoneda.format(movimiento.monto)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
     </DashboardLayout>

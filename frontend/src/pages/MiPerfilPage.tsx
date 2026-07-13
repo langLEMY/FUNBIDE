@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { traducirErrorAuth } from '../auth/mensajesError'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
@@ -6,6 +7,7 @@ import { api, ApiError } from '../lib/api'
 import { colorPorRol } from '../lib/colorPorRol'
 import { exportarCsv } from '../lib/exportarCsv'
 import { iniciales } from '../lib/iniciales'
+import { esModoLocal } from '../lib/supabaseClient'
 import type { Usuario } from '../types/usuario'
 import './MiPerfilPage.css'
 
@@ -24,11 +26,29 @@ interface EstadoSistema {
 }
 
 export function MiPerfilPage() {
-  const { perfil, iniciarSesion, restablecerContrasena, recargarPerfil } = useAuth()
+  const { perfil, iniciarSesion, restablecerContrasena, recargarPerfil, cerrarSesion } = useAuth()
+  const navigate = useNavigate()
 
   const inputFotoRef = useRef<HTMLInputElement>(null)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const [errorFoto, setErrorFoto] = useState<string | null>(null)
+
+  const [nombreCompleto, setNombreCompleto] = useState(perfil?.nombreCompleto ?? '')
+  const [correoEditar, setCorreoEditar] = useState(perfil?.correo ?? '')
+  const [contrasenaActualCorreo, setContrasenaActualCorreo] = useState('')
+  const [guardandoPerfil, setGuardandoPerfil] = useState(false)
+  const [errorPerfil, setErrorPerfil] = useState<string | null>(null)
+  const [exitoPerfil, setExitoPerfil] = useState(false)
+
+  const [cerrandoSesiones, setCerrandoSesiones] = useState(false)
+  const [errorCerrarSesiones, setErrorCerrarSesiones] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (perfil) {
+      setNombreCompleto(perfil.nombreCompleto)
+      setCorreoEditar(perfil.correo)
+    }
+  }, [perfil?.nombreCompleto, perfil?.correo])
 
   const [contrasenaActual, setContrasenaActual] = useState('')
   const [nuevaContrasena, setNuevaContrasena] = useState('')
@@ -129,6 +149,80 @@ export function MiPerfilPage() {
     }
   }
 
+  const cambiandoCorreo = perfil !== null && correoEditar.trim().toLowerCase() !== perfil.correo.toLowerCase()
+
+  const handleGuardarPerfil = async (event: FormEvent) => {
+    event.preventDefault()
+    setErrorPerfil(null)
+    setExitoPerfil(false)
+
+    if (!nombreCompleto.trim()) {
+      setErrorPerfil('El nombre completo es obligatorio.')
+      return
+    }
+    if (!correoEditar.trim()) {
+      setErrorPerfil('El correo es obligatorio.')
+      return
+    }
+    if (cambiandoCorreo && !contrasenaActualCorreo) {
+      setErrorPerfil('Ingresa tu contraseña actual para cambiar el correo de inicio de sesión.')
+      return
+    }
+
+    setGuardandoPerfil(true)
+    try {
+      // Cambiar el correo de login exige re-verificar la contraseña actual (igual que
+      // cambiar la contraseña, más abajo): sin esto, un JWT robado alcanzaba para
+      // secuestrar la cuenta permanentemente (cambiar el correo y después usar
+      // "olvidé mi contraseña" sobre el correo nuevo).
+      if (cambiandoCorreo && perfil) {
+        await iniciarSesion(perfil.correo, contrasenaActualCorreo)
+      }
+
+      await api.patch<Usuario>('/api/mi-perfil', {
+        nombreCompleto: nombreCompleto.trim(),
+        correo: correoEditar.trim(),
+      })
+      await recargarPerfil()
+      setExitoPerfil(true)
+      setContrasenaActualCorreo('')
+    } catch (err) {
+      const mensaje = err instanceof Error ? err.message : undefined
+      setErrorPerfil(
+        err instanceof ApiError
+          ? (err.detalle ?? err.message)
+          : traducirErrorAuth(mensaje, 'No se pudo actualizar el perfil.'),
+      )
+    } finally {
+      setGuardandoPerfil(false)
+    }
+  }
+
+  const handleCerrarTodasLasSesiones = async () => {
+    // En modo Local el JWT no tiene revocación server-side (ver localAuthClient.signOut):
+    // esto solo borra la sesión de ESTE navegador, no las de otros dispositivos ya
+    // logueados. Avisamos antes de que alguien confíe en el botón como si fuera un
+    // "kill switch" real tras perder/prestar un equipo.
+    const confirmado = window.confirm(
+      esModoLocal
+        ? 'En esta instalación (modo local) esto solo cierra la sesión de este navegador — no puede revocar sesiones ya abiertas en otros dispositivos. ¿Continuar?'
+        : 'Esto cierra la sesión en todos los dispositivos conectados con esta cuenta, incluida esta. ¿Continuar?',
+    )
+    if (!confirmado) {
+      return
+    }
+
+    setErrorCerrarSesiones(null)
+    setCerrandoSesiones(true)
+    try {
+      await cerrarSesion({ scope: 'global' })
+      navigate('/login', { replace: true })
+    } catch (err) {
+      setErrorCerrarSesiones(err instanceof Error ? err.message : 'No se pudo cerrar la sesión.')
+      setCerrandoSesiones(false)
+    }
+  }
+
   const handleExportarActividad = async () => {
     setExportando(true)
     setErrorExportar(null)
@@ -185,6 +279,49 @@ export function MiPerfilPage() {
           </section>
 
           <section className="mi-perfil-card">
+            <h2>Editar nombre y correo</h2>
+            <p className="text-secondary mi-perfil-card-subtitulo">Se sincroniza con tu correo de inicio de sesión.</p>
+
+            <form className="mi-perfil-form-contrasena" onSubmit={(event) => void handleGuardarPerfil(event)}>
+              <label className="mi-perfil-label">
+                Nombre completo
+                <input
+                  value={nombreCompleto}
+                  onChange={(event) => setNombreCompleto(event.target.value)}
+                  required
+                />
+              </label>
+              <label className="mi-perfil-label">
+                Correo
+                <input
+                  type="email"
+                  value={correoEditar}
+                  onChange={(event) => setCorreoEditar(event.target.value)}
+                  required
+                />
+              </label>
+              {cambiandoCorreo && (
+                <label className="mi-perfil-label">
+                  Contraseña actual (para confirmar el cambio de correo)
+                  <input
+                    type="password"
+                    value={contrasenaActualCorreo}
+                    onChange={(event) => setContrasenaActualCorreo(event.target.value)}
+                    required
+                  />
+                </label>
+              )}
+
+              {errorPerfil && <p className="mi-perfil-error">{errorPerfil}</p>}
+              {exitoPerfil && <p className="mi-perfil-exito">Perfil actualizado correctamente.</p>}
+
+              <button type="submit" className="mi-perfil-boton-primario" disabled={guardandoPerfil}>
+                {guardandoPerfil ? 'Guardando…' : 'Guardar cambios'}
+              </button>
+            </form>
+          </section>
+
+          <section className="mi-perfil-card">
             <h2>Cambiar contraseña</h2>
             <p className="text-secondary mi-perfil-card-subtitulo">Úsala si sospechas que tu cuenta fue comprometida.</p>
 
@@ -227,6 +364,24 @@ export function MiPerfilPage() {
                 {actualizandoContrasena ? 'Actualizando…' : 'Actualizar contraseña'}
               </button>
             </form>
+          </section>
+
+          <section className="mi-perfil-card mi-perfil-card-riesgo">
+            <h2>Zona de riesgo</h2>
+            <p className="text-secondary mi-perfil-card-subtitulo">
+              {esModoLocal
+                ? 'Cierra la sesión de este navegador (esta instalación no puede revocar sesiones de otros dispositivos).'
+                : 'Cierra la sesión en todos los dispositivos conectados con esta cuenta.'}
+            </p>
+            <button
+              type="button"
+              className="mi-perfil-boton-peligro"
+              onClick={() => void handleCerrarTodasLasSesiones()}
+              disabled={cerrandoSesiones}
+            >
+              {cerrandoSesiones ? 'Cerrando…' : esModoLocal ? 'Cerrar sesión' : 'Cerrar todas las sesiones'}
+            </button>
+            {errorCerrarSesiones && <p className="mi-perfil-error">{errorCerrarSesiones}</p>}
           </section>
         </div>
 
@@ -273,7 +428,7 @@ export function MiPerfilPage() {
                     </p>
                   </div>
                   <button type="button" disabled>
-                    Próximamente
+                    No aplica
                   </button>
                 </li>
                 <li>
@@ -302,21 +457,11 @@ export function MiPerfilPage() {
                     </p>
                   </div>
                   <button type="button" disabled>
-                    Próximamente
+                    No aplica
                   </button>
                 </li>
               </ul>
               {errorExportar && <p className="mi-perfil-error">{errorExportar}</p>}
-            </section>
-
-            <section className="mi-perfil-card mi-perfil-card-riesgo">
-              <h2>Zona de riesgo</h2>
-              <p className="text-secondary mi-perfil-card-subtitulo">
-                Cierra la sesión en todos los dispositivos conectados con esta cuenta.
-              </p>
-              <button type="button" className="mi-perfil-boton-peligro" disabled title="Próximamente">
-                Cerrar todas las sesiones (próximamente)
-              </button>
             </section>
           </div>
         )}

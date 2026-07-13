@@ -21,8 +21,10 @@
          generarlas).
       2. Llevar dist-offline.zip a la USB / a la PC destino. Ese .zip es autocontenido:
          no hace falta .NET, Node ni el repositorio ahí — solo PostgreSQL instalado.
-      3. En la PC destino: crear la base 'funbide' en el PostgreSQL local, descomprimir
-         el .zip, y abrir FUNBIDE.exe.
+      3. En la PC destino: crear la base 'funbide' en el PostgreSQL local (ver
+         scripts/preparar-postgres-local.sql), descomprimir el .zip **a un disco
+         local** (no correr FUNBIDE.exe directo desde una USB en FAT32 — falla al
+         abrir el .exe autocontenido; probado) y abrir FUNBIDE.exe desde ahí.
 #>
 
 $ErrorActionPreference = "Stop"
@@ -92,13 +94,23 @@ $leeme = @'
 FUNBIDE - instalacion offline/USB
 ==================================
 
+IMPORTANTE - copiar a disco local antes de abrir:
+  FUNBIDE.API.exe es un .exe autocontenido de un solo archivo (~110 MB) y
+  NO arranca corriendo directo desde una USB formateada en FAT32 (falla con
+  "el archivo o directorio esta danado o es ilegible" - probado). Copia toda
+  esta carpeta (o descomprimi el .zip) a un disco local de la PC destino
+  (por ejemplo C:\FUNBIDE) y abrila desde ahi. Si la USB esta en NTFS o
+  exFAT esto no pasa, pero copiar a disco local es lo mas confiable de
+  todas formas (mas rapido y sin depender del formato del pendrive).
+
 Requisito unico en la PC destino: PostgreSQL instalado y corriendo. No hace
 falta instalar .NET, Node ni nada mas - FUNBIDE.exe y publish\FUNBIDE.API.exe
 ya traen todo lo que necesitan.
 
 Pasos:
   1. Crear una base de datos vacia llamada "funbide" en el PostgreSQL local
-     (y un usuario con permisos sobre ella).
+     (y un usuario con permisos sobre ella). scripts/preparar-postgres-local.sql
+     (en el repo) hace esto solo si tenes psql a mano.
   2. Copiar publish\appsettings.Local.json.example a publish\appsettings.Local.json
      y completar ahi los CHANGE_ME: la cadena de conexion a esa base, y dos
      claves generadas (el propio archivo trae el comando de PowerShell para
@@ -122,4 +134,7 @@ Write-Host "  Zip:     $zipPath  <- esto es lo unico que hay que llevar a la USB
 Write-Host ""
 Write-Host "Antes de instalar en destino:" -ForegroundColor Yellow
 Write-Host "  1. Completar publish\appsettings.Local.json (ver LEEME.txt dentro del paquete)."
-Write-Host "  2. Confirmar que la PC destino tiene PostgreSQL instalado."
+Write-Host "  2. Confirmar que la PC destino tiene PostgreSQL instalado (o correr"
+Write-Host "     scripts/preparar-postgres-local.sql ahi con psql)."
+Write-Host "  3. En destino: descomprimir a un disco local (no correr FUNBIDE.exe"
+Write-Host "     directo desde una USB en FAT32 - el .exe autocontenido no arranca ahi)."

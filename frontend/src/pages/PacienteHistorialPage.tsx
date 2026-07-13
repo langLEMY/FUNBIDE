@@ -28,18 +28,19 @@ export function PacienteHistorialPage() {
     let cancelado = false
 
     Promise.all([
-      api.get<Paciente[]>('/api/pacientes'),
+      api.get<Paciente>(`/api/pacientes/${id}`),
       api.get<EntradaHistorial[]>(`/api/historial-clinico/paciente/${id}`),
     ])
-      .then(([pacientes, datosEntradas]) => {
+      .then(([pacienteEncontrado, datosEntradas]) => {
         if (cancelado) return
-        const encontrado = pacientes.find((p) => p.id === id) ?? null
-        setPaciente(encontrado)
-        if (!encontrado) setError('No se encontró a ese paciente.')
+        setPaciente(pacienteEncontrado)
         setEntradas(datosEntradas)
       })
       .catch((err) => {
-        if (!cancelado) {
+        if (cancelado) return
+        if (err instanceof ApiError && err.status === 404) {
+          setError('No se encontró a ese paciente.')
+        } else {
           setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar el historial clínico.')
         }
       })

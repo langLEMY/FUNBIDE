@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,14 +47,38 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 // Frena fuerza bruta contra POST /api/auth/login (modo Auth:Provider=Local: es el único
-// endpoint anónimo que verifica una contraseña). Por IP porque no hay usuario todavía.
+// endpoint anónimo que verifica una contraseña). Particionado por IP (RateLimitPartition):
+// AddFixedWindowLimiter a secas crea UN cupo global compartido por todos los clientes, así
+// que 10 requests desde cualquier IP agotaban el cupo y bloqueaban el login de todos los
+// demás (DoS trivial no autenticado). Con partición, cada IP tiene su propio cupo de 10/min.
 builder.Services.AddRateLimiter(options =>
-    options.AddFixedWindowLimiter("login-local", limiterOptions =>
-    {
-        limiterOptions.PermitLimit = 10;
-        limiterOptions.Window = TimeSpan.FromMinutes(1);
-        limiterOptions.QueueLimit = 0;
-    }));
+{
+    options.AddPolicy("login-local", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+
+    // /api/auth/eventos-login es anónimo (registra tanto éxitos como fallos de un login
+    // que ocurre fuera de esta API, ver AuthController) y confía en correo/exitoso que
+    // manda el cliente sin verificarlos contra nada — sin límite, cualquiera podía inflar
+    // la bitácora de auditoría con eventos falsos para cualquier correo, en bucle. Cupo
+    // más generoso que login-local porque acá sí se espera tráfico legítimo repetido
+    // (varios intentos fallidos reales de un usuario que escribe mal su contraseña).
+    options.AddPolicy("eventos-login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+});
 
 var app = builder.Build();
 

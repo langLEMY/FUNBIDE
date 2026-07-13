@@ -12,8 +12,14 @@ const RestablecerContrasenaPage = lazy(() =>
 )
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 const ResumenPage = lazy(() => import('./pages/ResumenPage').then((m) => ({ default: m.ResumenPage })))
-const ActividadPage = lazy(() => import('./pages/ActividadPage').then((m) => ({ default: m.ActividadPage })))
 const FinanzasPage = lazy(() => import('./pages/FinanzasPage').then((m) => ({ default: m.FinanzasPage })))
+const GastosPage = lazy(() => import('./pages/GastosPage').then((m) => ({ default: m.GastosPage })))
+const ActividadPage = lazy(() => import('./pages/ActividadPage').then((m) => ({ default: m.ActividadPage })))
+const CajaPage = lazy(() => import('./pages/CajaPage').then((m) => ({ default: m.CajaPage })))
+const CobrosPage = lazy(() => import('./pages/CobrosPage').then((m) => ({ default: m.CobrosPage })))
+const RecepcionPage = lazy(() => import('./pages/RecepcionPage').then((m) => ({ default: m.RecepcionPage })))
+const AgendaPage = lazy(() => import('./pages/AgendaPage').then((m) => ({ default: m.AgendaPage })))
+const AseguradorasPage = lazy(() => import('./pages/AseguradorasPage').then((m) => ({ default: m.AseguradorasPage })))
 const CitasPage = lazy(() => import('./pages/CitasPage').then((m) => ({ default: m.CitasPage })))
 const PacienteHistorialPage = lazy(() =>
   import('./pages/PacienteHistorialPage').then((m) => ({ default: m.PacienteHistorialPage })),
@@ -24,10 +30,6 @@ const PacientesPage = lazy(() => import('./pages/PacientesPage').then((m) => ({ 
 const InventarioPage = lazy(() => import('./pages/InventarioPage').then((m) => ({ default: m.InventarioPage })))
 const DashboardDoctorPage = lazy(() =>
   import('./pages/DashboardDoctorPage').then((m) => ({ default: m.DashboardDoctorPage })),
-)
-const EquipoPage = lazy(() => import('./pages/EquipoPage').then((m) => ({ default: m.EquipoPage })))
-const EquipoDetallePage = lazy(() =>
-  import('./pages/EquipoDetallePage').then((m) => ({ default: m.EquipoDetallePage })),
 )
 const MiPerfilPage = lazy(() => import('./pages/MiPerfilPage').then((m) => ({ default: m.MiPerfilPage })))
 
@@ -68,9 +70,25 @@ function App() {
           }
         />
         <Route
+          path="/finanzas"
+          element={
+            <ProtectedRoute rolesPermitidos="Admin">
+              <FinanzasPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/gastos"
+          element={
+            <ProtectedRoute rolesPermitidos="Admin">
+              <GastosPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/personal"
           element={
-            <ProtectedRoute rolesPermitidos="Lemy">
+            <ProtectedRoute rolesPermitidos={['Lemy', 'Admin']}>
               <PersonalPage />
             </ProtectedRoute>
           }
@@ -84,10 +102,42 @@ function App() {
           }
         />
         <Route
-          path="/finanzas"
+          path="/caja"
           element={
             <ProtectedRoute rolesPermitidos="Fondos">
-              <FinanzasPage />
+              <CajaPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cobros"
+          element={
+            <ProtectedRoute rolesPermitidos="Fondos">
+              <CobrosPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recepcion"
+          element={
+            <ProtectedRoute rolesPermitidos="Fondos">
+              <RecepcionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/agenda"
+          element={
+            <ProtectedRoute rolesPermitidos="Fondos">
+              <AgendaPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/aseguradoras"
+          element={
+            <ProtectedRoute rolesPermitidos={['Admin', 'Lemy']}>
+              <AseguradorasPage />
             </ProtectedRoute>
           }
         />
@@ -128,22 +178,6 @@ function App() {
           element={
             <ProtectedRoute rolesPermitidos={['Admin', 'Doctor', 'Fondos', 'Farmacia', 'Lemy']}>
               <PacientesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/equipo"
-          element={
-            <ProtectedRoute rolesPermitidos="Admin">
-              <EquipoPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/equipo/:id"
-          element={
-            <ProtectedRoute rolesPermitidos="Admin">
-              <EquipoDetallePage />
             </ProtectedRoute>
           }
         />

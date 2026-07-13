@@ -11,5 +11,7 @@ public sealed class CrearPacienteRequestValidator : AbstractValidator<CrearPacie
         RuleFor(x => x.Apellido).NotEmpty().MaximumLength(150);
         RuleFor(x => x.Cedula).NotEmpty().Length(5, 20);
         RuleFor(x => x.Telefono).MaximumLength(30);
+        RuleFor(x => x.Edad).InclusiveBetween(0, 130).When(x => x.Edad.HasValue);
+        RuleFor(x => x.Condicion).MaximumLength(200);
     }
 }

@@ -8,4 +8,5 @@ public sealed record MovimientoFinancieroDto(
     decimal Monto,
     string Concepto,
     Guid? CitaId,
+    Guid? TurnoCajaId,
     DateTimeOffset RegistradoEn);

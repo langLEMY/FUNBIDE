@@ -99,6 +99,74 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                     b.ToTable("citas", "funbide");
                 });
 
+            modelBuilder.Entity("FUNBIDE.Domain.Entities.Cobro", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CitaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodigoAutorizacion")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Concepto")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("MetodoPago")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal?>("MontoCobertura")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<decimal>("MontoPagado")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<decimal>("MontoTotal")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<Guid>("PacienteId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("PorcentajeCobertura")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<DateTimeOffset>("RegistradoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("SeguroMedicoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TurnoCajaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CitaId");
+
+                    b.HasIndex("PacienteId");
+
+                    b.HasIndex("RegistradoEn");
+
+                    b.HasIndex("TurnoCajaId");
+
+                    b.ToTable("cobros", "funbide", t =>
+                        {
+                            t.HasCheckConstraint("ck_cobro_monto_pagado_no_negativo", "\"MontoPagado\" >= 0");
+
+                            t.HasCheckConstraint("ck_cobro_monto_total_positivo", "\"MontoTotal\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("FUNBIDE.Domain.Entities.Empleado", b =>
                 {
                     b.Property<Guid>("Id")
@@ -293,12 +361,17 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
+                    b.Property<Guid?>("TurnoCajaId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("UsuarioId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("RegistradoEn");
+
+                    b.HasIndex("TurnoCajaId");
 
                     b.ToTable("movimientos_financieros", "funbide", t =>
                         {
@@ -427,6 +500,91 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("resumenes_diarios", "funbide");
+                });
+
+            modelBuilder.Entity("FUNBIDE.Domain.Entities.SeguroMedico", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<decimal>("PorcentajeCobertura")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("seguros_medicos", "funbide", t =>
+                        {
+                            t.HasCheckConstraint("ck_seguro_medico_porcentaje_cobertura_rango", "\"PorcentajeCobertura\" > 0 AND \"PorcentajeCobertura\" <= 100");
+                        });
+                });
+
+            modelBuilder.Entity("FUNBIDE.Domain.Entities.TurnoCaja", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("AbiertoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("CerradoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("Diferencia")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal?>("MontoEsperado")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<decimal?>("MontoFinalContado")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<decimal>("MontoInicial")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<string>("Notas")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("UsuarioAperturaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UsuarioCierreId")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Estado")
+                        .IsUnique()
+                        .HasFilter("\"Estado\" = 'Abierto'");
+
+                    b.ToTable("turnos_caja", "funbide", t =>
+                        {
+                            t.HasCheckConstraint("ck_turno_caja_monto_inicial_no_negativo", "\"MontoInicial\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("FUNBIDE.Domain.Entities.Usuario", b =>

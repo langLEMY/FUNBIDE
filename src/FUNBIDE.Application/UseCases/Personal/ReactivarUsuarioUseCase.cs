@@ -2,6 +2,8 @@ using FUNBIDE.Application.Common;
 using FUNBIDE.Application.Common.Interfaces;
 using FUNBIDE.Application.DTOs.Personal;
 using FUNBIDE.Application.Exceptions;
+using FUNBIDE.Domain.Enums;
+using FUNBIDE.Domain.Exceptions;
 using FUNBIDE.Domain.Interfaces;
 
 namespace FUNBIDE.Application.UseCases.Personal;
@@ -21,6 +23,20 @@ public sealed class ReactivarUsuarioUseCase(
     {
         var usuario = await usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken)
             ?? throw new RecursoNoEncontradoException(nameof(Domain.Entities.Usuario), usuarioId);
+
+        if (usuario.Rol == RolUsuario.Lemy && currentUser.Rol != RolUsuario.Lemy)
+        {
+            throw new OperacionNoPermitidaException("Solo una cuenta Lemy puede administrar cuentas con rol Lemy.");
+        }
+
+        // Una cuenta borrada permanentemente ya no existe en Supabase Auth (ver
+        // EliminarUsuarioPermanentementeUseCase); reactivarla dejaría Activo=true con
+        // EliminadoPermanentemente=true, un estado inconsistente e irreversible.
+        if (usuario.EliminadoPermanentemente)
+        {
+            throw new OperacionNoPermitidaException(
+                "Esta cuenta fue eliminada permanentemente y no puede reactivarse. Creá una cuenta nueva.");
+        }
 
         await supabaseAdmin.RestaurarAccesoAsync(usuario.SupabaseUserId, cancellationToken);
         usuario.Reactivar();

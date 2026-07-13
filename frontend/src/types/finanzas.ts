@@ -8,6 +8,7 @@ export interface MovimientoFinanciero {
   monto: number
   concepto: string
   citaId: string | null
+  turnoCajaId: string | null
   registradoEn: string
 }
 

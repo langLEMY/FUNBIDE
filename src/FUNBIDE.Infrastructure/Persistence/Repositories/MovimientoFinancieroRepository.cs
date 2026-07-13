@@ -12,6 +12,22 @@ public sealed class MovimientoFinancieroRepository(FunbideDbContext dbContext) :
             .OrderByDescending(m => m.RegistradoEn)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<MovimientoFinanciero>> ObtenerPorTurnoAsync(
+        Guid turnoCajaId, CancellationToken cancellationToken) =>
+        await dbContext.MovimientosFinancieros
+            .AsNoTracking()
+            .Where(m => m.TurnoCajaId == turnoCajaId)
+            .OrderByDescending(m => m.RegistradoEn)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<MovimientoFinanciero>> ObtenerPorRangoAsync(
+        DateTimeOffset desde, DateTimeOffset hasta, CancellationToken cancellationToken) =>
+        await dbContext.MovimientosFinancieros
+            .AsNoTracking()
+            .Where(m => m.RegistradoEn >= desde && m.RegistradoEn < hasta)
+            .OrderByDescending(m => m.RegistradoEn)
+            .ToListAsync(cancellationToken);
+
     public async Task RegistrarAsync(MovimientoFinanciero movimiento, CancellationToken cancellationToken) =>
         await dbContext.MovimientosFinancieros.AddAsync(movimiento, cancellationToken);
 

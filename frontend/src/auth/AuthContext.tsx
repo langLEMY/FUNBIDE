@@ -11,7 +11,7 @@ interface AuthContextValue {
   perfilCargando: boolean
   perfilError: string | null
   iniciarSesion: (correo: string, contrasena: string) => Promise<void>
-  cerrarSesion: () => Promise<void>
+  cerrarSesion: (opciones?: { scope?: 'global' }) => Promise<void>
   recargarPerfil: () => Promise<void>
   recuperarContrasena: (correo: string) => Promise<void>
   restablecerContrasena: (nuevaContrasena: string) => Promise<void>
@@ -69,8 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const cerrarSesion = async () => {
-    await supabase.auth.signOut()
+  const cerrarSesion = async (opciones?: { scope?: 'global' }) => {
+    await supabase.auth.signOut(opciones)
   }
 
   const recuperarContrasena = async (correo: string) => {

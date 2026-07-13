@@ -5,7 +5,7 @@ import { api, ApiError } from '../lib/api'
 import { coloresParaTema } from '../styles/colors'
 import { useTheme } from '../theme/ThemeContext'
 import type { Cita } from '../types/cita'
-import type { Paciente } from '../types/paciente'
+import type { PacientesPaginados } from '../types/paciente'
 import './DashboardDoctorPage.css'
 
 const formateadorEntero = new Intl.NumberFormat('es-DO')
@@ -17,7 +17,8 @@ export function DashboardDoctorPage() {
 
   const [pendientes, setPendientes] = useState<Cita[]>([])
   const [programadas, setProgramadas] = useState<Cita[]>([])
-  const [pacientes, setPacientes] = useState<Paciente[]>([])
+  const [completadas, setCompletadas] = useState<Cita[]>([])
+  const [pacientes, setPacientes] = useState<PacientesPaginados | null>(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -27,12 +28,17 @@ export function DashboardDoctorPage() {
     Promise.all([
       api.get<Cita[]>('/api/citas/pendientes'),
       api.get<Cita[]>('/api/citas/programadas'),
-      api.get<Paciente[]>('/api/pacientes'),
+      api.get<Cita[]>('/api/citas/completadas'),
+      // El endpoint devuelve paginado ({ items, total, ... }), no un array plano — se
+      // pide la página más grande permitida (100) solo para tener nombres a mano en
+      // "Próximas citas"; el conteo de "Pacientes totales" usa `.total`, no `.items.length`.
+      api.get<PacientesPaginados>('/api/pacientes?pagina=1&tamanoPagina=100'),
     ])
-      .then(([datosPendientes, datosProgramadas, datosPacientes]) => {
+      .then(([datosPendientes, datosProgramadas, datosCompletadas, datosPacientes]) => {
         if (cancelado) return
         setPendientes(datosPendientes)
         setProgramadas(datosProgramadas)
+        setCompletadas(datosCompletadas)
         setPacientes(datosPacientes)
       })
       .catch((err) => {
@@ -51,7 +57,7 @@ export function DashboardDoctorPage() {
 
   const nombrePorPacienteId = useMemo(() => {
     const mapa = new Map<string, string>()
-    for (const paciente of pacientes) {
+    for (const paciente of pacientes?.items ?? []) {
       mapa.set(paciente.id, `${paciente.nombre} ${paciente.apellido}`)
     }
     return mapa
@@ -68,10 +74,6 @@ export function DashboardDoctorPage() {
 
   return (
     <DashboardLayout titulo="Dashboard">
-      <p className="text-muted dashboard-doctor-aviso">
-        Panel temporal — más adelante va a tener más indicadores clínicos.
-      </p>
-
       {error && <p className="dashboard-error">{error}</p>}
 
       <section className="dashboard-stats">
@@ -86,8 +88,13 @@ export function DashboardDoctorPage() {
           colorSerie={chartColors.pacientes}
         />
         <StatCard
+          etiqueta="Consultas completadas"
+          valor={cargando ? '—' : formateadorEntero.format(completadas.length)}
+          colorSerie={chartColors.pacientes}
+        />
+        <StatCard
           etiqueta="Pacientes totales"
-          valor={cargando ? '—' : formateadorEntero.format(pacientes.length)}
+          valor={cargando ? '—' : formateadorEntero.format(pacientes?.total ?? 0)}
           colorSerie={chartColors.actividad}
         />
       </section>

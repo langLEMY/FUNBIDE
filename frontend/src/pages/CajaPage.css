@@ -1,0 +1,232 @@
+.caja-apertura-card,
+.caja-balance-card,
+.caja-desglose-card,
+.caja-alertas-card,
+.caja-egreso-card,
+.caja-timeline-card,
+.caja-cierre-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.caja-card-subtitulo {
+  margin: 4px 0 14px;
+  font-size: 13px;
+}
+
+.caja-apertura-form,
+.caja-egreso-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.caja-apertura-form input,
+.caja-egreso-form input {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 200px;
+}
+
+.caja-apertura-form button,
+.caja-egreso-form button,
+.caja-cierre-form button {
+  background: var(--series-dinero);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.caja-apertura-form button:disabled,
+.caja-egreso-form button:disabled,
+.caja-cierre-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.caja-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.caja-arqueo-cuadrado {
+  color: var(--success, #1a7f37);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.caja-arqueo-diferencia {
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+.caja-aviso-gastos-admin {
+  color: var(--warning, #9a6700);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.caja-efectivo-esperado {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.caja-grilla-balance {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+  .caja-grilla-balance {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.caja-balance-card {
+  margin-bottom: 0;
+}
+
+.caja-balance-monto {
+  margin: 4px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.caja-balance-monto-negativo {
+  color: var(--danger);
+}
+
+.caja-desglose-card h2,
+.caja-egreso-card h2,
+.caja-timeline-card h2,
+.caja-cierre-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.caja-desglose-grilla {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .caja-desglose-grilla {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.caja-desglose-grilla p:last-child {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+
+.caja-alertas-card {
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border-hairline));
+}
+
+.caja-alerta {
+  margin: 0;
+  font-size: 14px;
+}
+
+.caja-alerta + .caja-alerta {
+  margin-top: 8px;
+}
+
+.caja-alerta-deuda {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.caja-timeline-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.caja-timeline-lista li {
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.caja-timeline-ingreso {
+  color: var(--series-pacientes);
+  font-weight: 600;
+}
+
+.caja-timeline-egreso {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.caja-boton-cerrar {
+  background: var(--danger);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.caja-cierre-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 420px;
+}
+
+.caja-cierre-form input,
+.caja-cierre-form textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.caja-cierre-form textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+
+.caja-cierre-acciones {
+  display: flex;
+  gap: 10px;
+}
+
+.caja-cierre-acciones button:last-child {
+  background: var(--surface-2);
+}

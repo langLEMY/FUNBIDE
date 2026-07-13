@@ -16,7 +16,11 @@ public sealed class ListarPacientesUseCase(IPacienteRepository pacienteRepositor
     public async Task<PacientesPaginadosDto> EjecutarAsync(
         ListarPacientesRequest request, CancellationToken cancellationToken)
     {
-        var pagina = request.Pagina < 1 ? 1 : request.Pagina;
+        // Cota superior además del "< 1": sin esto, un pagina absurdamente grande puede
+        // desbordar el int de (pagina - 1) * tamanoPagina más adelante (aritmética
+        // unchecked por defecto en C#), produciendo un Skip negativo y un 500 en vez de
+        // simplemente devolver una página vacía.
+        var pagina = Math.Clamp(request.Pagina, 1, 1_000_000);
         var tamanoPagina = request.TamanoPagina < 1
             ? TamanoPaginaPorDefecto
             : Math.Min(request.TamanoPagina, TamanoPaginaMaximo);

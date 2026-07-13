@@ -16,10 +16,18 @@ public sealed class MovimientoFinanciero : AppendOnlyEntity
     public Guid UsuarioId { get; private set; }
     public Guid? CitaId { get; private set; }
 
+    /// <summary>
+    /// Turno de caja en el que se registró el movimiento (ver <see cref="TurnoCaja"/>).
+    /// Nullable para no romper filas históricas de antes de que existiera el concepto de
+    /// turno; todo movimiento nuevo lo trae siempre, exigido por
+    /// <c>RegistrarMovimientoFinancieroUseCase</c>.
+    /// </summary>
+    public Guid? TurnoCajaId { get; private set; }
+
     private MovimientoFinanciero() { }
 
     public MovimientoFinanciero(
-        TipoMovimientoFinanciero tipo, decimal monto, string concepto, Guid usuarioId, Guid? citaId = null)
+        TipoMovimientoFinanciero tipo, decimal monto, string concepto, Guid usuarioId, Guid? citaId = null, Guid? turnoCajaId = null)
     {
         if (monto <= 0)
         {
@@ -36,6 +44,7 @@ public sealed class MovimientoFinanciero : AppendOnlyEntity
         Concepto = concepto.Trim();
         UsuarioId = usuarioId;
         CitaId = citaId;
+        TurnoCajaId = turnoCajaId;
     }
 
     /// <summary>Ingreso suma, egreso resta: usado para acumular el neto del día en <see cref="ResumenDiario"/>.</summary>

@@ -29,6 +29,8 @@ src/FUNBIDE.API/wwwroot/
 !.env.example
 # Sin secretos (solo VITE_AUTH_MODE/VITE_API_BASE_URL): se commitea para el build offline.
 !.env.offline
+# Sin secretos (placeholders CHANGE_ME): se commitea como plantilla de docker-compose.local.yml.
+!.env.local.example
 
 # Configuración local del usuario de Claude Code (no es del equipo)
 .claude/settings.local.json

@@ -1,0 +1,212 @@
+.cobros-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+
+.cobros-aviso-caja-cerrada {
+  background: var(--surface-1);
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border-hairline));
+  border-radius: var(--radius-card);
+  color: var(--danger);
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cobros-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .cobros-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cobros-columna-principal {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.cobros-pendientes-card,
+.cobros-buscador-card,
+.cobros-formulario-card,
+.cobros-impresion-card,
+.cobros-historial-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+}
+
+.cobros-pendientes-card h2,
+.cobros-buscador-card h2,
+.cobros-formulario-card h2,
+.cobros-impresion-card h2,
+.cobros-historial-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.cobros-pendientes-lista,
+.cobros-resultados-lista,
+.cobros-historial-lista {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cobros-pendientes-lista li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.cobros-resultados-lista button {
+  width: 100%;
+  text-align: left;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cobros-buscador-card input[type='search'] {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+}
+
+.cobros-aviso-deuda {
+  color: var(--danger);
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 14px;
+}
+
+.cobros-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 420px;
+}
+
+.cobros-formulario input,
+.cobros-formulario select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.cobros-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.cobros-label-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.cobros-cobertura-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--series-dinero);
+  background: var(--surface-2);
+  border-radius: var(--radius-control);
+  padding: 10px;
+}
+
+.cobros-monto-a-cobrar {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.cobros-formulario button {
+  background: var(--series-dinero);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cobros-formulario button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.cobros-impresion-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cobros-impresion-botones button {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cobros-historial-lista li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.cobros-comprobante {
+  display: none;
+}
+
+@media print {
+  .cobros-comprobante {
+    display: block;
+    padding: 24px;
+  }
+
+  .cobros-comprobante p {
+    margin: 6px 0;
+  }
+}

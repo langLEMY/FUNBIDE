@@ -1,0 +1,110 @@
+.aseguradoras-crear-card,
+.aseguradoras-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.aseguradoras-crear-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.aseguradoras-crear-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.aseguradoras-crear-form input,
+.aseguradoras-tabla input {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+}
+
+.aseguradoras-crear-form input {
+  flex: 1 1 160px;
+}
+
+.aseguradoras-crear-form button,
+.aseguradoras-acciones button {
+  background: var(--series-dinero);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.aseguradoras-crear-form button:disabled,
+.aseguradoras-acciones button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.aseguradoras-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.aseguradoras-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.aseguradoras-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.aseguradoras-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.aseguradoras-fila-inactiva {
+  opacity: 0.55;
+}
+
+.aseguradoras-estado {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.aseguradoras-estado.activo {
+  background: color-mix(in srgb, var(--series-pacientes) 20%, transparent);
+  color: var(--series-pacientes);
+}
+
+.aseguradoras-estado.inactivo {
+  background: color-mix(in srgb, var(--text-muted) 25%, transparent);
+  color: var(--text-secondary);
+}
+
+.aseguradoras-acciones {
+  display: flex;
+  gap: 8px;
+}
+
+.aseguradoras-acciones button:last-child {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}

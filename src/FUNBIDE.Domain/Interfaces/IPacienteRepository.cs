@@ -20,6 +20,10 @@ public interface IPacienteRepository
 
     Task<Paciente?> ObtenerPorDocumentoAsync(string documento, CancellationToken cancellationToken);
 
+    /// <summary>Nombre completo por id, en lote: para enriquecer listados de citas/cobros sin hacer N consultas.</summary>
+    Task<IReadOnlyDictionary<Guid, string>> ObtenerNombresPorIdsAsync(
+        IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
+
     Task AgregarAsync(Paciente paciente, CancellationToken cancellationToken);
 
     void Eliminar(Paciente paciente);
