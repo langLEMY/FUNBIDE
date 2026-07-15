@@ -31,6 +31,11 @@ src/FUNBIDE.API/wwwroot/
 !.env.offline
 # Sin secretos (placeholders CHANGE_ME): se commitea como plantilla de docker-compose.local.yml.
 !.env.local.example
+# La URL y la anon key de Supabase NO son secretas (se embeben en el bundle del
+# cliente igual; la seguridad real es Row Level Security del lado de Supabase, no
+# ocultar esto) — se commitea para que "npm run build" (modo real) funcione desde
+# un clon nuevo del repo sin configuración manual previa.
+!.env.production
 
 # Configuración local del usuario de Claude Code (no es del equipo)
 .claude/settings.local.json
@@ -55,10 +60,19 @@ publish/
 
 # Build publicado del launcher de escritorio (launcher/) — binario grande
 # atado a esta máquina, se regenera con "dotnet publish launcher -c Release -o .".
+# Los .xml son documentación de paquetes NuGet (p. ej. WebView2) que "dotnet
+# publish -o ." copia sueltos a la raíz junto al exe.
 /FUNBIDE.exe
 /FUNBIDE.pdb
+/*.xml
 
 # Paquete offline/USB generado por scripts/publicar-offline.ps1 — binarios grandes
 # autocontenidos, se regeneran corriendo el script, nunca se commitean.
 /dist-offline/
 /dist-offline.zip
+
+# Paquete portable (FUNBIDE.exe + publish\, sin instalador) generado por
+# scripts/publicar-portable.ps1 — lleva la contraseña real de Supabase adentro,
+# nunca va a git.
+/dist-portable/
+/dist-portable.zip
