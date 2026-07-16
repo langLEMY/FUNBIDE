@@ -15,15 +15,20 @@ namespace FUNBIDE.Infrastructure.Security;
 /// — a diferencia de Supabase, acá no hay un token pre-emitido que pueda quedar
 /// desactualizado, así que no hace falta sincronizar nada por separado.
 /// </summary>
+/// <remarks>
+/// Soporta dos formatos de hash en <see cref="CredencialLocal.PasswordHash"/>: bcrypt
+/// (prefijo "$2") para cuentas migradas 1:1 desde <c>auth.users.encrypted_password</c> de
+/// Supabase (preserva la contraseña real de quien ya la tenía, sin obligar a un reseteo),
+/// y el formato de <see cref="PasswordHasher{TUser}"/> para cualquier credencial creada o
+/// cambiada después dentro de este modo Local (sembrador inicial, "cambiar contraseña").
+/// </remarks>
 public sealed class AutenticacionLocalService(
     FunbideDbContext dbContext, IOptions<LocalJwtOptions> opciones) : IAutenticacionLocalService
 {
-    private readonly PasswordHasher<CredencialLocal> hasher = new();
-
     // Hash ficticio de una contraseña aleatoria fija, calculado una sola vez: cuando el
-    // correo no existe (o la cuenta está inactiva/borrada), igual corremos un
-    // VerifyHashedPassword contra esto antes de devolver null. Sin esto, "correo no
-    // existe" devolvía al instante mientras "correo existe" tardaba lo que tarda hashear
+    // correo no existe (o la cuenta está inactiva/borrada), igual corremos una
+    // verificación contra esto antes de devolver null. Sin esto, "correo no existe"
+    // devolvía al instante mientras "correo existe" tardaba lo que tarda hashear/verificar
     // — una diferencia de tiempo medible que permite enumerar correos válidos por fuerza bruta.
     private static readonly string HashFicticio =
         new PasswordHasher<CredencialLocal>().HashPassword(new CredencialLocal(Guid.Empty, string.Empty), Guid.NewGuid().ToString());
@@ -44,11 +49,10 @@ public sealed class AutenticacionLocalService(
                 .FirstOrDefaultAsync(c => c.UsuarioId == usuario.SupabaseUserId, cancellationToken);
         }
 
-        var resultado = hasher.VerifyHashedPassword(
-            credencial ?? new CredencialLocal(Guid.Empty, string.Empty), credencial?.PasswordHash ?? HashFicticio, contrasena);
+        var passwordValida = VerificarContrasena(credencial?.PasswordHash ?? HashFicticio, contrasena);
 
         if (usuario is null || !usuario.Activo || usuario.EliminadoPermanentemente ||
-            credencial is null || resultado == PasswordVerificationResult.Failed)
+            credencial is null || !passwordValida)
         {
             return null;
         }
@@ -77,5 +81,28 @@ public sealed class AutenticacionLocalService(
 
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
         return new TokenLocalResultado(accessToken, expira);
+    }
+
+    // Los hashes bcrypt (los que trae una cuenta migrada 1:1 desde Supabase) siempre
+    // empiezan con "$2" (variantes $2a$/$2b$/$2y$) — cualquier otra cosa es un hash de
+    // PasswordHasher<T> generado por este mismo modo Local (sembrador o cambio de
+    // contraseña posterior). BCrypt.Verify ya corre en tiempo constante internamente.
+    private static bool VerificarContrasena(string hash, string contrasena)
+    {
+        if (hash.StartsWith("$2", StringComparison.Ordinal))
+        {
+            try
+            {
+                return BCrypt.Net.BCrypt.Verify(contrasena, hash);
+            }
+            catch (BCrypt.Net.SaltParseException)
+            {
+                return false;
+            }
+        }
+
+        var hasher = new PasswordHasher<CredencialLocal>();
+        var resultado = hasher.VerifyHashedPassword(new CredencialLocal(Guid.Empty, string.Empty), hash, contrasena);
+        return resultado != PasswordVerificationResult.Failed;
     }
 }
