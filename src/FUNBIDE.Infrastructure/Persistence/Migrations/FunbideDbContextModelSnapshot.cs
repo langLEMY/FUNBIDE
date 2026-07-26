@@ -167,6 +167,69 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("FUNBIDE.Domain.Entities.ConfiguracionSistema", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ActualizadoPorUsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("ModoMantenimientoActivo")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ModoMantenimientoMensaje")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("configuracion_sistema", "funbide");
+                });
+
+            modelBuilder.Entity("FUNBIDE.Domain.Entities.Donacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Concepto")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("DonanteContacto")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("DonanteNombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("Monto")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<DateTimeOffset>("RegistradoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RegistradoEn");
+
+                    b.ToTable("donaciones", "funbide", t =>
+                        {
+                            t.HasCheckConstraint("ck_donacion_monto_positivo", "\"Monto\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("FUNBIDE.Domain.Entities.Empleado", b =>
                 {
                     b.Property<Guid>("Id")
@@ -605,6 +668,10 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<string>("Especialidad")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
 
                     b.Property<string>("FotoPerfilUrl")
                         .HasMaxLength(500)

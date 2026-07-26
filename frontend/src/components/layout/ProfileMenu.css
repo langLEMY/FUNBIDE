@@ -47,7 +47,7 @@
   background: var(--surface-2);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-card);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-chrome);
   overflow: hidden;
   z-index: 30;
   transform-origin: top right;

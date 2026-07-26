@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { api, ApiError } from '../lib/api'
+import { exportarCsv } from '../lib/exportarCsv'
 import { coloresParaTema } from '../styles/colors'
 import { useTheme } from '../theme/ThemeContext'
 import type { MovimientoImportante, ResumenMensual } from '../types/finanzasAdmin'
@@ -105,12 +106,31 @@ export function FinanzasPage() {
   }, [resumenAnual, mes])
 
   const aniosDisponibles = Array.from({ length: 5 }, (_, i) => anioActual - i)
+  const etiquetaPeriodo = mes ? `${NOMBRES_MES_COMPLETO[mes - 1]}_${anio}` : `${anio}`
+
+  const handleExportar = () => {
+    exportarCsv(
+      `movimientos_${etiquetaPeriodo}.csv`,
+      movimientos.map((movimiento) => ({
+        fecha: formateadorFechaHora.format(new Date(movimiento.fecha)),
+        origen: movimiento.origen,
+        tipo: movimiento.tipo,
+        concepto: movimiento.concepto,
+        paciente: movimiento.pacienteNombre ?? '',
+        monto: movimiento.monto,
+      })),
+    )
+  }
 
   return (
     <DashboardLayout titulo="Finanzas">
       {error && <p className="finanzas-admin-error">{error}</p>}
 
-      <div className="finanzas-admin-filtros">
+      <h1 className="finanzas-admin-print-titulo">
+        FUNBIDE — Reporte financiero — {mes ? `${NOMBRES_MES_COMPLETO[mes - 1]} ${anio}` : `Año ${anio}`}
+      </h1>
+
+      <div className="finanzas-admin-filtros no-imprimir">
         <select value={anio} onChange={(event) => setAnio(Number(event.target.value))}>
           {aniosDisponibles.map((opcion) => (
             <option key={opcion} value={opcion}>
@@ -126,6 +146,12 @@ export function FinanzasPage() {
             </option>
           ))}
         </select>
+        <button type="button" onClick={handleExportar} disabled={movimientos.length === 0}>
+          Exportar Excel
+        </button>
+        <button type="button" onClick={() => window.print()}>
+          Imprimir reporte
+        </button>
       </div>
 
       <div className="finanzas-admin-kpis">
@@ -154,7 +180,7 @@ export function FinanzasPage() {
           Ganancias de {anio} por mes — click en un mes para filtrar el detalle
         </p>
         {cargandoResumen ? (
-          <p className="text-secondary">Cargando…</p>
+          <p className="text-secondary cargando-pulso">Cargando…</p>
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={datosGrafico} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -213,13 +239,13 @@ export function FinanzasPage() {
             Movimientos importantes — {mes ? NOMBRES_MES_COMPLETO[mes - 1] : 'todo el año'} {anio}
           </p>
           {mes && (
-            <button type="button" className="finanzas-admin-limpiar-mes" onClick={() => setMes(null)}>
+            <button type="button" className="finanzas-admin-limpiar-mes no-imprimir" onClick={() => setMes(null)}>
               Ver todo el año
             </button>
           )}
         </div>
         {cargandoMovimientos ? (
-          <p className="text-secondary">Cargando…</p>
+          <p className="text-secondary cargando-pulso">Cargando…</p>
         ) : movimientos.length === 0 ? (
           <p className="text-secondary">No hay movimientos en este período.</p>
         ) : (

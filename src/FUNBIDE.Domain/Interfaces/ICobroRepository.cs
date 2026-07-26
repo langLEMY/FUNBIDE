@@ -20,6 +20,9 @@ public interface ICobroRepository
     /// <summary>Cuenta pacientes distintos con al menos un cobro con saldo pendiente, para el aviso del dashboard.</summary>
     Task<int> ContarPacientesConDeudaAsync(CancellationToken cancellationToken);
 
+    /// <summary>Deuda de TODOS los pacientes con saldo pendiente (no solo un subconjunto conocido), para la alerta del Dashboard de Admin.</summary>
+    Task<IReadOnlyDictionary<Guid, decimal>> ObtenerTodosConDeudaAsync(CancellationToken cancellationToken);
+
     /// <summary>true si ya existe un cobro registrado contra esta cita (para no cobrarla dos veces).</summary>
     Task<bool> ExisteCobroParaCitaAsync(Guid citaId, CancellationToken cancellationToken);
 

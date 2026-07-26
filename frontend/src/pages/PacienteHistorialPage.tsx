@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
+import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import type { Paciente } from '../types/paciente'
 import type { EntradaHistorial } from '../types/historialClinico'
@@ -12,6 +13,10 @@ const formateadorFechaHora = new Intl.DateTimeFormat('es-DO', { dateStyle: 'medi
 export function PacienteHistorialPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { perfil } = useAuth()
+  // Admin puede supervisar el historial pero no escribirlo: eso sigue siendo exclusivo
+  // del Doctor (ver HistorialClinicoController, POST solo permite RolUsuario.Doctor).
+  const puedeRegistrar = perfil?.rol === 'Doctor'
 
   const [paciente, setPaciente] = useState<Paciente | null>(null)
   const [entradas, setEntradas] = useState<EntradaHistorial[]>([])
@@ -91,7 +96,7 @@ export function PacienteHistorialPage() {
       </button>
 
       {cargando ? (
-        <p className="text-secondary">Cargando…</p>
+        <p className="text-secondary cargando-pulso">Cargando…</p>
       ) : error && !paciente ? (
         <p className="historial-error">{error}</p>
       ) : (
@@ -105,26 +110,28 @@ export function PacienteHistorialPage() {
             </section>
           )}
 
-          <section className="historial-crear-card">
-            <h2>Agregar entrada</h2>
-            <form className="historial-crear-form" onSubmit={(event) => void handleRegistrar(event)}>
-              <input
-                placeholder="Diagnóstico"
-                value={diagnostico}
-                onChange={(event) => setDiagnostico(event.target.value)}
-              />
-              <input
-                placeholder="Tratamiento"
-                value={tratamiento}
-                onChange={(event) => setTratamiento(event.target.value)}
-              />
-              <textarea placeholder="Notas" value={notas} onChange={(event) => setNotas(event.target.value)} />
-              <button type="submit" disabled={registrando}>
-                {registrando ? 'Guardando…' : 'Guardar entrada'}
-              </button>
-            </form>
-            {errorRegistrar && <p className="historial-error">{errorRegistrar}</p>}
-          </section>
+          {puedeRegistrar && (
+            <section className="historial-crear-card">
+              <h2>Agregar entrada</h2>
+              <form className="historial-crear-form" onSubmit={(event) => void handleRegistrar(event)}>
+                <input
+                  placeholder="Diagnóstico"
+                  value={diagnostico}
+                  onChange={(event) => setDiagnostico(event.target.value)}
+                />
+                <input
+                  placeholder="Tratamiento"
+                  value={tratamiento}
+                  onChange={(event) => setTratamiento(event.target.value)}
+                />
+                <textarea placeholder="Notas" value={notas} onChange={(event) => setNotas(event.target.value)} />
+                <button type="submit" disabled={registrando}>
+                  {registrando ? 'Guardando…' : 'Guardar entrada'}
+                </button>
+              </form>
+              {errorRegistrar && <p className="historial-error">{errorRegistrar}</p>}
+            </section>
+          )}
 
           <section className="historial-lista-card">
             {entradas.length === 0 ? (

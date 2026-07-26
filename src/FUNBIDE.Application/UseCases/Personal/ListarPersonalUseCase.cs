@@ -28,7 +28,7 @@ public sealed class ListarPersonalUseCase(
         }
 
         return usuarios
-            .Select(u => new UsuarioDto(u.Id, u.NombreCompleto, u.Correo, u.Rol, u.Activo, u.FotoPerfilUrl))
+            .Select(u => new UsuarioDto(u.Id, u.NombreCompleto, u.Correo, u.Rol, u.Activo, u.FotoPerfilUrl, u.Especialidad))
             .ToList();
     }
 }

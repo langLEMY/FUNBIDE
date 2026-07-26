@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../auth/AuthContext'
 import { traducirErrorAuth } from '../auth/mensajesError'
-import { FondoBlobs } from '../components/layout/FondoBlobs'
 import './LoginPage.css'
 
 /**
@@ -69,8 +68,6 @@ export function RestablecerContrasenaPage() {
 
   return (
     <div className="login-page">
-      <FondoBlobs />
-
       <form className="login-card" onSubmit={(event) => void handleSubmit(event)}>
         <div className="login-ventana-barra">
           <div className="login-ventana-puntos">

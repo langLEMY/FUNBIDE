@@ -46,6 +46,14 @@ public sealed class CobroRepository(FunbideDbContext dbContext) : ICobroReposito
             .Distinct()
             .CountAsync(cancellationToken);
 
+    public async Task<IReadOnlyDictionary<Guid, decimal>> ObtenerTodosConDeudaAsync(CancellationToken cancellationToken) =>
+        await dbContext.Cobros
+            .AsNoTracking()
+            .Where(c => c.MontoTotal - (c.MontoCobertura ?? 0) - c.MontoPagado > 0)
+            .GroupBy(c => c.PacienteId)
+            .Select(g => new { PacienteId = g.Key, Deuda = g.Sum(c => c.MontoTotal - (c.MontoCobertura ?? 0) - c.MontoPagado) })
+            .ToDictionaryAsync(x => x.PacienteId, x => x.Deuda, cancellationToken);
+
     public async Task<IReadOnlyList<Cobro>> ObtenerPorRangoAsync(
         DateTimeOffset desde, DateTimeOffset hasta, CancellationToken cancellationToken) =>
         await dbContext.Cobros

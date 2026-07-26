@@ -1,0 +1,150 @@
+.operaciones-intro {
+  margin: 0 0 20px;
+}
+
+.operaciones-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+
+.operaciones-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.operaciones-seccion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.operaciones-seccion-titulo {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.operaciones-seccion-header .operaciones-seccion-titulo {
+  margin: 0;
+}
+
+.operaciones-presets {
+  display: flex;
+  gap: 8px;
+}
+
+.operaciones-presets button {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.operaciones-rango,
+.operaciones-filtros {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.operaciones-rango label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.operaciones-rango input,
+.operaciones-filtros input,
+.operaciones-filtros select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.operaciones-rango button,
+.operaciones-filtros-limpiar {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.operaciones-tabla-scroll {
+  overflow-x: auto;
+}
+
+.operaciones-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.operaciones-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+  white-space: nowrap;
+}
+
+.operaciones-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+  white-space: nowrap;
+}
+
+.operaciones-diferencia-distinta {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.operaciones-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.operaciones-badge-programada {
+  background: color-mix(in srgb, var(--series-dinero) 20%, transparent);
+  color: var(--series-dinero);
+}
+
+.operaciones-badge-en-espera {
+  background: color-mix(in srgb, var(--series-pacientes) 20%, transparent);
+  color: var(--series-pacientes);
+}
+
+.operaciones-badge-completada {
+  background: color-mix(in srgb, var(--text-muted) 25%, transparent);
+  color: var(--text-secondary);
+}
+
+.operaciones-badge-cancelada {
+  background: color-mix(in srgb, var(--danger) 20%, transparent);
+  color: var(--danger);
+}

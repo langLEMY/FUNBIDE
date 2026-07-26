@@ -10,6 +10,9 @@ public interface ICitaRepository
     Task<IReadOnlyList<Cita>> ObtenerPorDoctorYEstadoAsync(
         Guid doctorId, EstadoCita estado, CancellationToken cancellationToken);
 
+    /// <summary>Ids distintos de pacientes que alguna vez tuvieron una cita con este doctor (cualquier estado) — para el Dashboard de Doctor, que no tiene un vínculo directo Paciente-Doctor en el dominio.</summary>
+    Task<IReadOnlyList<Guid>> ObtenerPacienteIdsDistintosPorDoctorAsync(Guid doctorId, CancellationToken cancellationToken);
+
     Task<bool> ExisteAlgunaParaPacienteAsync(Guid pacienteId, CancellationToken cancellationToken);
 
     /// <summary>true si el paciente ya tiene una cita Programada o EnEspera con ese doctor (evita duplicar una llegada walk-in).</summary>

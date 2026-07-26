@@ -30,7 +30,7 @@ public sealed class PacientesController(
     IImportarPacientesUseCase importarPacientes) : ControllerBase
 {
     [HttpGet]
-    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
     public async Task<ActionResult<PacientesPaginadosDto>> ListarAsync(
         [FromQuery] int pagina, [FromQuery] int tamanoPagina, [FromQuery] string? busqueda,
         [FromQuery] EstadoPaciente? estado, CancellationToken cancellationToken) =>
@@ -38,12 +38,12 @@ public sealed class PacientesController(
             new ListarPacientesRequest(pagina, tamanoPagina, busqueda, estado), cancellationToken));
 
     [HttpGet("{id:guid}")]
-    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
     public async Task<ActionResult<PacienteDto>> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken) =>
         Ok(await obtenerPacientePorId.EjecutarAsync(id, cancellationToken));
 
     [HttpPost]
-    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
     public async Task<ActionResult<PacienteDto>> CrearAsync(
         CrearPacienteRequest request, CancellationToken cancellationToken)
     {

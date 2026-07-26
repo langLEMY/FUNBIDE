@@ -13,7 +13,7 @@ export function ProtectedRoute({ children, rolesPermitidos }: ProtectedRouteProp
   const { session, perfil, cargando, perfilError } = useAuth()
 
   if (cargando) {
-    return <div className="pantalla-centrada text-secondary">Cargando…</div>
+    return <div className="pantalla-centrada text-secondary cargando-pulso">Cargando…</div>
   }
 
   if (!session) {
@@ -30,7 +30,7 @@ export function ProtectedRoute({ children, rolesPermitidos }: ProtectedRouteProp
       return <EstadoBloqueado mensaje={`No se pudo cargar tu perfil: ${perfilError}`} />
     }
 
-    return <div className="pantalla-centrada text-secondary">Cargando tu perfil…</div>
+    return <div className="pantalla-centrada text-secondary cargando-pulso">Cargando tu perfil…</div>
   }
 
   const roles = rolesPermitidos ? (Array.isArray(rolesPermitidos) ? rolesPermitidos : [rolesPermitidos]) : null

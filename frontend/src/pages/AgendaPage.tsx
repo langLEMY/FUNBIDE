@@ -1,6 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { api, ApiError } from '../lib/api'
+import { agruparDoctoresPorEspecialidad } from '../lib/agruparDoctores'
 import type { CitaAgenda } from '../types/cita'
 import type { Paciente, PacientesPaginados } from '../types/paciente'
 import type { DoctorSimple } from '../types/doctor'
@@ -30,6 +31,7 @@ function construirQuery(fecha: string, doctorId: string): string {
 
 export function AgendaPage() {
   const [doctores, setDoctores] = useState<DoctorSimple[]>([])
+  const gruposDoctores = useMemo(() => agruparDoctoresPorEspecialidad(doctores), [doctores])
   const [citas, setCitas] = useState<CitaAgenda[]>([])
   const [cargando, setCargando] = useState(true)
   const [cargandoTabla, setCargandoTabla] = useState(false)
@@ -174,7 +176,7 @@ export function AgendaPage() {
   if (cargando) {
     return (
       <DashboardLayout titulo="Agenda">
-        <p className="text-secondary">Cargando…</p>
+        <p className="text-secondary cargando-pulso">Cargando…</p>
       </DashboardLayout>
     )
   }
@@ -218,10 +220,14 @@ export function AgendaPage() {
         <form className="agenda-crear-form" onSubmit={(event) => void handleAgendar(event)}>
           <select value={doctorId} onChange={(event) => setDoctorId(event.target.value)}>
             <option value="">Selecciona un doctor…</option>
-            {doctores.map((doctor) => (
-              <option key={doctor.id} value={doctor.id}>
-                {doctor.nombreCompleto}
-              </option>
+            {gruposDoctores.map((grupo) => (
+              <optgroup key={grupo.etiqueta} label={grupo.etiqueta}>
+                {grupo.doctores.map((doctor) => (
+                  <option key={doctor.id} value={doctor.id}>
+                    {doctor.nombreCompleto}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <input placeholder="Motivo" value={motivo} onChange={(event) => setMotivo(event.target.value)} required />
@@ -238,10 +244,14 @@ export function AgendaPage() {
       <div className="agenda-filtros">
         <select value={filtroDoctorId} onChange={(event) => setFiltroDoctorId(event.target.value)}>
           <option value="">Todos los doctores</option>
-          {doctores.map((doctor) => (
-            <option key={doctor.id} value={doctor.id}>
-              {doctor.nombreCompleto}
-            </option>
+          {gruposDoctores.map((grupo) => (
+            <optgroup key={grupo.etiqueta} label={grupo.etiqueta}>
+              {grupo.doctores.map((doctor) => (
+                <option key={doctor.id} value={doctor.id}>
+                  {doctor.nombreCompleto}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
         <input type="date" value={filtroFecha} onChange={(event) => setFiltroFecha(event.target.value)} />
@@ -261,7 +271,7 @@ export function AgendaPage() {
 
       <section className="agenda-tabla-card">
         {cargandoTabla ? (
-          <p className="text-secondary">Cargando citas…</p>
+          <p className="text-secondary cargando-pulso">Cargando citas…</p>
         ) : citas.length === 0 ? (
           <p className="text-secondary">No hay citas que coincidan con el filtro.</p>
         ) : (

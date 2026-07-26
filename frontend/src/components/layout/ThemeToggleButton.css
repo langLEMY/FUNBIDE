@@ -1,0 +1,19 @@
+.tema-toggle {
+  position: relative;
+}
+
+.tema-toggle-icono {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.5) rotate(-90deg);
+  transition:
+    opacity var(--duracion-base) var(--ease-suave),
+    transform var(--duracion-base) var(--ease-suave);
+}
+
+.tema-toggle-icono.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1) rotate(0deg);
+}

@@ -7,7 +7,6 @@ const RUTA_POR_ROL: Partial<Record<string, string>> = {
   Lemy: '/personal',
   Doctor: '/dashboard-doctor',
   Fondos: '/caja',
-  Farmacia: '/inventario',
 }
 
 /** "/" no es una página en sí: manda a cada rol a su panel. */
@@ -15,7 +14,7 @@ export function HomeRedirect() {
   const { session, perfil, cargando, perfilCargando, perfilError } = useAuth()
 
   if (cargando) {
-    return <div className="pantalla-centrada text-secondary">Cargando…</div>
+    return <div className="pantalla-centrada text-secondary cargando-pulso">Cargando…</div>
   }
 
   if (!session) {
@@ -27,7 +26,7 @@ export function HomeRedirect() {
   }
 
   if (perfilCargando || !perfil) {
-    return <div className="pantalla-centrada text-secondary">Cargando tu perfil…</div>
+    return <div className="pantalla-centrada text-secondary cargando-pulso">Cargando tu perfil…</div>
   }
 
   const ruta = RUTA_POR_ROL[perfil.rol]

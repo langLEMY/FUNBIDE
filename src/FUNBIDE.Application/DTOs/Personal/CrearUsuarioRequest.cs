@@ -6,4 +6,5 @@ public sealed record CrearUsuarioRequest(
     string NombreCompleto,
     string Correo,
     string ContrasenaTemporal,
-    RolUsuario Rol);
+    RolUsuario Rol,
+    EspecialidadMedica? Especialidad);

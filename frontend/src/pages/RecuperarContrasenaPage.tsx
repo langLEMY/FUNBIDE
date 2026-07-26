@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { traducirErrorAuth } from '../auth/mensajesError'
-import { FondoBlobs } from '../components/layout/FondoBlobs'
 import './LoginPage.css'
 
 export function RecuperarContrasenaPage() {
@@ -36,8 +35,6 @@ export function RecuperarContrasenaPage() {
 
   return (
     <div className="login-page">
-      <FondoBlobs />
-
       <form className="login-card" onSubmit={(event) => void handleSubmit(event)}>
         <div className="login-ventana-barra">
           <div className="login-ventana-puntos">

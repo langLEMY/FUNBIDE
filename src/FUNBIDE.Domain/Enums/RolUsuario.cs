@@ -9,7 +9,6 @@ public enum RolUsuario
     Admin,
     Doctor,
     Fondos,
-    Farmacia,
 
     /// <summary>
     /// Rol de administración del sistema: gestiona el personal (crear/eliminar perfiles,

@@ -10,9 +10,11 @@
 }
 
 .editar-personal-modal {
+  position: relative;
   background: var(--surface-2);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-card);
+  box-shadow: var(--shadow-chrome);
   padding: 24px;
   width: 340px;
   display: flex;

@@ -71,6 +71,7 @@ export function ResumenPage() {
   const hoy = inicioDeHoy()
   const [desde, setDesde] = useState(aFechaISO(sumarDias(hoy, -7)))
   const [hasta, setHasta] = useState(aFechaISO(hoy))
+  const [presetActivo, setPresetActivo] = useState<string | null>('Últimos 7 días')
   const [registros, setRegistros] = useState<RegistroAuditoria[]>([])
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -105,6 +106,7 @@ export function ResumenPage() {
     const hastaValor = aFechaISO(fin)
     setDesde(desdeValor)
     setHasta(hastaValor)
+    setPresetActivo(preset.etiqueta)
     void cargar(desdeValor, hastaValor)
   }
 
@@ -134,7 +136,12 @@ export function ResumenPage() {
       <section className="resumen-filtros no-imprimir">
         <div className="resumen-presets">
           {PRESETS.map((preset) => (
-            <button key={preset.etiqueta} type="button" onClick={() => aplicarPreset(preset)}>
+            <button
+              key={preset.etiqueta}
+              type="button"
+              className={presetActivo === preset.etiqueta ? 'activo' : undefined}
+              onClick={() => aplicarPreset(preset)}
+            >
               {preset.etiqueta}
             </button>
           ))}
@@ -142,11 +149,27 @@ export function ResumenPage() {
         <form className="resumen-rango" onSubmit={handleFiltrar}>
           <label>
             Desde
-            <input type="date" value={desde} max={hasta} onChange={(event) => setDesde(event.target.value)} />
+            <input
+              type="date"
+              value={desde}
+              max={hasta}
+              onChange={(event) => {
+                setDesde(event.target.value)
+                setPresetActivo(null)
+              }}
+            />
           </label>
           <label>
             Hasta
-            <input type="date" value={hasta} min={desde} onChange={(event) => setHasta(event.target.value)} />
+            <input
+              type="date"
+              value={hasta}
+              min={desde}
+              onChange={(event) => {
+                setHasta(event.target.value)
+                setPresetActivo(null)
+              }}
+            />
           </label>
           <button type="submit" disabled={cargando}>
             {cargando ? 'Filtrando…' : 'Filtrar'}
@@ -205,7 +228,7 @@ export function ResumenPage() {
       <section className="resumen-tabla-card">
         <p className="resumen-tabla-titulo">Detalle ({registros.length} movimientos)</p>
         {cargando ? (
-          <p className="text-secondary">Cargando…</p>
+          <p className="text-secondary cargando-pulso">Cargando…</p>
         ) : registros.length === 0 ? (
           <p className="text-secondary">Sin movimientos registrados en este rango.</p>
         ) : (

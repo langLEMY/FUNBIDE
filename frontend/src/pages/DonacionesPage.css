@@ -1,0 +1,117 @@
+.donaciones-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0 0 14px;
+}
+
+.donaciones-exito {
+  color: var(--series-pacientes);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.donaciones-filtros {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.donaciones-filtros select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 12px;
+  font-size: 14px;
+}
+
+.donaciones-total-card,
+.donaciones-tabla-card,
+.donaciones-registrar-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.donaciones-total-monto {
+  margin: 4px 0 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--series-pacientes);
+}
+
+.donaciones-tabla-titulo {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.donaciones-tabla-scroll {
+  overflow-x: auto;
+}
+
+.donaciones-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.donaciones-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.donaciones-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.donaciones-registrar-card h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.donaciones-registrar-subtitulo {
+  margin: 0 0 14px;
+  font-size: 13px;
+}
+
+.donaciones-registrar-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.donaciones-registrar-form input {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 200px;
+}
+
+.donaciones-registrar-form button {
+  background: var(--series-pacientes);
+  color: var(--surface-1);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.donaciones-registrar-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

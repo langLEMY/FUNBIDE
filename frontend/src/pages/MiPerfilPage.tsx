@@ -11,6 +11,8 @@ import { esModoLocal } from '../lib/supabaseClient'
 import type { Usuario } from '../types/usuario'
 import './MiPerfilPage.css'
 
+const formateadorFechaHora = new Intl.DateTimeFormat('es-DO', { dateStyle: 'short', timeStyle: 'short' })
+
 interface RegistroAuditoria {
   id: string
   usuarioId: string | null
@@ -23,6 +25,11 @@ interface RegistroAuditoria {
 
 interface EstadoSistema {
   baseDeDatosOperativa: boolean
+  ultimoBackupUtc: string | null
+  ultimoBackupExitoso: boolean | null
+  almacenamientoOperativo: boolean
+  modoMantenimientoActivo: boolean
+  modoMantenimientoMensaje: string | null
 }
 
 export function MiPerfilPage() {
@@ -58,6 +65,7 @@ export function MiPerfilPage() {
   const [exitoContrasena, setExitoContrasena] = useState(false)
 
   const esLemy = perfil?.rol === 'Lemy'
+  const esAdmin = perfil?.rol === 'Admin'
 
   const [estadoSistema, setEstadoSistema] = useState<EstadoSistema | null>(null)
   const [verificandoEstado, setVerificandoEstado] = useState(false)
@@ -65,6 +73,9 @@ export function MiPerfilPage() {
 
   const [exportando, setExportando] = useState(false)
   const [errorExportar, setErrorExportar] = useState<string | null>(null)
+
+  const [cambiandoMantenimiento, setCambiandoMantenimiento] = useState(false)
+  const [errorMantenimiento, setErrorMantenimiento] = useState<string | null>(null)
 
   const verificarEstadoSistema = async () => {
     setVerificandoEstado(true)
@@ -80,12 +91,12 @@ export function MiPerfilPage() {
   }
 
   useEffect(() => {
-    if (esLemy) {
+    if (esLemy || esAdmin) {
       void verificarEstadoSistema()
     }
-    // Solo al montar (y cuando se confirma que el perfil es Lemy).
+    // Solo al montar (y cuando se confirma que el perfil es Lemy o Admin).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [esLemy])
+  }, [esLemy, esAdmin])
 
   if (!perfil) {
     return null
@@ -220,6 +231,38 @@ export function MiPerfilPage() {
     } catch (err) {
       setErrorCerrarSesiones(err instanceof Error ? err.message : 'No se pudo cerrar la sesión.')
       setCerrandoSesiones(false)
+    }
+  }
+
+  const handleToggleMantenimiento = async () => {
+    const activandolo = !estadoSistema?.modoMantenimientoActivo
+
+    if (activandolo) {
+      const confirmado = window.confirm(
+        'Esto bloquea el acceso a TODO el personal (Admin, Doctor, Fondos) hasta que lo apagues — ' +
+          'solo tu cuenta Lemy sigue pudiendo entrar. ¿Continuar?',
+      )
+      if (!confirmado) {
+        return
+      }
+    } else {
+      const confirmado = window.confirm('¿Quitar el modo mantenimiento y devolver el acceso a todo el personal?')
+      if (!confirmado) {
+        return
+      }
+    }
+
+    const mensaje = activandolo ? window.prompt('Mensaje para quien intente entrar (opcional):', '') : null
+
+    setErrorMantenimiento(null)
+    setCambiandoMantenimiento(true)
+    try {
+      await api.patch('/api/mantenimiento', { activo: activandolo, mensaje: mensaje || null })
+      await verificarEstadoSistema()
+    } catch (err) {
+      setErrorMantenimiento(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cambiar el modo mantenimiento.')
+    } finally {
+      setCambiandoMantenimiento(false)
     }
   }
 
@@ -385,7 +428,7 @@ export function MiPerfilPage() {
           </section>
         </div>
 
-        {esLemy && (
+        {(esLemy || esAdmin) && (
           <div className="mi-perfil-columna">
             <section className="mi-perfil-card">
               <h2>Estado del sistema</h2>
@@ -409,60 +452,176 @@ export function MiPerfilPage() {
                 <div className="mi-perfil-estado-fila">
                   <dt>Respaldos automáticos</dt>
                   <dd>
-                    <span className="mi-perfil-estado-punto mi-perfil-estado-desconocido">No disponible todavía</span>
+                    {verificandoEstado ? (
+                      <span className="text-muted">Verificando…</span>
+                    ) : !estadoSistema?.ultimoBackupUtc ? (
+                      <span className="mi-perfil-estado-punto mi-perfil-estado-desconocido">
+                        Nunca corrió (o deshabilitado en esta instalación)
+                      </span>
+                    ) : (
+                      <span
+                        className={`mi-perfil-estado-punto ${estadoSistema.ultimoBackupExitoso ? 'mi-perfil-estado-bien' : 'mi-perfil-estado-mal'}`}
+                      >
+                        {estadoSistema.ultimoBackupExitoso ? 'Exitoso' : 'Con problemas'} —{' '}
+                        {formateadorFechaHora.format(new Date(estadoSistema.ultimoBackupUtc))}
+                      </span>
+                    )}
                   </dd>
                 </div>
+                <div className="mi-perfil-estado-fila">
+                  <dt>Almacenamiento de archivos</dt>
+                  <dd>
+                    {verificandoEstado ? (
+                      <span className="text-muted">Verificando…</span>
+                    ) : errorEstado ? (
+                      <span className="mi-perfil-estado-punto mi-perfil-estado-mal">Sin verificar</span>
+                    ) : (
+                      <span
+                        className={`mi-perfil-estado-punto ${estadoSistema?.almacenamientoOperativo ? 'mi-perfil-estado-bien' : 'mi-perfil-estado-mal'}`}
+                      >
+                        {estadoSistema?.almacenamientoOperativo ? 'Operativo' : 'Con problemas'}
+                      </span>
+                    )}
+                  </dd>
+                </div>
+                {estadoSistema?.modoMantenimientoActivo && (
+                  <div className="mi-perfil-estado-fila">
+                    <dt>Modo mantenimiento</dt>
+                    <dd>
+                      <span className="mi-perfil-estado-punto mi-perfil-estado-mal">Activo</span>
+                    </dd>
+                  </div>
+                )}
               </dl>
             </section>
 
+            {esLemy && (
             <section className="mi-perfil-card">
               <h2>Herramientas de soporte</h2>
               <p className="text-secondary mi-perfil-card-subtitulo">Acciones rápidas para resolver incidencias comunes.</p>
 
-              <ul className="mi-perfil-herramientas">
-                <li>
-                  <div>
+              <div className="mi-perfil-herramientas-grilla">
+                <article className="mi-perfil-herramienta">
+                  <span className="mi-perfil-herramienta-icono" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M4 7h16M9 7V4h6v3m-8 0 1 13a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-13"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <div className="mi-perfil-herramienta-texto">
                     <p className="mi-perfil-herramienta-titulo">Vaciar caché del sistema</p>
-                    <p className="text-muted mi-perfil-herramienta-detalle">
-                      No aplica: la API no mantiene caché de servidor.
-                    </p>
+                    <p className="text-muted mi-perfil-herramienta-detalle">No aplica: la API no mantiene caché de servidor.</p>
                   </div>
                   <button type="button" disabled>
                     No aplica
                   </button>
-                </li>
-                <li>
-                  <div>
-                    <p className="mi-perfil-herramienta-titulo">Verificar conexión con la base de datos</p>
-                    <p className="text-muted mi-perfil-herramienta-detalle">Comprueba que los datos se estén guardando correctamente.</p>
+                </article>
+
+                <article className="mi-perfil-herramienta">
+                  <span className="mi-perfil-herramienta-icono" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <ellipse cx="12" cy="5.5" rx="7" ry="2.5" stroke="currentColor" strokeWidth="1.6" />
+                      <path
+                        d="M5 5.5V18c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V5.5M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </span>
+                  <div className="mi-perfil-herramienta-texto">
+                    <p className="mi-perfil-herramienta-titulo">Verificar conexiones (base de datos y almacenamiento)</p>
+                    <p className="text-muted mi-perfil-herramienta-detalle">Comprueba que los datos y las fotos se estén guardando correctamente.</p>
                   </div>
                   <button type="button" onClick={() => void verificarEstadoSistema()} disabled={verificandoEstado}>
                     {verificandoEstado ? 'Verificando…' : 'Ejecutar'}
                   </button>
-                </li>
-                <li>
-                  <div>
+                </article>
+
+                <article className="mi-perfil-herramienta">
+                  <span className="mi-perfil-herramienta-icono" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M12 3v13m0 0 4-4m-4 4-4-4M5 19h14"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <div className="mi-perfil-herramienta-texto">
                     <p className="mi-perfil-herramienta-titulo">Exportar registro de actividad</p>
                     <p className="text-muted mi-perfil-herramienta-detalle">Descarga los últimos 30 días de bitácora en CSV.</p>
                   </div>
                   <button type="button" onClick={() => void handleExportarActividad()} disabled={exportando}>
                     {exportando ? 'Exportando…' : 'Ejecutar'}
                   </button>
-                </li>
-                <li>
-                  <div>
+                </article>
+
+                <article className="mi-perfil-herramienta">
+                  <span className="mi-perfil-herramienta-icono" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M4 12a8 8 0 0 1 13.66-5.66M20 12a8 8 0 0 1-13.66 5.66M17 3v4h-4M7 21v-4h4"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  <div className="mi-perfil-herramienta-texto">
                     <p className="mi-perfil-herramienta-titulo">Forzar sincronización de datos</p>
-                    <p className="text-muted mi-perfil-herramienta-detalle">
-                      No aplica: no hay un sistema externo con el que sincronizar.
-                    </p>
+                    <p className="text-muted mi-perfil-herramienta-detalle">No aplica: no hay un sistema externo con el que sincronizar.</p>
                   </div>
                   <button type="button" disabled>
                     No aplica
                   </button>
-                </li>
-              </ul>
+                </article>
+              </div>
               {errorExportar && <p className="mi-perfil-error">{errorExportar}</p>}
+              {errorEstado && <p className="mi-perfil-error">{errorEstado}</p>}
             </section>
+            )}
+
+            {esLemy && (
+              <section className="mi-perfil-card mi-perfil-card-riesgo">
+                <h2>Modo mantenimiento</h2>
+                <p className="text-secondary mi-perfil-card-subtitulo">
+                  Bloquea el acceso a todo el personal (menos Lemy) mientras resuelves una incidencia.
+                </p>
+
+                <div className="mi-perfil-mantenimiento-fila">
+                  <div>
+                    <p className="mi-perfil-herramienta-titulo">
+                      {estadoSistema?.modoMantenimientoActivo ? 'Activo' : 'Apagado'}
+                    </p>
+                    {estadoSistema?.modoMantenimientoActivo && estadoSistema.modoMantenimientoMensaje && (
+                      <p className="text-muted mi-perfil-herramienta-detalle">
+                        Mensaje actual: "{estadoSistema.modoMantenimientoMensaje}"
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={estadoSistema?.modoMantenimientoActivo ?? false}
+                    className={`mi-perfil-interruptor ${estadoSistema?.modoMantenimientoActivo ? 'activo' : ''}`}
+                    onClick={() => void handleToggleMantenimiento()}
+                    disabled={cambiandoMantenimiento || verificandoEstado}
+                  >
+                    <span className="mi-perfil-interruptor-perilla" />
+                  </button>
+                </div>
+                {errorMantenimiento && <p className="mi-perfil-error">{errorMantenimiento}</p>}
+              </section>
+            )}
           </div>
         )}
       </div>

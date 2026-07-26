@@ -14,6 +14,8 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ 
 const ResumenPage = lazy(() => import('./pages/ResumenPage').then((m) => ({ default: m.ResumenPage })))
 const FinanzasPage = lazy(() => import('./pages/FinanzasPage').then((m) => ({ default: m.FinanzasPage })))
 const GastosPage = lazy(() => import('./pages/GastosPage').then((m) => ({ default: m.GastosPage })))
+const DonacionesPage = lazy(() => import('./pages/DonacionesPage').then((m) => ({ default: m.DonacionesPage })))
+const OperacionesPage = lazy(() => import('./pages/OperacionesPage').then((m) => ({ default: m.OperacionesPage })))
 const ActividadPage = lazy(() => import('./pages/ActividadPage').then((m) => ({ default: m.ActividadPage })))
 const CajaPage = lazy(() => import('./pages/CajaPage').then((m) => ({ default: m.CajaPage })))
 const CobrosPage = lazy(() => import('./pages/CobrosPage').then((m) => ({ default: m.CobrosPage })))
@@ -34,7 +36,7 @@ const DashboardDoctorPage = lazy(() =>
 const MiPerfilPage = lazy(() => import('./pages/MiPerfilPage').then((m) => ({ default: m.MiPerfilPage })))
 
 function CargandoPagina() {
-  return <div className="pantalla-centrada text-secondary">Cargando…</div>
+  return <div className="pantalla-centrada text-secondary cargando-pulso">Cargando…</div>
 }
 
 function App() {
@@ -86,6 +88,14 @@ function App() {
           }
         />
         <Route
+          path="/donaciones"
+          element={
+            <ProtectedRoute rolesPermitidos="Admin">
+              <DonacionesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/personal"
           element={
             <ProtectedRoute rolesPermitidos={['Lemy', 'Admin']}>
@@ -94,9 +104,17 @@ function App() {
           }
         />
         <Route
+          path="/operaciones"
+          element={
+            <ProtectedRoute rolesPermitidos="Admin">
+              <OperacionesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/actividad"
           element={
-            <ProtectedRoute rolesPermitidos="Lemy">
+            <ProtectedRoute rolesPermitidos={['Lemy', 'Admin']}>
               <ActividadPage />
             </ProtectedRoute>
           }
@@ -160,7 +178,7 @@ function App() {
         <Route
           path="/pacientes/:id/historial"
           element={
-            <ProtectedRoute rolesPermitidos="Doctor">
+            <ProtectedRoute rolesPermitidos={['Doctor', 'Admin']}>
               <PacienteHistorialPage />
             </ProtectedRoute>
           }
@@ -176,7 +194,7 @@ function App() {
         <Route
           path="/pacientes"
           element={
-            <ProtectedRoute rolesPermitidos={['Admin', 'Doctor', 'Fondos', 'Farmacia', 'Lemy']}>
+            <ProtectedRoute rolesPermitidos={['Admin', 'Doctor', 'Fondos', 'Lemy']}>
               <PacientesPage />
             </ProtectedRoute>
           }
@@ -184,7 +202,7 @@ function App() {
         <Route
           path="/inventario"
           element={
-            <ProtectedRoute rolesPermitidos={['Admin', 'Doctor', 'Fondos', 'Farmacia', 'Lemy']}>
+            <ProtectedRoute rolesPermitidos={['Admin', 'Doctor', 'Fondos', 'Lemy']}>
               <InventarioPage />
             </ProtectedRoute>
           }

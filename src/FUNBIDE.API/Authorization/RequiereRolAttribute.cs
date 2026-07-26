@@ -3,7 +3,7 @@ using FUNBIDE.Domain.Enums;
 namespace FUNBIDE.API.Authorization;
 
 /// <summary>
-/// Declara qué roles de negocio (ADMIN, DOCTOR, FONDOS, FARMACIA) pueden invocar un
+/// Declara qué roles de negocio (ADMIN, DOCTOR, FONDOS, LEMY) pueden invocar un
 /// endpoint. Es metadata pura: la evalúa <c>RoleAuthorizationMiddleware</c>, que la
 /// contrasta contra el claim de rol proyectado desde el JWT de Supabase.
 /// </summary>

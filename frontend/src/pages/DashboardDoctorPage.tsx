@@ -4,8 +4,7 @@ import { StatCard } from '../components/dashboard/StatCard'
 import { api, ApiError } from '../lib/api'
 import { coloresParaTema } from '../styles/colors'
 import { useTheme } from '../theme/ThemeContext'
-import type { Cita } from '../types/cita'
-import type { PacientesPaginados } from '../types/paciente'
+import type { Cita, PacienteDelDoctor } from '../types/cita'
 import './DashboardDoctorPage.css'
 
 const formateadorEntero = new Intl.NumberFormat('es-DO')
@@ -18,7 +17,7 @@ export function DashboardDoctorPage() {
   const [pendientes, setPendientes] = useState<Cita[]>([])
   const [programadas, setProgramadas] = useState<Cita[]>([])
   const [completadas, setCompletadas] = useState<Cita[]>([])
-  const [pacientes, setPacientes] = useState<PacientesPaginados | null>(null)
+  const [pacientes, setPacientes] = useState<PacienteDelDoctor[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -29,10 +28,9 @@ export function DashboardDoctorPage() {
       api.get<Cita[]>('/api/citas/pendientes'),
       api.get<Cita[]>('/api/citas/programadas'),
       api.get<Cita[]>('/api/citas/completadas'),
-      // El endpoint devuelve paginado ({ items, total, ... }), no un array plano — se
-      // pide la página más grande permitida (100) solo para tener nombres a mano en
-      // "Próximas citas"; el conteo de "Pacientes totales" usa `.total`, no `.items.length`.
-      api.get<PacientesPaginados>('/api/pacientes?pagina=1&tamanoPagina=100'),
+      // Pacientes que alguna vez tuvieron una cita con este doctor (no todos los
+      // pacientes de la clínica: el dominio no tiene un vínculo directo Paciente-Doctor).
+      api.get<PacienteDelDoctor[]>('/api/citas/pacientes'),
     ])
       .then(([datosPendientes, datosProgramadas, datosCompletadas, datosPacientes]) => {
         if (cancelado) return
@@ -57,8 +55,8 @@ export function DashboardDoctorPage() {
 
   const nombrePorPacienteId = useMemo(() => {
     const mapa = new Map<string, string>()
-    for (const paciente of pacientes?.items ?? []) {
-      mapa.set(paciente.id, `${paciente.nombre} ${paciente.apellido}`)
+    for (const paciente of pacientes) {
+      mapa.set(paciente.pacienteId, paciente.nombreCompleto)
     }
     return mapa
   }, [pacientes])
@@ -94,7 +92,7 @@ export function DashboardDoctorPage() {
         />
         <StatCard
           etiqueta="Pacientes totales"
-          valor={cargando ? '—' : formateadorEntero.format(pacientes?.total ?? 0)}
+          valor={cargando ? '—' : formateadorEntero.format(pacientes.length)}
           colorSerie={chartColors.actividad}
         />
       </section>
@@ -102,7 +100,7 @@ export function DashboardDoctorPage() {
       <section className="dashboard-doctor-proximas-card">
         <h2>Próximas citas</h2>
         {cargando ? (
-          <p className="text-secondary">Cargando…</p>
+          <p className="text-secondary cargando-pulso">Cargando…</p>
         ) : proximasCitas.length === 0 ? (
           <p className="text-secondary">No hay citas programadas.</p>
         ) : (

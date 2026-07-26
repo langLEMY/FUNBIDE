@@ -20,4 +20,10 @@ public interface ISupabaseStorageService
 
     /// <summary>Genera una URL firmada de corta duración para ver una foto de cédula privada.</summary>
     Task<string> GenerarUrlFirmadaCedulaAsync(string rutaObjeto, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Chequeo de conectividad real (no una constante) para el panel "Estado del sistema" /
+    /// "Probar conexión" de LEMY — sin ejecutar ninguna subida de negocio.
+    /// </summary>
+    Task<bool> VerificarConexionAsync(CancellationToken cancellationToken);
 }

@@ -20,6 +20,6 @@ public sealed class ListarDoctoresUseCase(IUsuarioRepository usuarioRepository) 
         // Cita.DoctorId, y el resto del sistema (ObtenerCitasPorEstadoUseCase,
         // ProgramarCitaUseCase, etc.) compara DoctorId contra currentUser.UsuarioId,
         // que también es el SupabaseUserId (claim "sub" del JWT).
-        return doctores.Select(d => new DoctorSimpleDto(d.SupabaseUserId, d.NombreCompleto)).ToList();
+        return doctores.Select(d => new DoctorSimpleDto(d.SupabaseUserId, d.NombreCompleto, d.Especialidad)).ToList();
     }
 }

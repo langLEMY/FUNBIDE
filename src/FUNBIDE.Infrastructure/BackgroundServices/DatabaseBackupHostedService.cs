@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,6 +18,9 @@ public sealed class DatabaseBackupHostedService(
 {
     private readonly BackupOptions _options = options.Value;
 
+    /// <summary>Nombre del archivo de estado leído por <c>EstadoBackupService</c> (Persistence/) para el panel "Estado del sistema".</summary>
+    public const string NombreArchivoEstado = "estado.json";
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         Directory.CreateDirectory(_options.DirectorioDestino);
@@ -28,14 +32,43 @@ public sealed class DatabaseBackupHostedService(
             try
             {
                 await EjecutarBackupAsync(stoppingToken);
-                LimpiarBackupsAntiguos();
+                await EscribirEstadoAsync(exitoso: true, mensaje: null, stoppingToken);
+
+                try
+                {
+                    LimpiarBackupsAntiguos();
+                }
+                catch (Exception ex)
+                {
+                    // Best-effort: la limpieza por política de retención es secundaria al
+                    // backup en sí. Si falla (p. ej. un archivo bloqueado), el dump de hoy
+                    // ya se generó y cifró correctamente — no debe reportarse como fallido.
+                    logger.LogWarning(ex, "No se pudieron limpiar los backups antiguos por política de retención.");
+                }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogError(ex, "Falló la ejecución del backup automático de la base de datos.");
+                await EscribirEstadoAsync(exitoso: false, mensaje: ex.Message, stoppingToken);
             }
         }
         while (await timer.WaitForNextTickAsync(stoppingToken));
+    }
+
+    private async Task EscribirEstadoAsync(bool exitoso, string? mensaje, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var estado = new EstadoBackupArchivo(DateTimeOffset.UtcNow, exitoso, mensaje);
+            var rutaEstado = Path.Combine(_options.DirectorioDestino, NombreArchivoEstado);
+            await File.WriteAllTextAsync(rutaEstado, JsonSerializer.Serialize(estado), cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Mejor esfuerzo: si no se puede escribir el estado (permisos, disco lleno), no
+            // debe tumbar el backup en sí — el panel simplemente seguirá mostrando el estado anterior.
+            logger.LogWarning(ex, "No se pudo escribir el archivo de estado del backup.");
+        }
     }
 
     private async Task EjecutarBackupAsync(CancellationToken cancellationToken)

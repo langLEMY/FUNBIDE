@@ -23,6 +23,21 @@ export interface CerrarTurnoCajaRequest {
   notas: string | null
 }
 
+// Variante de TurnoCaja con nombres en vez de ids, para la vista de supervisión de Admin.
+export interface TurnoCajaAdmin {
+  id: string
+  usuarioAperturaNombre: string
+  montoInicial: number
+  abiertoEn: string
+  estado: EstadoTurnoCaja
+  usuarioCierreNombre: string | null
+  montoFinalContado: number | null
+  montoEsperado: number | null
+  diferencia: number | null
+  notas: string | null
+  cerradoEn: string | null
+}
+
 export interface ResumenCaja {
   cajaAbierta: boolean
   efectivoEnCaja: number

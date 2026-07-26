@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { StatCard } from '../components/dashboard/StatCard'
 import { MonthlyMetricChart } from '../components/dashboard/MonthlyMetricChart'
+import { Sparkline } from '../components/dashboard/Sparkline'
 import { api, ApiError } from '../lib/api'
-import type { ResumenDiario } from '../types/dashboard'
-import { coloresParaTema } from '../styles/colors'
+import type { AlertasAdmin, ResumenDiario } from '../types/dashboard'
+import type { Usuario } from '../types/usuario'
+import { coloresParaTema, colorRolParaTema } from '../styles/colors'
 import { useTheme } from '../theme/ThemeContext'
 import './DashboardPage.css'
+
+const ROLES_COBERTURA = ['Doctor', 'Fondos', 'Lemy'] as const
+
+const TAMANO_VENTANA_SPARKLINE = 7
 
 const formateadorMoneda = new Intl.NumberFormat('es-DO', {
   style: 'currency',
@@ -25,6 +32,8 @@ export function DashboardPage() {
   const chartColors = coloresParaTema(tema)
   const [resumenHoy, setResumenHoy] = useState<ResumenDiario | null>(null)
   const [resumenMes, setResumenMes] = useState<ResumenDiario[]>([])
+  const [alertas, setAlertas] = useState<AlertasAdmin | null>(null)
+  const [personal, setPersonal] = useState<Usuario[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,13 +44,17 @@ export function DashboardPage() {
       setCargando(true)
       setError(null)
       try {
-        const [hoy, mes] = await Promise.all([
+        const [hoy, mes, alertasAdmin, personalLista] = await Promise.all([
           api.get<ResumenDiario>('/api/dashboard/resumen-hoy'),
           api.get<ResumenDiario[]>('/api/dashboard/resumen-mes'),
+          api.get<AlertasAdmin>('/api/dashboard/alertas'),
+          api.get<Usuario[]>('/api/personal'),
         ])
         if (!cancelado) {
           setResumenHoy(hoy)
           setResumenMes(mes)
+          setAlertas(alertasAdmin)
+          setPersonal(personalLista)
         }
       } catch (err) {
         if (!cancelado) {
@@ -62,6 +75,29 @@ export function DashboardPage() {
 
   const nombreMes = capitalizar(new Date().toLocaleDateString('es-DO', { month: 'long', year: 'numeric' }))
 
+  const ventanaMes = resumenMes.slice(-TAMANO_VENTANA_SPARKLINE)
+  const sparkPacientes = ventanaMes.map((r) => r.pacientesAtendidos)
+  const sparkDinero = ventanaMes.map((r) => r.dineroMovido)
+
+  const totalStaffCount = personal.length
+  const activeStaffCount = personal.filter((u) => u.activo).length
+
+  const coberturaPorArea = ROLES_COBERTURA.map((rol) => {
+    const delRol = personal.filter((u) => u.rol === rol)
+    const activos = delRol.filter((u) => u.activo).length
+    const total = delRol.length
+    return {
+      rol,
+      color: colorRolParaTema(tema, rol),
+      activos,
+      total,
+      porcentaje: total > 0 ? Math.round((activos / total) * 100) : 0,
+    }
+  })
+
+  const stockBajoCount = alertas?.stockBajo.length ?? 0
+  const pacientesConDeudaCount = alertas?.pacientesConDeuda.length ?? 0
+
   return (
     <DashboardLayout titulo="Dashboard">
       {error && <p className="dashboard-error">{error}</p>}
@@ -71,13 +107,72 @@ export function DashboardPage() {
           etiqueta="Pacientes atendidos hoy"
           valor={cargando ? '—' : formateadorEntero.format(resumenHoy?.pacientesAtendidos ?? 0)}
           colorSerie={chartColors.pacientes}
+          icono="medical"
+          sparkline={
+            sparkPacientes.length > 0 && (
+              <Sparkline valores={sparkPacientes} color={chartColors.pacientes} modo="linea" />
+            )
+          }
         />
         <StatCard
           etiqueta="Movimientos hoy"
           valor={cargando ? '—' : formateadorMoneda.format(resumenHoy?.dineroMovido ?? 0)}
           colorSerie={chartColors.dinero}
+          icono="dollar"
+          sparkline={
+            sparkDinero.length > 0 && <Sparkline valores={sparkDinero} color={chartColors.dinero} modo="barras" />
+          }
+        />
+        <StatCard
+          etiqueta="Personal activo"
+          valor={cargando ? '—' : `${activeStaffCount} de ${totalStaffCount}`}
+          colorSerie={chartColors.actividad}
+          icono="users"
         />
       </section>
+
+      {alertas && (alertas.stockBajo.length > 0 || alertas.pacientesConDeuda.length > 0) && (
+        <section className="dashboard-alertas">
+          {alertas.stockBajo.length > 0 && (
+            <div className="dashboard-alerta-card">
+              <div className="dashboard-alerta-header">
+                <h2>Inventario con stock bajo</h2>
+                <span className="dashboard-alerta-contador">{alertas.stockBajo.length}</span>
+              </div>
+              <ul className="dashboard-alerta-lista">
+                {alertas.stockBajo.slice(0, 5).map((item) => (
+                  <li key={item.id}>
+                    <span>{item.nombre}</span>
+                    <span className="text-muted">
+                      {item.stockActual} / {item.stockMinimo} mín.
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <Link to="/inventario" className="dashboard-alerta-link">
+                Ver inventario →
+              </Link>
+            </div>
+          )}
+
+          {alertas.pacientesConDeuda.length > 0 && (
+            <div className="dashboard-alerta-card">
+              <div className="dashboard-alerta-header">
+                <h2>Pacientes con deuda pendiente</h2>
+                <span className="dashboard-alerta-contador">{alertas.pacientesConDeuda.length}</span>
+              </div>
+              <ul className="dashboard-alerta-lista">
+                {alertas.pacientesConDeuda.slice(0, 5).map((paciente) => (
+                  <li key={paciente.pacienteId}>
+                    <span>{paciente.pacienteNombre}</span>
+                    <span className="text-muted">{formateadorMoneda.format(paciente.montoAdeudado)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="dashboard-vista-mes">
         <div className="dashboard-vista-mes-encabezado">
@@ -100,6 +195,52 @@ export function DashboardPage() {
             color={chartColors.dinero}
             formatearValor={(valor) => formateadorMoneda.format(valor)}
           />
+        </div>
+      </section>
+
+      <section className="dashboard-detalle">
+        <div className="dashboard-cobertura-card">
+          <h2>Personal por área</h2>
+          {coberturaPorArea.map((area) => (
+            <div key={area.rol} className="dashboard-cobertura-fila">
+              <div className="dashboard-cobertura-etiqueta">
+                <span className="dashboard-cobertura-punto" style={{ background: area.color }} />
+                {area.rol}
+                <span className="text-muted">{area.total > 0 ? `${area.porcentaje}%` : '—'}</span>
+              </div>
+              <div className="dashboard-cobertura-barra">
+                <div
+                  className="dashboard-cobertura-relleno"
+                  style={{ background: area.color, width: `${area.porcentaje}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="dashboard-insights-card">
+          <h2>Insights operativos</h2>
+          <div className="dashboard-insight-item">
+            <p className="text-muted">Alertas de inventario</p>
+            <p className="dashboard-insight-valor" style={{ color: stockBajoCount > 0 ? 'var(--danger)' : undefined }}>
+              {stockBajoCount} {stockBajoCount === 1 ? 'insumo' : 'insumos'} por agotarse
+            </p>
+          </div>
+          <div className="dashboard-insight-item">
+            <p className="text-muted">Pacientes con deuda</p>
+            <p
+              className="dashboard-insight-valor"
+              style={{ color: pacientesConDeudaCount > 0 ? chartColors.dinero : undefined }}
+            >
+              {pacientesConDeudaCount} con saldo pendiente
+            </p>
+          </div>
+          <div className="dashboard-insight-item">
+            <p className="text-muted">Estado del personal</p>
+            <p className="dashboard-insight-valor" style={{ color: chartColors.pacientes }}>
+              {activeStaffCount} activos hoy
+            </p>
+          </div>
         </div>
       </section>
     </DashboardLayout>

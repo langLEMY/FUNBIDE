@@ -15,6 +15,16 @@ public sealed class TurnoCajaRepository(FunbideDbContext dbContext) : ITurnoCaja
     public Task<TurnoCaja?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.TurnosCaja.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
+    // Por AbiertoEn (no CerradoEn): un turno abierto en el rango pero sin cerrar todavía
+    // también debe verse en la vista de supervisión de Admin.
+    public async Task<IReadOnlyList<TurnoCaja>> ObtenerPorRangoAsync(
+        DateTimeOffset desde, DateTimeOffset hasta, CancellationToken cancellationToken) =>
+        await dbContext.TurnosCaja
+            .AsNoTracking()
+            .Where(t => t.AbiertoEn >= desde && t.AbiertoEn < hasta)
+            .OrderByDescending(t => t.AbiertoEn)
+            .ToListAsync(cancellationToken);
+
     public async Task AgregarAsync(TurnoCaja turno, CancellationToken cancellationToken) =>
         await dbContext.TurnosCaja.AddAsync(turno, cancellationToken);
 

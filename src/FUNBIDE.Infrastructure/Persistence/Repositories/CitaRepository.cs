@@ -31,6 +31,14 @@ public sealed class CitaRepository(FunbideDbContext dbContext, IDateTimeProvider
             .OrderBy(c => c.Id)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<Guid>> ObtenerPacienteIdsDistintosPorDoctorAsync(Guid doctorId, CancellationToken cancellationToken) =>
+        await dbContext.Citas
+            .AsNoTracking()
+            .Where(c => c.DoctorId == doctorId)
+            .Select(c => c.PacienteId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
     public Task<bool> ExisteAlgunaParaPacienteAsync(Guid pacienteId, CancellationToken cancellationToken) =>
         dbContext.Citas.AnyAsync(c => c.PacienteId == pacienteId, cancellationToken);
 

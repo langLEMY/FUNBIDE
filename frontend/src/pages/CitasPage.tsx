@@ -153,7 +153,7 @@ export function CitasPage() {
         {error && <p className="citas-error">{error}</p>}
 
         {cargando ? (
-          <p className="text-secondary">Cargando citas…</p>
+          <p className="text-secondary cargando-pulso">Cargando citas…</p>
         ) : listaActiva.length === 0 ? (
           <p className="text-secondary">No hay citas {tab.toLowerCase()}.</p>
         ) : (

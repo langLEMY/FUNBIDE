@@ -27,5 +27,9 @@ public sealed class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
         builder.Property(u => u.EliminadoPermanentemente).IsRequired().HasDefaultValue(false);
 
         builder.Property(u => u.FotoPerfilUrl).HasMaxLength(500);
+
+        builder.Property(u => u.Especialidad)
+            .HasConversion<string>()
+            .HasMaxLength(40);
     }
 }

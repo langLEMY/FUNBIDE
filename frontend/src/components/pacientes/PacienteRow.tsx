@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { api, ApiError } from '../../lib/api'
-import type { EstadoPaciente, Paciente } from '../../types/paciente'
+import type { EstadoPaciente, Paciente, UrlFotoCedula } from '../../types/paciente'
 import { ESTADOS_PACIENTE } from '../../types/paciente'
 
 interface PacienteRowProps {
@@ -9,6 +9,8 @@ interface PacienteRowProps {
   puedeEditar: boolean
   puedeEliminar: boolean
   puedeVerHistorial: boolean
+  puedeSubirFotoCedula: boolean
+  puedeVerFotoCedula: boolean
   onActualizado: (paciente: Paciente) => void
   onEliminado: (pacienteId: string) => void
 }
@@ -34,6 +36,8 @@ export function PacienteRow({
   puedeEditar,
   puedeEliminar,
   puedeVerHistorial,
+  puedeSubirFotoCedula,
+  puedeVerFotoCedula,
   onActualizado,
   onEliminado,
 }: PacienteRowProps) {
@@ -49,6 +53,10 @@ export function PacienteRow({
 
   const [eliminando, setEliminando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [subiendoFoto, setSubiendoFoto] = useState(false)
+  const [cargandoFoto, setCargandoFoto] = useState(false)
+  const inputFotoRef = useRef<HTMLInputElement>(null)
 
   const guardarEdicion = async () => {
     setError(null)
@@ -101,7 +109,41 @@ export function PacienteRow({
     }
   }
 
-  const columnas = puedeEditar || puedeEliminar || puedeVerHistorial ? 8 : 7
+  const handleArchivoFotoCedulaSeleccionado = async (event: ChangeEvent<HTMLInputElement>) => {
+    const archivo = event.target.files?.[0]
+    event.target.value = ''
+    if (!archivo) {
+      return
+    }
+
+    setError(null)
+    setSubiendoFoto(true)
+    try {
+      const form = new FormData()
+      form.append('archivo', archivo)
+      const actualizado = await api.postForm<Paciente>(`/api/pacientes/${paciente.id}/foto-cedula`, form)
+      onActualizado(actualizado)
+    } catch (err) {
+      setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo subir la foto de cédula.')
+    } finally {
+      setSubiendoFoto(false)
+    }
+  }
+
+  const handleVerFotoCedula = async () => {
+    setError(null)
+    setCargandoFoto(true)
+    try {
+      const { url } = await api.get<UrlFotoCedula>(`/api/pacientes/${paciente.id}/foto-cedula`)
+      window.open(url, '_blank', 'noopener,noreferrer')
+    } catch (err) {
+      setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo abrir la foto de cédula.')
+    } finally {
+      setCargandoFoto(false)
+    }
+  }
+
+  const columnas = puedeEditar || puedeEliminar || puedeVerHistorial || puedeSubirFotoCedula || puedeVerFotoCedula ? 8 : 7
 
   if (editando) {
     return (
@@ -175,12 +217,22 @@ export function PacienteRow({
         </td>
         <td>{paciente.cedula}</td>
         <td className="text-muted">{paciente.telefono ?? '—'}</td>
-        {(puedeEditar || puedeEliminar || puedeVerHistorial) && (
+        {(puedeEditar || puedeEliminar || puedeVerHistorial || puedeSubirFotoCedula || puedeVerFotoCedula) && (
           <td className="pacientes-acciones">
             {puedeVerHistorial && <Link to={`/pacientes/${paciente.id}/historial`}>Historial</Link>}
             {puedeEditar && (
               <button type="button" onClick={() => setEditando(true)}>
                 Editar
+              </button>
+            )}
+            {puedeVerFotoCedula && paciente.tieneFotoCedula && (
+              <button type="button" onClick={() => void handleVerFotoCedula()} disabled={cargandoFoto}>
+                {cargandoFoto ? 'Abriendo…' : 'Ver cédula'}
+              </button>
+            )}
+            {puedeSubirFotoCedula && (
+              <button type="button" onClick={() => inputFotoRef.current?.click()} disabled={subiendoFoto}>
+                {subiendoFoto ? 'Subiendo…' : paciente.tieneFotoCedula ? 'Reemplazar cédula' : 'Subir cédula'}
               </button>
             )}
             {puedeEliminar && (
@@ -192,6 +244,15 @@ export function PacienteRow({
               >
                 {eliminando ? 'Eliminando…' : 'Eliminar'}
               </button>
+            )}
+            {puedeSubirFotoCedula && (
+              <input
+                ref={inputFotoRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(event) => void handleArchivoFotoCedulaSeleccionado(event)}
+              />
             )}
           </td>
         )}

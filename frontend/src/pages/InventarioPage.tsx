@@ -1,15 +1,20 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useAuth } from '../auth/AuthContext'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
+import { ImportarExcel } from '../components/ImportarExcel'
 import { InventarioRow } from '../components/inventario/InventarioRow'
 import { api, ApiError } from '../lib/api'
 import { exportarCsv } from '../lib/exportarCsv'
-import type { InventarioItem } from '../types/inventario'
+import type { ImportarInventarioResultado, InventarioItem } from '../types/inventario'
 import { CATEGORIAS_INVENTARIO } from '../types/inventario'
 import './InventarioPage.css'
 
 const FILTRO_TODOS = 'Todos'
 
 export function InventarioPage() {
+  const { perfil } = useAuth()
+  const puedeImportar = perfil?.rol === 'Lemy' || perfil?.rol === 'Admin'
+  const [resultadoImportacion, setResultadoImportacion] = useState<ImportarInventarioResultado | null>(null)
   const [items, setItems] = useState<InventarioItem[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -25,10 +30,13 @@ export function InventarioPage() {
   const [stockMinimo, setStockMinimo] = useState('')
   const [creando, setCreando] = useState(false)
   const [errorCrear, setErrorCrear] = useState<string | null>(null)
+  const [recargarClave, setRecargarClave] = useState(0)
+  const recargar = () => setRecargarClave((clave) => clave + 1)
 
   useEffect(() => {
     let cancelado = false
 
+    setCargando(true)
     api
       .get<InventarioItem[]>('/api/inventario')
       .then((datos) => {
@@ -46,7 +54,12 @@ export function InventarioPage() {
     return () => {
       cancelado = true
     }
-  }, [])
+  }, [recargarClave])
+
+  const handleImportado = (resultado: ImportarInventarioResultado) => {
+    setResultadoImportacion(resultado)
+    recargar()
+  }
 
   const itemsFiltrados = useMemo(() => {
     const busquedaNormalizada = busqueda.trim().toLowerCase()
@@ -120,6 +133,29 @@ export function InventarioPage() {
 
   return (
     <DashboardLayout titulo="Inventario">
+      {puedeImportar && (
+        <section className="inventario-crear-card">
+          <h2>Importar inventario desde Excel</h2>
+          <ImportarExcel<ImportarInventarioResultado> endpoint="/api/inventario/importar" onImportado={handleImportado} />
+          {resultadoImportacion && (
+            <div className="inventario-importar-resumen">
+              <p>
+                {resultadoImportacion.creados} ítems creados y {resultadoImportacion.actualizados} actualizados de{' '}
+                {resultadoImportacion.totalFilas} filas.
+                {resultadoImportacion.omitidos > 0 && ` ${resultadoImportacion.omitidos} filas omitidas.`}
+              </p>
+              {resultadoImportacion.omisiones.length > 0 && (
+                <ul className="inventario-importar-omisiones">
+                  {resultadoImportacion.omisiones.map((omision, indice) => (
+                    <li key={indice}>{omision}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
       <section className="inventario-crear-card">
         <h2>Agregar medicamento o insumo</h2>
         <form className="inventario-crear-form" onSubmit={(event) => void handleCrear(event)}>
@@ -195,7 +231,7 @@ export function InventarioPage() {
         {error && <p className="inventario-error">{error}</p>}
 
         {cargando ? (
-          <p className="text-secondary">Cargando inventario…</p>
+          <p className="text-secondary cargando-pulso">Cargando inventario…</p>
         ) : itemsFiltrados.length === 0 ? (
           <p className="text-secondary">
             {items.length === 0

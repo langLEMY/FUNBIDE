@@ -34,8 +34,7 @@ public sealed class InventarioItemConfiguration : IEntityTypeConfiguration<Inven
         builder.Property<uint>("xmin").IsRowVersion();
 
         // Datos de ejemplo para que el inventario no aparezca vacío la primera vez que
-        // se aplica esta migración: no hay todavía una pantalla de "crear ítem" (queda
-        // para el perfil de Farmacia), así que se siembran algunos artículos reales.
+        // se aplica esta migración.
         builder.HasData(
             new
             {

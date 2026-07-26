@@ -7,10 +7,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 28px;
-  background: var(--glass-chrome-bg);
-  backdrop-filter: blur(26px);
-  -webkit-backdrop-filter: blur(26px);
+  background: var(--chrome-bg);
   border-bottom: 1px solid var(--border-hairline);
+  box-shadow: var(--shadow-chrome);
 }
 
 .topbar-titulo {
@@ -42,8 +41,4 @@
 .topbar-tema-boton:hover {
   background: var(--surface-2);
   transform: scale(1.05);
-}
-
-.topbar-tema-boton svg {
-  animation: funbide-desplegar var(--duracion-base) var(--ease-entrada);
 }

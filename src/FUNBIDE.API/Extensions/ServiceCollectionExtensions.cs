@@ -5,6 +5,7 @@ using FUNBIDE.Application.UseCases.Caja;
 using FUNBIDE.Application.UseCases.Citas;
 using FUNBIDE.Application.UseCases.Cobros;
 using FUNBIDE.Application.UseCases.Dashboard;
+using FUNBIDE.Application.UseCases.Donaciones;
 using FUNBIDE.Application.UseCases.Empleados;
 using FUNBIDE.Application.UseCases.Finanzas;
 using FUNBIDE.Application.UseCases.FinanzasAdmin;
@@ -37,11 +38,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IListarAgendaUseCase, ListarAgendaUseCase>();
         services.AddScoped<IListarSalaDeEsperaUseCase, ListarSalaDeEsperaUseCase>();
         services.AddScoped<IListarPendientesDeCobroUseCase, ListarPendientesDeCobroUseCase>();
+        services.AddScoped<IListarPacientesDelDoctorUseCase, ListarPacientesDelDoctorUseCase>();
 
         services.AddScoped<IAbrirTurnoCajaUseCase, AbrirTurnoCajaUseCase>();
         services.AddScoped<ICerrarTurnoCajaUseCase, CerrarTurnoCajaUseCase>();
         services.AddScoped<IObtenerTurnoCajaActualUseCase, ObtenerTurnoCajaActualUseCase>();
         services.AddScoped<IObtenerResumenCajaUseCase, ObtenerResumenCajaUseCase>();
+        services.AddScoped<IListarTurnosCajaUseCase, ListarTurnosCajaUseCase>();
 
         services.AddScoped<IRegistrarCobroUseCase, RegistrarCobroUseCase>();
         services.AddScoped<IListarCobrosDelTurnoUseCase, ListarCobrosDelTurnoUseCase>();
@@ -61,9 +64,12 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICrearInventarioItemUseCase, CrearInventarioItemUseCase>();
         services.AddScoped<IEditarInventarioItemUseCase, EditarInventarioItemUseCase>();
         services.AddScoped<IEliminarInventarioItemUseCase, EliminarInventarioItemUseCase>();
+        services.AddScoped<IImportarInventarioUseCase, ImportarInventarioUseCase>();
 
+        services.AddScoped<IObtenerAlertasAdminUseCase, ObtenerAlertasAdminUseCase>();
         services.AddScoped<IObtenerLogsAuditoriaUseCase, ObtenerLogsAuditoriaUseCase>();
         services.AddScoped<IVerificarEstadoSistemaUseCase, VerificarEstadoSistemaUseCase>();
+        services.AddScoped<ICambiarModoMantenimientoUseCase, CambiarModoMantenimientoUseCase>();
 
         services.AddScoped<IRegistrarEventoLoginUseCase, RegistrarEventoLoginUseCase>();
         services.AddScoped<IIniciarSesionLocalUseCase, IniciarSesionLocalUseCase>();
@@ -73,6 +79,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICrearUsuarioUseCase, CrearUsuarioUseCase>();
         services.AddScoped<IEditarUsuarioUseCase, EditarUsuarioUseCase>();
         services.AddScoped<ICambiarRolUsuarioUseCase, CambiarRolUsuarioUseCase>();
+        services.AddScoped<ICambiarEspecialidadUsuarioUseCase, CambiarEspecialidadUsuarioUseCase>();
         services.AddScoped<ICambiarContrasenaUsuarioUseCase, CambiarContrasenaUsuarioUseCase>();
         services.AddScoped<IActualizarFotoPerfilUseCase, ActualizarFotoPerfilUseCase>();
         services.AddScoped<IEliminarUsuarioUseCase, EliminarUsuarioUseCase>();
@@ -107,6 +114,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IActualizarFotoCedulaUseCase, ActualizarFotoCedulaUseCase>();
         services.AddScoped<IObtenerUrlFotoCedulaUseCase, ObtenerUrlFotoCedulaUseCase>();
         services.AddScoped<IImportarPacientesUseCase, ImportarPacientesUseCase>();
+
+        services.AddScoped<IListarDonacionesUseCase, ListarDonacionesUseCase>();
+        services.AddScoped<IRegistrarDonacionUseCase, RegistrarDonacionUseCase>();
 
         return services;
     }

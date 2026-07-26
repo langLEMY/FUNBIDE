@@ -1,8 +1,8 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useAuth } from '../../auth/AuthContext'
 import { api, ApiError } from '../../lib/api'
-import type { Usuario, RolUsuario } from '../../types/usuario'
-import { rolesAsignablesPara } from '../../types/personal'
+import type { Usuario, RolUsuario, EspecialidadMedica } from '../../types/usuario'
+import { rolesAsignablesPara, ESPECIALIDADES, ETIQUETA_ESPECIALIDAD } from '../../types/personal'
 import './EditarPersonalModal.css'
 
 interface EditarPersonalModalProps {
@@ -17,6 +17,11 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
   const [nombreCompleto, setNombreCompleto] = useState(usuario.nombreCompleto)
   const [correo, setCorreo] = useState(usuario.correo)
   const [rol, setRol] = useState<RolUsuario>(usuario.rol)
+  // null cuando el doctor todavia no tiene especialidad asignada: por eso NO se
+  // usa un default como 'Pediatria' aca — con ese default, guardar cualquier otro
+  // campo (nombre, correo, contrasena) mandaba especialidad !== null y pisaba
+  // silenciosamente la especialidad real del doctor con el valor por defecto.
+  const [especialidad, setEspecialidad] = useState<EspecialidadMedica | null>(usuario.especialidad)
   const [nuevaContrasena, setNuevaContrasena] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -35,6 +40,10 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
 
       if (rol !== usuario.rol) {
         actual = await api.patch<Usuario>('/api/personal/rol', { usuarioId: usuario.id, nuevoRol: rol })
+      }
+
+      if (rol === 'Doctor' && especialidad !== null && especialidad !== actual.especialidad) {
+        actual = await api.patch<Usuario>('/api/personal/especialidad', { usuarioId: usuario.id, especialidad })
       }
 
       if (nuevaContrasena.trim().length > 0) {
@@ -86,6 +95,24 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
             </option>
           ))}
         </select>
+
+        {rol === 'Doctor' && (
+          <>
+            <label htmlFor="ep-especialidad">Especialidad</label>
+            <select
+              id="ep-especialidad"
+              value={especialidad ?? ''}
+              onChange={(event) => setEspecialidad((event.target.value || null) as EspecialidadMedica | null)}
+            >
+              <option value="">Sin asignar</option>
+              {ESPECIALIDADES.map((opcion) => (
+                <option key={opcion} value={opcion}>
+                  {ETIQUETA_ESPECIALIDAD[opcion]}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
 
         <label htmlFor="ep-contrasena">Nueva contraseña (opcional)</label>
         <input

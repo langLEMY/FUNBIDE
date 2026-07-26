@@ -23,6 +23,6 @@ public sealed class VerPerfilPropioUseCase(
         var usuario = await usuarioRepository.ObtenerPorSupabaseUserIdAsync(currentUser.UsuarioId, cancellationToken)
             ?? throw new RecursoNoEncontradoException(nameof(Domain.Entities.Usuario), currentUser.UsuarioId);
 
-        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl);
+        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
     }
 }

@@ -162,7 +162,7 @@ export function DirectorioPage() {
         {error && <p className="directorio-error">{error}</p>}
 
         {cargando ? (
-          <p className="text-secondary">Cargando directorio…</p>
+          <p className="text-secondary cargando-pulso">Cargando directorio…</p>
         ) : empleados.length === 0 ? (
           <p className="text-secondary">Todavía no hay nadie registrado.</p>
         ) : (

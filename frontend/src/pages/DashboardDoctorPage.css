@@ -20,8 +20,6 @@
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-card);
   padding: 24px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
 }
 
 .dashboard-doctor-proximas-card h2 {

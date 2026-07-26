@@ -24,6 +24,7 @@ public static class ApplicationBuilderExtensions
         app.UseMiddleware<RequestAuditLoggingMiddleware>();
         app.UseMiddleware<AppendOnlyGuardMiddleware>();
         app.UseMiddleware<RoleAuthorizationMiddleware>();
+        app.UseMiddleware<MantenimientoMiddleware>();
         app.UseAuthorization();
 
         return app;

@@ -3,10 +3,9 @@
   z-index: 1;
   width: 252px;
   flex-shrink: 0;
-  background: var(--glass-chrome-bg);
-  backdrop-filter: blur(26px);
-  -webkit-backdrop-filter: blur(26px);
+  background: var(--chrome-bg);
   border-right: 1px solid var(--border-hairline);
+  box-shadow: var(--shadow-chrome);
   padding: 20px 16px;
   display: flex;
   flex-direction: column;
@@ -31,20 +30,46 @@
 }
 
 .sidebar-nav {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.sidebar-nav-grupo-titulo {
+  margin: 14px 12px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sidebar-nav-grupo-item:first-child .sidebar-nav-grupo-titulo {
+  margin-top: 2px;
 }
 
 .sidebar-nav-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 10px 12px 10px 16px;
   border-radius: var(--radius-control);
   color: var(--text-secondary);
   text-decoration: none;
   font-size: 14px;
+}
+
+.sidebar-nav-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.75;
 }
 
 .sidebar-nav-badge {
@@ -61,23 +86,95 @@
 .sidebar-nav-item:hover {
   background: var(--surface-hover);
   color: var(--text-primary);
+  transform: translateX(2px);
+}
+
+/* Fila completa, no un botón chico: bajarla al 97% (el valor genérico de
+   a:active en theme.css) se ve raro en algo tan ancho. 98.5% es perceptible
+   sin desplazar visualmente toda la fila. */
+.sidebar-nav-item:active {
+  transform: scale(0.985);
+}
+
+.sidebar-nav-item:hover:active {
+  transform: translateX(2px) scale(0.985);
 }
 
 .sidebar-nav-item.activo {
-  background: var(--surface-2);
-  color: var(--text-primary);
+  background: color-mix(in srgb, var(--series-pacientes) 12%, transparent);
+  color: var(--series-pacientes);
+  font-weight: 700;
 }
 
-.sidebar-nav-punto {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.6;
-  transition: opacity var(--duracion-rapida) var(--ease-suave), transform var(--duracion-rapida) var(--ease-suave);
+.sidebar-nav-item.activo::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--series-pacientes);
 }
 
-.sidebar-nav-item.activo .sidebar-nav-punto {
+.sidebar-nav-item.activo .sidebar-nav-icono {
   opacity: 1;
-  transform: scale(1.3);
+}
+
+.sidebar-perfil {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px;
+  margin-top: -8px;
+  border-top: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.sidebar-perfil:hover {
+  background: var(--surface-hover);
+}
+
+.sidebar-perfil.activo {
+  background: color-mix(in srgb, var(--series-pacientes) 12%, transparent);
+}
+
+.sidebar-perfil-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-perfil-avatar-iniciales {
+  background: var(--series-pacientes);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sidebar-perfil-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sidebar-perfil-nombre {
+  font-size: 12.5px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-perfil-subtitulo {
+  font-size: 10.5px;
+  color: var(--text-muted);
 }

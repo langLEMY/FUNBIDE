@@ -27,6 +27,7 @@ public sealed class PersonalController(
     ICrearUsuarioUseCase crearUsuario,
     IEditarUsuarioUseCase editarUsuario,
     ICambiarRolUsuarioUseCase cambiarRol,
+    ICambiarEspecialidadUsuarioUseCase cambiarEspecialidad,
     ICambiarContrasenaUsuarioUseCase cambiarContrasena,
     IActualizarFotoPerfilUseCase actualizarFoto,
     IEliminarUsuarioUseCase eliminarUsuario,
@@ -63,6 +64,12 @@ public sealed class PersonalController(
     public async Task<ActionResult<UsuarioDto>> CambiarRolAsync(
         CambiarRolRequest request, CancellationToken cancellationToken) =>
         Ok(await cambiarRol.EjecutarAsync(request, cancellationToken));
+
+    [HttpPatch("especialidad")]
+    [RequiereRol(RolUsuario.Lemy, RolUsuario.Admin)]
+    public async Task<ActionResult<UsuarioDto>> CambiarEspecialidadAsync(
+        CambiarEspecialidadRequest request, CancellationToken cancellationToken) =>
+        Ok(await cambiarEspecialidad.EjecutarAsync(request, cancellationToken));
 
     [HttpPatch("contrasena")]
     [RequiereRol(RolUsuario.Lemy, RolUsuario.Admin)]

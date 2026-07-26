@@ -203,20 +203,39 @@
   color: var(--text-muted);
 }
 
-.mi-perfil-herramientas {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+.mi-perfil-herramientas-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
 }
 
-.mi-perfil-herramientas li {
+.mi-perfil-herramienta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-2);
+}
+
+/* Realce sutil al pasar el mouse: la tarjeta "responde" sin gritar (sin elevación
+   ni sombra) — coherente con que estas acciones son de diagnóstico, no navegación. */
+.mi-perfil-herramienta:hover {
+  border-color: var(--series-pacientes);
+}
+
+.mi-perfil-herramienta-icono {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface-1);
+  color: var(--series-pacientes);
+  flex-shrink: 0;
 }
 
 .mi-perfil-herramienta-titulo {
@@ -230,23 +249,69 @@
   font-size: 12px;
 }
 
-.mi-perfil-herramientas button {
-  flex-shrink: 0;
+.mi-perfil-herramienta button {
+  width: 100%;
   padding: 8px 14px;
   border-radius: var(--radius-control);
   border: 1px solid var(--border-hairline);
-  background: var(--surface-2);
+  background: var(--surface-1);
   color: var(--text-primary);
   font-size: 13px;
   cursor: pointer;
 }
 
-.mi-perfil-herramientas button:hover:not(:disabled) {
+.mi-perfil-herramienta button:hover:not(:disabled) {
   background: var(--surface-hover);
 }
 
-.mi-perfil-herramientas button:disabled {
+.mi-perfil-herramienta button:disabled {
   opacity: 0.5;
+  cursor: default;
+}
+
+.mi-perfil-mantenimiento-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Interruptor tipo iOS: la perilla se desliza con el mismo timing/easing que el
+   resto de la respuesta táctil de la app (--duracion-base / --ease-suave). */
+.mi-perfil-interruptor {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-2);
+  padding: 0;
+  cursor: pointer;
+}
+
+.mi-perfil-interruptor.activo {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.mi-perfil-interruptor-perilla {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  transition: transform var(--duracion-base) var(--ease-suave);
+}
+
+.mi-perfil-interruptor.activo .mi-perfil-interruptor-perilla {
+  transform: translateX(20px);
+}
+
+.mi-perfil-interruptor:disabled {
+  opacity: 0.6;
   cursor: default;
 }
 

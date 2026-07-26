@@ -142,7 +142,7 @@ export function GastosPage() {
         <p className="gastos-balance-titulo text-secondary">Ganancias vs. gastos — {etiquetaPeriodo}</p>
 
         {cargandoResumen ? (
-          <p className="text-secondary">Cargando…</p>
+          <p className="text-secondary cargando-pulso">Cargando…</p>
         ) : total === 0 ? (
           <p className="text-secondary">No hay movimientos en este período.</p>
         ) : (

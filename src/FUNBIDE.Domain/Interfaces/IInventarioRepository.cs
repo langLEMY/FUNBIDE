@@ -15,6 +15,14 @@ public interface IInventarioRepository
 
     Task<IReadOnlyList<InventarioItem>> ObtenerTodosAsync(CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Con seguimiento de cambios (sin AsNoTracking), para que <c>ImportarInventarioUseCase</c>
+    /// pueda reconciliar el archivo contra los ítems existentes (por código) y actualizarlos
+    /// en la misma unidad de trabajo. No usar en rutas de solo lectura: para eso está
+    /// <see cref="ObtenerTodosAsync"/>.
+    /// </summary>
+    Task<IReadOnlyList<InventarioItem>> ObtenerTodosParaImportarAsync(CancellationToken cancellationToken);
+
     Task<bool> ExisteCodigoAsync(string codigo, CancellationToken cancellationToken);
 
     Task<bool> TieneMovimientosAsync(Guid inventarioItemId, CancellationToken cancellationToken);

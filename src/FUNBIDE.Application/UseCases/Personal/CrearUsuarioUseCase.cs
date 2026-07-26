@@ -40,7 +40,7 @@ public sealed class CrearUsuarioUseCase(
         var supabaseUserId = await supabaseAdmin.CrearUsuarioAsync(
             request.Correo, request.ContrasenaTemporal, request.Rol, cancellationToken);
 
-        var usuario = new Usuario(supabaseUserId, request.NombreCompleto, request.Correo, request.Rol);
+        var usuario = new Usuario(supabaseUserId, request.NombreCompleto, request.Correo, request.Rol, request.Especialidad);
 
         try
         {
@@ -61,6 +61,6 @@ public sealed class CrearUsuarioUseCase(
             codigoRespuestaHttp: 201,
             cancellationToken: cancellationToken);
 
-        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl);
+        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
     }
 }

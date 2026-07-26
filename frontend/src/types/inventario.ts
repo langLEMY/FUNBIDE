@@ -40,3 +40,11 @@ export interface MovimientoInventarioDto {
   stockResultante: number
   registradoEn: string
 }
+
+export interface ImportarInventarioResultado {
+  totalFilas: number
+  creados: number
+  actualizados: number
+  omitidos: number
+  omisiones: string[]
+}

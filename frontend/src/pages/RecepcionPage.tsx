@@ -1,6 +1,7 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { api, ApiError } from '../lib/api'
+import { agruparDoctoresPorEspecialidad } from '../lib/agruparDoctores'
 import type { CitaAgenda } from '../types/cita'
 import type { Paciente, PacientesPaginados } from '../types/paciente'
 import type { DoctorSimple } from '../types/doctor'
@@ -20,6 +21,7 @@ function claseBadgeEstado(estado: CitaAgenda['estado']): string {
 export function RecepcionPage() {
   const [salaDeEspera, setSalaDeEspera] = useState<CitaAgenda[]>([])
   const [doctores, setDoctores] = useState<DoctorSimple[]>([])
+  const gruposDoctores = useMemo(() => agruparDoctoresPorEspecialidad(doctores), [doctores])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [accionandoId, setAccionandoId] = useState<string | null>(null)
@@ -139,7 +141,7 @@ export function RecepcionPage() {
   if (cargando) {
     return (
       <DashboardLayout titulo="Recepción">
-        <p className="text-secondary">Cargando…</p>
+        <p className="text-secondary cargando-pulso">Cargando…</p>
       </DashboardLayout>
     )
   }
@@ -183,10 +185,14 @@ export function RecepcionPage() {
         <form className="recepcion-llegada-form" onSubmit={(event) => void handleLlegadaDirecta(event)}>
           <select value={doctorId} onChange={(event) => setDoctorId(event.target.value)}>
             <option value="">Selecciona un doctor…</option>
-            {doctores.map((doctor) => (
-              <option key={doctor.id} value={doctor.id}>
-                {doctor.nombreCompleto}
-              </option>
+            {gruposDoctores.map((grupo) => (
+              <optgroup key={grupo.etiqueta} label={grupo.etiqueta}>
+                {grupo.doctores.map((doctor) => (
+                  <option key={doctor.id} value={doctor.id}>
+                    {doctor.nombreCompleto}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <input placeholder="Motivo" value={motivo} onChange={(event) => setMotivo(event.target.value)} required />

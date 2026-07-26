@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useTheme } from '../theme/ThemeContext'
 import { traducirErrorAuth } from '../auth/mensajesError'
-import { FondoBlobs } from '../components/layout/FondoBlobs'
+import { ThemeToggleButton } from '../components/layout/ThemeToggleButton'
 import './LoginPage.css'
 
 const CLAVE_USUARIO_RECORDADO = 'funbide-usuario-recordado'
@@ -29,7 +29,7 @@ function registrarEventoLogin(correo: string, exitoso: boolean) {
 export function LoginPage() {
   const { iniciarSesion } = useAuth()
   const navigate = useNavigate()
-  const { tema, alternarTema } = useTheme()
+  const { tema } = useTheme()
 
   const [correo, setCorreo] = useState('')
   const [contrasena, setContrasena] = useState('')
@@ -76,26 +76,7 @@ export function LoginPage() {
 
   return (
     <div className="login-page">
-      <FondoBlobs />
-
-      <button
-        type="button"
-        className="login-tema-boton"
-        onClick={alternarTema}
-        aria-label={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
-        aria-pressed={tema === 'claro'}
-      >
-        {tema === 'oscuro' ? (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" />
-          </svg>
-        ) : (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="4" fill="currentColor" />
-            <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-        )}
-      </button>
+      <ThemeToggleButton className="login-tema-boton" />
 
       <form className="login-card" onSubmit={(event) => void handleSubmit(event)}>
         <div className="login-ventana-barra">
@@ -109,7 +90,11 @@ export function LoginPage() {
         </div>
 
         <div className="login-contenido">
-          <img className="login-logo" src="/logo-funbide.png" alt="FUNBIDE" />
+          <img
+            className="login-logo"
+            src={tema === 'oscuro' ? '/logo-funbide-wordmark-oscuro.png' : '/logo-funbide-wordmark-claro.png'}
+            alt="FUNBIDE"
+          />
           <h1 className="login-titulo">Bienvenido de nuevo</h1>
           <p className="login-subtitulo">Ingresa tus credenciales para acceder al panel.</p>
 

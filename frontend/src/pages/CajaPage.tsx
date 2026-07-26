@@ -190,7 +190,7 @@ export function CajaPage() {
   if (cargando) {
     return (
       <DashboardLayout titulo="Caja">
-        <p className="text-secondary">Cargando…</p>
+        <p className="text-secondary cargando-pulso">Cargando…</p>
       </DashboardLayout>
     )
   }

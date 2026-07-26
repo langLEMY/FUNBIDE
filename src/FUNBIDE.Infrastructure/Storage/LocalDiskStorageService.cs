@@ -39,6 +39,21 @@ public sealed class LocalDiskStorageService(IOptions<LocalStorageOptions> opcion
     public Task<string> GenerarUrlFirmadaCedulaAsync(string rutaObjeto, CancellationToken cancellationToken) =>
         Task.FromResult(GenerarUrlFirmada(rutaObjeto, DuracionFirmaCedula));
 
+    public Task<bool> VerificarConexionAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            // No hay red que probar en modo local: alcanza con confirmar que el directorio
+            // base es accesible (existe o se puede crear) en este disco.
+            Directory.CreateDirectory(opciones.Value.DirectorioBase);
+            return Task.FromResult(true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return Task.FromResult(false);
+        }
+    }
+
     private async Task GuardarAsync(string rutaRelativa, Stream contenido, CancellationToken cancellationToken)
     {
         var rutaAbsoluta = ArchivoLocalRutas.ResolverRutaSegura(opciones.Value.DirectorioBase, rutaRelativa)

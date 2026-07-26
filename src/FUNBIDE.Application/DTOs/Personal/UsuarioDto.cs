@@ -8,4 +8,5 @@ public sealed record UsuarioDto(
     string Correo,
     RolUsuario Rol,
     bool Activo,
-    string? FotoPerfilUrl);
+    string? FotoPerfilUrl,
+    EspecialidadMedica? Especialidad);

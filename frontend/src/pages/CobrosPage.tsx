@@ -227,7 +227,7 @@ export function CobrosPage() {
   if (cargando) {
     return (
       <DashboardLayout titulo="Cobros">
-        <p className="text-secondary">Cargando…</p>
+        <p className="text-secondary cargando-pulso">Cargando…</p>
       </DashboardLayout>
     )
   }

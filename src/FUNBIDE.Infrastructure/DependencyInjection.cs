@@ -42,11 +42,14 @@ public static class DependencyInjection
         services.AddScoped<ITurnoCajaRepository, TurnoCajaRepository>();
         services.AddScoped<ICobroRepository, CobroRepository>();
         services.AddScoped<ISeguroMedicoRepository, SeguroMedicoRepository>();
+        services.AddScoped<IDonacionRepository, DonacionRepository>();
+        services.AddScoped<IConfiguracionSistemaRepository, ConfiguracionSistemaRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddScoped<IAuditoriaLogService, AuditoriaLogService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IEstadoBaseDeDatosService, EstadoBaseDeDatosService>();
+        services.AddScoped<IEstadoBackupService, EstadoBackupService>();
         services.AddScoped<IExcelLectorService, ExcelLectorService>();
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 

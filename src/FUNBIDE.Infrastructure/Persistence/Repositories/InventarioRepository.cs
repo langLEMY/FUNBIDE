@@ -31,6 +31,9 @@ public sealed class InventarioRepository(FunbideDbContext dbContext) : IInventar
             .OrderBy(i => i.Nombre)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<InventarioItem>> ObtenerTodosParaImportarAsync(CancellationToken cancellationToken) =>
+        await dbContext.InventarioItems.ToListAsync(cancellationToken);
+
     public Task<bool> ExisteCodigoAsync(string codigo, CancellationToken cancellationToken) =>
         dbContext.InventarioItems.AsNoTracking().AnyAsync(i => i.Codigo == codigo, cancellationToken);
 

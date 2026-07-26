@@ -29,7 +29,8 @@ public sealed class CitasController(
     IRegistrarLlegadaSinCitaUseCase registrarLlegadaSinCita,
     IListarAgendaUseCase listarAgenda,
     IListarSalaDeEsperaUseCase listarSalaDeEspera,
-    IListarPendientesDeCobroUseCase listarPendientesDeCobro) : ControllerBase
+    IListarPendientesDeCobroUseCase listarPendientesDeCobro,
+    IListarPacientesDelDoctorUseCase listarPacientesDelDoctor) : ControllerBase
 {
     [HttpGet("pendientes")]
     [RequiereRol(RolUsuario.Doctor)]
@@ -56,6 +57,12 @@ public sealed class CitasController(
     [RequiereRol(RolUsuario.Doctor)]
     public async Task<ActionResult<IReadOnlyList<CitaDto>>> ObtenerEnEsperaAsync(CancellationToken cancellationToken) =>
         Ok(await obtenerPorEstado.EjecutarAsync(EstadoCita.EnEspera, cancellationToken));
+
+    /// <summary>Pacientes que alguna vez tuvieron una cita con el doctor autenticado, para su Dashboard.</summary>
+    [HttpGet("pacientes")]
+    [RequiereRol(RolUsuario.Doctor)]
+    public async Task<ActionResult<IReadOnlyList<PacienteDelDoctorDto>>> ObtenerPacientesAsync(CancellationToken cancellationToken) =>
+        Ok(await listarPacientesDelDoctor.EjecutarAsync(cancellationToken));
 
     [HttpPost]
     [RequiereRol(RolUsuario.Doctor)]
@@ -104,13 +111,13 @@ public sealed class CitasController(
     }
 
     [HttpGet("agenda")]
-    [RequiereRol(RolUsuario.Fondos)]
+    [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin)]
     public async Task<ActionResult<IReadOnlyList<CitaAgendaDto>>> ObtenerAgendaAsync(
         [FromQuery] DateOnly? fecha, [FromQuery] Guid? doctorId, CancellationToken cancellationToken) =>
         Ok(await listarAgenda.EjecutarAsync(new ListarAgendaRequest(fecha, doctorId), cancellationToken));
 
     [HttpGet("sala-espera")]
-    [RequiereRol(RolUsuario.Fondos)]
+    [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin)]
     public async Task<ActionResult<IReadOnlyList<CitaAgendaDto>>> ObtenerSalaDeEsperaAsync(CancellationToken cancellationToken) =>
         Ok(await listarSalaDeEspera.EjecutarAsync(cancellationToken));
 

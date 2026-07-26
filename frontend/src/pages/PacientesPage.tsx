@@ -25,9 +25,11 @@ export function PacientesPage() {
   const { perfil } = useAuth()
   const puedeEditar = perfil?.rol === 'Lemy'
   const puedeEliminar = perfil?.rol === 'Lemy' || perfil?.rol === 'Admin' || perfil?.rol === 'Doctor'
-  const puedeVerHistorial = perfil?.rol === 'Doctor'
+  const puedeVerHistorial = perfil?.rol === 'Doctor' || perfil?.rol === 'Admin'
   const puedeCrear = Boolean(perfil)
   const puedeImportar = perfil?.rol === 'Lemy' || perfil?.rol === 'Admin'
+  const puedeSubirFotoCedula = perfil?.rol === 'Lemy'
+  const puedeVerFotoCedula = perfil?.rol === 'Lemy' || perfil?.rol === 'Admin'
 
   const [pacientes, setPacientes] = useState<Paciente[]>([])
   const [total, setTotal] = useState(0)
@@ -237,7 +239,7 @@ export function PacientesPage() {
         {error && <p className="pacientes-error">{error}</p>}
 
         {cargando ? (
-          <p className="text-secondary">Cargando pacientes…</p>
+          <p className="text-secondary cargando-pulso">Cargando pacientes…</p>
         ) : pacientes.length === 0 ? (
           <p className="text-secondary">
             {total === 0 && !busqueda.trim() && filtroEstado === FILTRO_TODOS
@@ -257,7 +259,9 @@ export function PacientesPage() {
                     <th>Estado</th>
                     <th>Cédula</th>
                     <th>Teléfono</th>
-                    {(puedeEditar || puedeEliminar || puedeVerHistorial) && <th>Acciones</th>}
+                    {(puedeEditar || puedeEliminar || puedeVerHistorial || puedeSubirFotoCedula || puedeVerFotoCedula) && (
+                      <th>Acciones</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -268,6 +272,8 @@ export function PacientesPage() {
                       puedeEditar={puedeEditar}
                       puedeEliminar={puedeEliminar}
                       puedeVerHistorial={puedeVerHistorial}
+                      puedeSubirFotoCedula={puedeSubirFotoCedula}
+                      puedeVerFotoCedula={puedeVerFotoCedula}
                       onActualizado={actualizarEnLista}
                       onEliminado={quitarDeLista}
                     />

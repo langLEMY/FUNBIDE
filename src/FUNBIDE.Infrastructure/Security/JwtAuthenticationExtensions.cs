@@ -11,7 +11,7 @@ public static class JwtAuthenticationExtensions
 {
     /// <summary>
     /// Configura la autenticación JWT contra los tokens emitidos por Supabase Auth y
-    /// proyecta el rol de negocio (ADMIN, DOCTOR, FONDOS, FARMACIA, LEMY) —guardado en
+    /// proyecta el rol de negocio (ADMIN, DOCTOR, FONDOS, LEMY) —guardado en
     /// app_metadata.role— como <see cref="ClaimTypes.Role"/> para que funcione con
     /// [Authorize(Roles = ...)] y con el middleware de validación de roles.
     /// </summary>

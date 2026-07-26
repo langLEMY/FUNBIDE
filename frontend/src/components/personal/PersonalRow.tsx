@@ -3,6 +3,7 @@ import { api, ApiError } from '../../lib/api'
 import { iniciales } from '../../lib/iniciales'
 import { EditarPersonalModal } from './EditarPersonalModal'
 import type { Usuario } from '../../types/usuario'
+import { ETIQUETA_ESPECIALIDAD } from '../../types/personal'
 
 interface PersonalRowProps {
   usuario: Usuario
@@ -102,6 +103,13 @@ export function PersonalRow({ usuario, onActualizado, onEliminadoPermanentemente
           <span className="personal-row-rol">{usuario.rol}</span>
         </td>
         <td>
+          {usuario.rol === 'Doctor' && (
+            <span className="personal-row-especialidad">
+              {usuario.especialidad ? ETIQUETA_ESPECIALIDAD[usuario.especialidad] : 'Sin asignar'}
+            </span>
+          )}
+        </td>
+        <td>
           <span className={`personal-row-estado ${usuario.activo ? 'activo' : 'inactivo'}`}>
             {usuario.activo ? 'Activo' : 'Inactivo'}
           </span>
@@ -135,7 +143,7 @@ export function PersonalRow({ usuario, onActualizado, onEliminadoPermanentemente
       </tr>
       {error && (
         <tr>
-          <td colSpan={4} className="personal-row-error">
+          <td colSpan={5} className="personal-row-error">
             {error}
           </td>
         </tr>

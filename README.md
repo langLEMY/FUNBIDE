@@ -16,10 +16,9 @@ Panel de administración de la Fundación Bienestar y Desarrollo: gestión de pa
 | `Admin` | Ve el dashboard, el resumen financiero (incluye gastos administrativos), el directorio de personal y administra las aseguradoras/seguros médicos. Solo lectura sobre inventario/pacientes desde el punto de vista de gestión de personal. |
 | `Doctor` | Pacientes, citas (crear/programar/completar) e historial clínico. |
 | `Fondos` | Caja (apertura/cierre de turno con arqueo), cobros a pacientes (con o sin seguro médico), recepción (registrar llegada, sala de espera), agenda de citas y movimientos financieros (ingresos/egresos). |
-| `Farmacia` | Administra inventario (agregar ítems, despachar). |
 | `Lemy` | Administra personal (altas/bajas, roles, contraseñas), aseguradoras/seguros médicos y tiene la bitácora de actividad (`/actividad`) con filtros por login, cambios, inventario y pacientes. |
 
-Pacientes e inventario están abiertos a los cinco roles para agregar/consultar; eliminar pacientes es exclusivo de `Admin`, `Lemy` y `Doctor`.
+Pacientes e inventario están abiertos a los cuatro roles para agregar/consultar; eliminar pacientes es exclusivo de `Admin`, `Lemy` y `Doctor`.
 
 ## Requisitos previos
 

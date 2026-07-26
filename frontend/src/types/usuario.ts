@@ -1,4 +1,16 @@
-export type RolUsuario = 'Admin' | 'Doctor' | 'Fondos' | 'Farmacia' | 'Lemy'
+export type RolUsuario = 'Admin' | 'Doctor' | 'Fondos' | 'Lemy'
+
+/** Debe coincidir exactamente con FUNBIDE.Domain.Enums.EspecialidadMedica. Solo aplica a rol Doctor. */
+export type EspecialidadMedica =
+  | 'Sonografia'
+  | 'Odontologia'
+  | 'Pediatria'
+  | 'Cardiologia'
+  | 'Ginecologia'
+  | 'MedicinaGeneralYFamiliar'
+  | 'Diabetologia'
+  | 'Psicologia'
+  | 'Oftalmologia'
 
 export interface Usuario {
   id: string
@@ -7,4 +19,5 @@ export interface Usuario {
   rol: RolUsuario
   activo: boolean
   fotoPerfilUrl: string | null
+  especialidad: EspecialidadMedica | null
 }

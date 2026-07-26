@@ -17,6 +17,9 @@ public sealed class Usuario : Entity
     public bool Activo { get; private set; } = true;
     public string? FotoPerfilUrl { get; private set; }
 
+    /// <summary>Solo tiene sentido cuando <see cref="Rol"/> es <see cref="RolUsuario.Doctor"/> — ver <see cref="AsignarEspecialidad"/>.</summary>
+    public EspecialidadMedica? Especialidad { get; private set; }
+
     /// <summary>
     /// true cuando a este usuario se le borró el acceso de Supabase Auth de forma
     /// irreversible (<c>EliminarUsuarioPermanentementeUseCase</c>), a diferencia de
@@ -28,7 +31,7 @@ public sealed class Usuario : Entity
 
     private Usuario() { }
 
-    public Usuario(Guid supabaseUserId, string nombreCompleto, string correo, RolUsuario rol)
+    public Usuario(Guid supabaseUserId, string nombreCompleto, string correo, RolUsuario rol, EspecialidadMedica? especialidad = null)
     {
         if (string.IsNullOrWhiteSpace(nombreCompleto))
         {
@@ -44,6 +47,7 @@ public sealed class Usuario : Entity
         NombreCompleto = nombreCompleto.Trim();
         Correo = correo.Trim().ToLowerInvariant();
         Rol = rol;
+        AsignarEspecialidad(especialidad);
     }
 
     /// <summary>
@@ -52,7 +56,29 @@ public sealed class Usuario : Entity
     /// sincronizar primero <c>app_metadata.role</c> en Supabase Auth, que es la fuente
     /// real que se proyecta como claim en el JWT y decide la autorización.
     /// </summary>
-    public void CambiarRol(RolUsuario nuevoRol) => Rol = nuevoRol;
+    /// <summary>
+    /// Si el nuevo rol no es Doctor, limpia <see cref="Especialidad"/>: ya no aplica y
+    /// dejarla puesta violaría la regla validada en <see cref="AsignarEspecialidad"/>.
+    /// </summary>
+    public void CambiarRol(RolUsuario nuevoRol)
+    {
+        Rol = nuevoRol;
+        if (nuevoRol != RolUsuario.Doctor)
+        {
+            Especialidad = null;
+        }
+    }
+
+    /// <summary>Solo un usuario con rol Doctor puede tener una especialidad médica asignada.</summary>
+    public void AsignarEspecialidad(EspecialidadMedica? especialidad)
+    {
+        if (especialidad is not null && Rol != RolUsuario.Doctor)
+        {
+            throw new ArgumentException("Solo un usuario con rol Doctor puede tener una especialidad médica.", nameof(especialidad));
+        }
+
+        Especialidad = especialidad;
+    }
 
     /// <summary>
     /// Actualiza nombre y correo. Igual que <see cref="CambiarRol"/>, quien invoque este

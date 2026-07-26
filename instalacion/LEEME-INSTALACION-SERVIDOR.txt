@@ -1,0 +1,194 @@
+FUNBIDE - instalacion limpia en una maquina nueva (rol: SERVIDOR)
+==================================================================
+
+Que resuelve esto: hoy cada PC de la clinica necesita tener FUNBIDE.exe
+instalado. Esta guia es para el otro modelo: UNA sola maquina (esta) corre el
+backend, y todas las demas PCs se conectan a ella con un navegador comun, sin
+instalar nada. Los datos siguen siendo los reales, en la nube (Supabase) - el
+servidor local no reemplaza esa base, solo evita que cada PC tenga que correr
+su propia copia del backend.
+
+Importante: esto es username-independiente. Cualquier PC de la red (Windows,
+Mac, Linux, celular) puede conectarse, siempre que este en la misma red local
+y sepa la direccion IP de esta maquina.
+
+
+PASO 0 - Que necesitas antes de empezar
+----------------------------------------
+  - Esta maquina: Windows 10 o 11, 64 bits, con conexion a internet estable
+    (el backend habla todo el tiempo con Supabase en la nube).
+  - El paquete portable de FUNBIDE ya armado: la carpeta con FUNBIDE.exe +
+    publish\ (adentro FUNBIDE.API.exe, wwwroot\, appsettings.Local.json).
+    Se genera en la maquina de desarrollo corriendo
+    "scripts\publicar-portable.ps1" y produce "dist-portable.zip".
+  - Esta carpeta "instalacion" (con este archivo y iniciar-servidor.ps1) va
+    DENTRO del mismo paquete, al lado de publish\ y FUNBIDE.exe.
+
+ARCHIVO SENSIBLE: publish\appsettings.Local.json trae la contrasena real de
+la base de datos. El paquete completo hay que llevarlo por USB o copia
+directa en la red - nunca por correo, WhatsApp ni un link publico.
+
+
+PASO 1 - Copiar el paquete a la maquina servidor
+--------------------------------------------------
+  1. Copiar la carpeta completa (o descomprimir el .zip) a un disco local,
+     por ejemplo C:\FUNBIDE. No hace falta que sea Archivos de Programa.
+  2. Confirmar que quedo esta estructura:
+       C:\FUNBIDE\FUNBIDE.exe
+       C:\FUNBIDE\publish\FUNBIDE.API.exe
+       C:\FUNBIDE\publish\wwwroot\   (el frontend ya compilado)
+       C:\FUNBIDE\publish\appsettings.Local.json
+       C:\FUNBIDE\instalacion\iniciar-servidor.ps1
+       C:\FUNBIDE\instalacion\LEEME-INSTALACION-SERVIDOR.txt  (este archivo)
+  3. Si esta maquina no tiene el runtime "Microsoft Edge WebView2" (Windows
+     10 viejo), FUNBIDE.exe lo pide solo la primera vez que se abre. No hace
+     falta para el rol de servidor puro (ver paso 5), solo si en esta misma
+     maquina tambien se va a usar la ventana nativa.
+
+
+PASO 2 - Configurar una IP fija para esta maquina
+-----------------------------------------------------
+Por que hace falta: si esta maquina recibe una IP distinta cada vez que se
+reinicia el router (comportamiento normal de DHCP), las demas PCs tendrian
+que cambiar la direccion a la que se conectan cada vez que eso pase. Necesitas
+que la IP de esta maquina en la red local NUNCA cambie.
+
+Opcion recomendada - reserva de IP en el router (no toca nada en Windows):
+  1. Anotar la direccion fisica (MAC) de esta maquina: abrir PowerShell y
+     correr "ipconfig /all", buscar el adaptador que esta conectado
+     (Ethernet o Wi-Fi) y copiar el campo "Direccion fisica".
+  2. Entrar al panel de administracion del router (normalmente
+     192.168.0.1 o 192.168.1.1 desde un navegador, usuario/clave del router
+     - no el de Windows).
+  3. Buscar la seccion "DHCP" / "Reserva de IP" / "Direcciones estaticas" (el
+     nombre cambia segun la marca del router) y crear una reserva: la MAC de
+     arriba siempre recibe la misma IP, por ejemplo 192.168.1.50.
+  4. Reiniciar la conexion de red de esta maquina (o el router) para que
+     tome la IP reservada.
+
+Ventaja de esta opcion sobre poner la IP a mano en Windows: se configura en
+un solo lugar, la maquina sigue funcionando con DHCP normal, y no hay riesgo
+de elegir por error una IP que el router le vaya a dar a otro dispositivo.
+
+Opcion alternativa - IP estatica manual en Windows (si no se tiene acceso al
+router): Panel de Control > Redes e Internet > Centro de redes > Cambiar
+configuracion del adaptador > click derecho en la red activa > Propiedades >
+"Protocolo de Internet version 4 (TCP/IPv4)" > Propiedades > "Usar la
+siguiente direccion IP". Hace falta saber de antemano la mascara de subred,
+la puerta de enlace y el DNS del router (se ven con "ipconfig /all" mientras
+la maquina todavia esta en DHCP), y elegir una IP fuera del rango que reparte
+el DHCP del router para no chocar con otro dispositivo.
+
+Anotar la IP elegida - se necesita en el paso 5 y en cada PC cliente.
+
+
+PASO 3 - Abrir el puerto en el Firewall de Windows
+------------------------------------------------------
+FUNBIDE usa el puerto 5090. Sin esta regla, las demas PCs se van a quedar
+"cargando" sin conectar aunque el servidor este corriendo bien.
+
+Abrir PowerShell como Administrador y correr:
+
+    New-NetFirewallRule -DisplayName "FUNBIDE Servidor" -Direction Inbound -Protocol TCP -LocalPort 5090 -Action Allow
+
+
+PASO 4 - Arrancar el backend en modo servidor
+-------------------------------------------------
+OJO: no es lo mismo que abrir FUNBIDE.exe de siempre. FUNBIDE.exe (el
+lanzador con ventana) arranca su propio backend escuchando SOLO en
+127.0.0.1 (esta misma maquina) - a proposito, pensado para el modo de un
+solo puesto. Para que otras PCs se conecten hace falta que escuche en todas
+las interfaces de red (0.0.0.0). Para eso sirve el script de esta carpeta:
+
+    powershell -ExecutionPolicy Bypass -File "C:\FUNBIDE\instalacion\iniciar-servidor.ps1"
+
+(ajustar la ruta si se copio el paquete a otra carpeta). El script:
+  - Revisa que no haya ya un FUNBIDE corriendo en el puerto 5090.
+  - Arranca publish\FUNBIDE.API.exe escuchando en 0.0.0.0:5090, en segundo
+    plano (sin ventana).
+  - Espera a que responda /health y avisa la IP a la que se tienen que
+    conectar las demas PCs.
+
+Nota de seguridad: esto expone la API por HTTP simple (sin cifrar) dentro de
+la red local - las credenciales de sesion viajan en texto plano dentro de esa
+red. Es un riesgo aceptable UNICAMENTE si la red local es de confianza (la
+red interna y cerrada de la clinica, no un Wi-Fi publico ni compartido con
+gente ajena). Si mas adelante hace falta cifrado (HTTPS) para la red local,
+el despliegue con Docker + nginx + Let's Encrypt que ya existe en el repo
+(docker-compose.yml) esta pensado justamente para eso, pero requiere un
+dominio propio.
+
+
+PASO 5 - Que arranque solo cuando se prende la maquina
+------------------------------------------------------------
+Para que el servidor no dependa de que alguien inicie sesion en Windows y
+corra el script a mano cada vez que se reinicia la PC (corte de luz,
+mantenimiento, etc.), se registra como tarea programada. Como Administrador,
+una sola vez:
+
+    schtasks /create /tn "FUNBIDE Servidor" /tr "powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\FUNBIDE\instalacion\iniciar-servidor.ps1" /sc onstart /ru SYSTEM /rl highest
+
+Para probarla sin reiniciar la PC:
+
+    schtasks /run /tn "FUNBIDE Servidor"
+
+Para sacarla (si se quiere volver a arrancar solo a mano):
+
+    schtasks /delete /tn "FUNBIDE Servidor" /f
+
+
+PASO 6 - Conectarse desde las demas PCs
+---------------------------------------------
+Ya no hace falta instalar FUNBIDE.exe en cada PC. Alcanza con abrir un
+navegador cualquiera (Chrome, Edge, Firefox) y entrar a:
+
+    http://<IP-del-servidor>:5090
+
+Por ejemplo, si la IP reservada en el paso 2 fue 192.168.1.50:
+
+    http://192.168.1.50:5090
+
+El login es el mismo de siempre (cuentas reales) - no hace falta ninguna
+configuracion especial por PC.
+
+Sugerencia para que se sienta como una app y no como "una pagina": en Chrome
+o Edge, entrar a esa direccion y usar el menu (los tres puntos) > "Mas
+herramientas" > "Crear acceso directo..." (o "Instalar como aplicacion") -
+queda un icono en el escritorio que abre FUNBIDE en su propia ventana, sin
+la barra del navegador.
+
+
+PASO 7 (opcional) - Usar tambien la ventana nativa en esta misma maquina
+-------------------------------------------------------------------------------
+Si en la maquina servidor tambien se quiere abrir FUNBIDE con la ventana
+nativa (no solo desde el navegador), se puede sin conflicto: FUNBIDE.exe
+revisa primero si el puerto 5090 ya esta ocupado, y si el backend ya esta
+corriendo (el que arranco iniciar-servidor.ps1 o la tarea programada) no
+arranca uno nuevo - solo abre la ventana apuntando al que ya esta activo.
+Osea: primero se asegura el paso 4, despues se puede abrir FUNBIDE.exe
+normal en esta misma maquina.
+
+
+PASO 8 - Actualizar a una version nueva mas adelante
+----------------------------------------------------------
+  1. En la maquina de desarrollo, correr de nuevo "scripts\publicar-portable.ps1"
+     para generar un dist-portable.zip actualizado.
+  2. Copiar el .zip nuevo a la maquina servidor (USB o red, igual que la
+     primera vez).
+  3. Detener el servicio: "schtasks /end /tn "FUNBIDE Servidor"" o
+     reiniciar la maquina.
+  4. Reemplazar el contenido de la carpeta (FUNBIDE.exe + publish\) por el
+     del paquete nuevo. La carpeta "instalacion" no cambia, no hace falta
+     tocarla.
+  5. Volver a arrancar (paso 4, o esperar a que la tarea programada lo haga
+     sola en el proximo inicio).
+
+
+Resumen / checklist rapido
+------------------------------
+  [ ] Paquete copiado a C:\FUNBIDE (FUNBIDE.exe + publish\ + instalacion\)
+  [ ] IP fija reservada para esta maquina (paso 2)
+  [ ] Regla de Firewall para el puerto 5090 (paso 3)
+  [ ] iniciar-servidor.ps1 probado a mano, /health respondio bien (paso 4)
+  [ ] Tarea programada creada, arranca solo (paso 5)
+  [ ] Una PC cliente probada desde el navegador, http://IP:5090 (paso 6)

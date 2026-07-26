@@ -8,13 +8,15 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUNBIDE.API.Controllers;
 
 /// <summary>
-/// Panel de "Estado del sistema" exclusivo de LEMY, dentro de Mi Perfil.
+/// Panel de "Estado del sistema", dentro de Mi Perfil. LEMY lo usa para diagnóstico
+/// operativo; Admin lo ve como parte de su visibilidad de solo lectura sobre todo el sistema.
 /// </summary>
 [ApiController]
 [Route("api/sistema")]
 [Authorize]
-[RequiereRol(RolUsuario.Lemy)]
+[RequiereRol(RolUsuario.Lemy, RolUsuario.Admin)]
 [SoloLecturaEInsercion]
+[VisibleDuranteMantenimiento]
 public sealed class SistemaController(IVerificarEstadoSistemaUseCase verificarEstado) : ControllerBase
 {
     [HttpGet("estado")]

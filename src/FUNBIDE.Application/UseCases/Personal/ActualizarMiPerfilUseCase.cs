@@ -52,6 +52,6 @@ public sealed class ActualizarMiPerfilUseCase(
             codigoRespuestaHttp: 200,
             cancellationToken: cancellationToken);
 
-        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl);
+        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
     }
 }

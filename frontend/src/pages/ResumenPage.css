@@ -32,6 +32,17 @@
   color: var(--text-primary);
 }
 
+.resumen-presets button.activo {
+  background: var(--series-pacientes);
+  border-color: var(--series-pacientes);
+  color: #ffffff;
+}
+
+.resumen-presets button.activo:hover {
+  background: var(--series-pacientes);
+  filter: brightness(1.05);
+}
+
 .resumen-rango {
   display: flex;
   align-items: flex-end;

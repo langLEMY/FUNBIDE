@@ -41,3 +41,27 @@ cambia un administrador rol Lemy desde Personal) y no tiene backup
 automatico por pg_dump (el volumen de Docker de Postgres ya persiste los
 datos; si queres backups periodicos, es un "pg_dump" del contenedor
 "funbide-postgres" agendado aparte).
+
+
+El dia de la instalacion final (conectar las demas PCs)
+==========================================================
+
+Docker y los contenedores de FUNBIDE ya estan preparados para arrancar
+solos con la maquina (servicio systemd habilitado + restart:unless-stopped
+en docker-compose.local.yml) - eso no depende de la red y ya funciona.
+
+Lo unico que falta hacer una vez que esta maquina este en su ubicacion
+DEFINITIVA, conectada por cable al switch de esa red (no antes, porque la
+IP/gateway de cualquier red previa - de pruebas - no van a servir ahi):
+
+  sudo bash instalacion/preparar-servidor-linux.sh
+
+Este script detecta la IP que le da el DHCP de esa red en ese momento, la
+fija como estatica (para que no cambie mas y las demas PCs no pierdan la
+conexion), abre el puerto en el firewall si esta activo, y al final
+imprime la direccion exacta a la que se tienen que conectar las demas PCs
+del switch (por ejemplo http://192.168.1.40:8080) - alcanza con abrir esa
+direccion en cualquier navegador, sin instalar nada en cada PC.
+
+Se puede correr mas de una vez sin problema si hace falta (cambio de
+switch, de router, etc.) - cada corrida vuelve a fijar la IP del momento.

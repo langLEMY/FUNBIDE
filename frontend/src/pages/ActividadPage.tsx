@@ -194,7 +194,7 @@ export function ActividadPage() {
         {error && <p className="actividad-error">{error}</p>}
 
         {cargando ? (
-          <p className="text-secondary">Cargando…</p>
+          <p className="text-secondary cargando-pulso">Cargando…</p>
         ) : registrosFiltrados.length === 0 ? (
           <p className="text-secondary">Sin actividad registrada en este rango.</p>
         ) : (

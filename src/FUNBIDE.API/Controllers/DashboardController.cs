@@ -18,7 +18,8 @@ namespace FUNBIDE.API.Controllers;
 [RequiereRol(RolUsuario.Admin)]
 public sealed class DashboardController(
     IObtenerResumenHoyUseCase obtenerResumenHoy,
-    IObtenerResumenMesUseCase obtenerResumenMes) : ControllerBase
+    IObtenerResumenMesUseCase obtenerResumenMes,
+    IObtenerAlertasAdminUseCase obtenerAlertas) : ControllerBase
 {
     [HttpGet("resumen-hoy")]
     public async Task<ActionResult<ResumenDiarioDto>> ObtenerResumenHoyAsync(CancellationToken cancellationToken) =>
@@ -27,4 +28,8 @@ public sealed class DashboardController(
     [HttpGet("resumen-mes")]
     public async Task<ActionResult<IReadOnlyList<ResumenDiarioDto>>> ObtenerResumenMesAsync(CancellationToken cancellationToken) =>
         Ok(await obtenerResumenMes.EjecutarAsync(cancellationToken));
+
+    [HttpGet("alertas")]
+    public async Task<ActionResult<AlertasAdminDto>> ObtenerAlertasAsync(CancellationToken cancellationToken) =>
+        Ok(await obtenerAlertas.EjecutarAsync(cancellationToken));
 }

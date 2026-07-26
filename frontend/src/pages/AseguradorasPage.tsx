@@ -137,7 +137,7 @@ export function AseguradorasPage() {
         {errorFila && <p className="aseguradoras-error">{errorFila}</p>}
 
         {cargando ? (
-          <p className="text-secondary">Cargando aseguradoras…</p>
+          <p className="text-secondary cargando-pulso">Cargando aseguradoras…</p>
         ) : seguros.length === 0 ? (
           <p className="text-secondary">Todavía no hay aseguradoras registradas.</p>
         ) : (

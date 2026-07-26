@@ -4,6 +4,19 @@
   margin: 0 0 14px;
 }
 
+.finanzas-admin-print-titulo {
+  display: none;
+}
+
+@media print {
+  .finanzas-admin-print-titulo {
+    display: block;
+    margin: 0 0 20px;
+    font-size: 20px;
+    font-weight: 700;
+  }
+}
+
 .finanzas-admin-exito {
   color: var(--series-pacientes);
   font-size: 13px;
@@ -23,6 +36,22 @@
   color: var(--text-primary);
   padding: 9px 12px;
   font-size: 14px;
+}
+
+.finanzas-admin-filtros button {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.finanzas-admin-filtros button:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .finanzas-admin-kpis {

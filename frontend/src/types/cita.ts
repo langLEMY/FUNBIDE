@@ -49,6 +49,12 @@ export interface RegistrarLlegadaSinCitaRequest {
   motivo: string
 }
 
+// Paciente que alguna vez tuvo una cita con el doctor autenticado (Dashboard de Doctor).
+export interface PacienteDelDoctor {
+  pacienteId: string
+  nombreCompleto: string
+}
+
 // Variante de Cita enriquecida con nombres, para Agenda/Recepción (listan citas de todos los doctores).
 export interface CitaAgenda {
   id: string

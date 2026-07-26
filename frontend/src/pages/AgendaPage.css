@@ -45,7 +45,7 @@
   background: var(--surface-1);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-control);
-  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow-chrome);
 }
 
 .agenda-resultados-lista button {

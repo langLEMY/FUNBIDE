@@ -1,4 +1,5 @@
 using FUNBIDE.API.Authorization;
+using FUNBIDE.API.Extensions;
 using FUNBIDE.Application.DTOs.Inventario;
 using FUNBIDE.Application.UseCases.Inventario;
 using FUNBIDE.Domain.Enums;
@@ -21,15 +22,16 @@ public sealed class InventarioController(
     ICrearInventarioItemUseCase crearInventarioItem,
     IEditarInventarioItemUseCase editarInventarioItem,
     IEliminarInventarioItemUseCase eliminarInventarioItem,
-    IDescargarInventarioUseCase descargarInventario) : ControllerBase
+    IDescargarInventarioUseCase descargarInventario,
+    IImportarInventarioUseCase importarInventario) : ControllerBase
 {
     [HttpGet]
-    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
     public async Task<ActionResult<IReadOnlyList<InventarioItemDto>>> ListarAsync(CancellationToken cancellationToken) =>
         Ok(await listarInventario.EjecutarAsync(cancellationToken));
 
     [HttpPost]
-    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
     public async Task<ActionResult<InventarioItemDto>> CrearAsync(
         CrearInventarioItemRequest request, CancellationToken cancellationToken)
     {
@@ -38,13 +40,13 @@ public sealed class InventarioController(
     }
 
     [HttpPatch]
-    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
     public async Task<ActionResult<InventarioItemDto>> EditarAsync(
         EditarInventarioItemRequest request, CancellationToken cancellationToken) =>
         Ok(await editarInventarioItem.EjecutarAsync(request, cancellationToken));
 
     [HttpDelete("{id:guid}")]
-    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
     public async Task<IActionResult> EliminarAsync(Guid id, CancellationToken cancellationToken)
     {
         await eliminarInventarioItem.EjecutarAsync(id, cancellationToken);
@@ -52,8 +54,22 @@ public sealed class InventarioController(
     }
 
     [HttpPost("descargo")]
-    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Farmacia, RolUsuario.Lemy)]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
     public async Task<ActionResult<MovimientoInventarioDto>> DescargarAsync(
         DescargarInventarioRequest request, CancellationToken cancellationToken) =>
         Ok(await descargarInventario.EjecutarAsync(request, cancellationToken));
+
+    [HttpPost("importar")]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
+    public async Task<ActionResult<ImportarInventarioResultDto>> ImportarAsync(
+        IFormFile archivo, CancellationToken cancellationToken)
+    {
+        if (!archivo.EsExcelValido(out var error))
+        {
+            return BadRequest(new { titulo = "Solicitud inválida", detalle = error });
+        }
+
+        await using var contenido = archivo.OpenReadStream();
+        return Ok(await importarInventario.EjecutarAsync(contenido, cancellationToken));
+    }
 }

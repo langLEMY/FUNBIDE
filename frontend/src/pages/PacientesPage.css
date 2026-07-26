@@ -91,29 +91,30 @@
 .pacientes-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 8px;
   margin-bottom: 20px;
-  border-bottom: 1px solid var(--border-hairline);
 }
 
 .pacientes-tab {
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: 999px;
   color: var(--text-secondary);
-  padding: 10px 14px;
+  padding: 9px 16px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .pacientes-tab:hover {
+  background: var(--surface-hover);
   color: var(--text-primary);
 }
 
 .pacientes-tab.activo {
-  color: var(--text-primary);
-  border-bottom-color: var(--series-dinero);
+  background: var(--series-pacientes);
+  border-color: var(--series-pacientes);
+  color: #ffffff;
 }
 
 .pacientes-tabla-scroll {

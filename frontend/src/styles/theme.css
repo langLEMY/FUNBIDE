@@ -1,30 +1,34 @@
 :root {
-  --page-plane: #12100c;
-  --surface-1: rgba(28, 26, 22, 0.72);
-  --surface-2: rgba(34, 31, 26, 0.6);
-  --surface-hover: rgba(41, 38, 31, 0.78);
+  --page-plane: #100f0d;
+  --surface-1: #1c1a16;
+  --surface-2: #221f1a;
+  --surface-hover: #29261f;
 
-  --text-primary: #f3f2ee;
+  --text-primary: #f0efeb;
   --text-secondary: rgba(243, 242, 238, 0.7);
   --text-muted: rgba(243, 242, 238, 0.5);
 
   --gridline: rgba(243, 242, 238, 0.08);
   --baseline: rgba(243, 242, 238, 0.16);
-  --border-hairline: rgba(255, 255, 255, 0.09);
-  --glass-chrome-bg: rgba(28, 26, 22, 0.72);
+  --border-hairline: rgba(255, 255, 255, 0.065);
+  --chrome-bg: #1c1a16;
 
-  --series-dinero: #d4a24e;
-  --series-dinero-fill: rgba(212, 162, 78, 0.12);
+  --shadow-card: 0 16px 40px -14px rgba(0, 0, 0, 0.5), 0 2px 10px -4px rgba(0, 0, 0, 0.35);
+  --shadow-chrome: 0 24px 60px -24px rgba(0, 0, 0, 0.6);
+
+  /* Dorado metálico → ámbar cálido: se siente más cercano/amigable (una fundación
+     de salud, no un banco privado) sin perder la asociación con "dinero". */
+  --series-dinero: #e2984f;
+  --series-dinero-fill: rgba(226, 152, 79, 0.12);
   --series-pacientes: #2fbf8f;
   --series-pacientes-fill: rgba(47, 191, 143, 0.12);
 
-  --danger: #e0705f;
+  --danger: #dd7d70;
 
-  --blob-mint: rgba(47, 191, 143, 0.28);
-  --blob-gold: rgba(212, 162, 78, 0.24);
-
-  --radius-card: 14px;
-  --radius-control: 8px;
+  /* Radios más generosos = formas más suaves = se lee más amigable que la
+     misma tarjeta con esquinas casi rectas. */
+  --radius-card: 16px;
+  --radius-control: 10px;
 
   /* Motion tipo iOS/macOS: easing "out" pronunciado al inicio y que frena suave,
      nunca lineal ni con rebote exagerado. Duraciones cortas para que se sientan
@@ -40,45 +44,45 @@
 }
 
 :root[data-theme='claro'] {
-  --page-plane: #f3f1ec;
-  --surface-1: rgba(255, 255, 255, 0.72);
-  --surface-2: rgba(243, 241, 236, 0.6);
-  --surface-hover: rgba(236, 232, 224, 0.78);
+  --page-plane: #fdfdfc;
+  --surface-1: #ffffff;
+  --surface-2: #f3f1ec;
+  --surface-hover: #ece8e0;
 
-  --text-primary: #20221f;
+  --text-primary: #2a2c28;
   --text-secondary: rgba(32, 34, 31, 0.7);
   --text-muted: rgba(32, 34, 31, 0.5);
 
   --gridline: rgba(32, 34, 31, 0.08);
   --baseline: rgba(32, 34, 31, 0.16);
-  --border-hairline: rgba(0, 0, 0, 0.07);
-  --glass-chrome-bg: rgba(255, 255, 255, 0.72);
+  --border-hairline: rgba(0, 0, 0, 0.06);
+  --chrome-bg: #ffffff;
 
-  --series-dinero: #a9762e;
-  --series-dinero-fill: rgba(169, 118, 46, 0.1);
+  --shadow-card: 0 16px 36px -16px rgba(32, 34, 31, 0.18), 0 2px 8px -4px rgba(32, 34, 31, 0.1);
+  --shadow-chrome: 0 20px 50px -24px rgba(32, 34, 31, 0.24);
+
+  --series-dinero: #c17830;
+  --series-dinero-fill: rgba(193, 120, 48, 0.1);
   --series-pacientes: #2fbf8f;
   --series-pacientes-fill: rgba(47, 191, 143, 0.12);
 
-  --danger: #c1483a;
+  --danger: #c4574b;
 
   color-scheme: light;
 }
 
-/* Entornos sin backdrop-filter (o donde sea muy costoso): las superficies caen a un
-   fondo sólido en vez de translúcido, sin perder legibilidad. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+/* Contraste alto del sistema: cambia el hairline apenas visible por un borde
+   definido, para que cada tarjeta/superficie se distinga sin depender solo
+   de diferencias sutiles de opacidad. */
+@media (prefers-contrast: more) {
   :root {
-    --surface-1: #1c1a16;
-    --surface-2: #221f1a;
-    --surface-hover: #29261f;
-    --glass-chrome-bg: #1c1a16;
+    --border-hairline: rgba(255, 255, 255, 0.32);
+    --gridline: rgba(243, 242, 238, 0.24);
   }
 
   :root[data-theme='claro'] {
-    --surface-1: #ffffff;
-    --surface-2: #f3f1ec;
-    --surface-hover: #ece8e0;
-    --glass-chrome-bg: #ffffff;
+    --border-hairline: rgba(0, 0, 0, 0.35);
+    --gridline: rgba(32, 34, 31, 0.24);
   }
 }
 
@@ -97,7 +101,20 @@ body {
   background: var(--page-plane);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
-  transition: background-color var(--duracion-base) var(--ease-suave), color var(--duracion-base) var(--ease-suave);
+}
+
+/* Evita saltos de color abruptos al alternar tema claro/oscuro en CUALQUIER
+   superficie — antes solo <body> y los controles interactivos (más abajo)
+   suavizaban el cambio; el sidebar, el topbar, las tarjetas y los menús
+   cambiaban de golpe. Los selectores más específicos de abajo (button, a,
+   input...) igual ganan la cascada y agregan transform/box-shadow/opacity
+   encima de esta base. */
+*,
+*::before,
+*::after {
+  transition: background-color var(--duracion-base) var(--ease-suave),
+    border-color var(--duracion-base) var(--ease-suave),
+    color var(--duracion-base) var(--ease-suave);
 }
 
 button,
@@ -141,7 +158,11 @@ a:focus-visible {
   border-color: var(--series-pacientes);
 }
 
-button:not(:disabled):active {
+/* Respuesta a la presión para cualquier elemento clickeable, no solo <button>:
+   los enlaces de navegación (sidebar, "editar", etc.) se sentían "muertos" al
+   presionarlos porque esta regla antes solo cubría botones. */
+button:not(:disabled):active,
+a:not([aria-disabled='true']):active {
   transform: scale(0.97);
 }
 
@@ -227,6 +248,25 @@ table tbody tr:nth-child(n + 7),
   }
 }
 
+/* "Cargando…" en cada página del panel usaba texto estático — un estado de
+   carga sin ningún indicio de actividad se lee como colgado, no como
+   "trabajando". Un pulso de respiración (no lineal: un progress bar sí
+   ameritaría linear, un texto de estado se siente más natural con ease-in-out)
+   comunica "esto sigue vivo" sin la necesidad de un spinner aparte. */
+.cargando-pulso {
+  animation: funbide-pulso-carga 1.4s ease-in-out infinite;
+}
+
+@keyframes funbide-pulso-carga {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* Respeta la preferencia del sistema operativo: quien pidió menos movimiento no
    debería ver ninguna de las animaciones de arriba, sin tener que tocar cada regla. */
 @media (prefers-reduced-motion: reduce) {
@@ -263,9 +303,9 @@ table tbody tr:nth-child(n + 7),
   text-align: center;
 }
 
-/* Tratamiento "glass" compartido por todas las tarjetas de contenido del panel
-   (stats, gráficos, filtros, tablas). Centralizado acá para no repetir el
-   backdrop-filter en cada archivo CSS de cada página. */
+/* Elevación compartida por todas las tarjetas de contenido del panel (stats,
+   gráficos, filtros, tablas). Centralizado acá para no repetir el box-shadow
+   en cada archivo CSS de cada página. */
 .stat-card,
 .monthly-chart-card,
 .resumen-filtros,
@@ -302,9 +342,16 @@ table tbody tr:nth-child(n + 7),
 .finanzas-admin-kpi-card,
 .finanzas-admin-grafico-card,
 .finanzas-admin-tabla-card,
-.finanzas-admin-gasto-card {
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+.finanzas-admin-gasto-card,
+.operaciones-tabla-card,
+.dashboard-alerta-card,
+.dashboard-cobertura-card,
+.dashboard-insights-card,
+.donaciones-total-card,
+.donaciones-tabla-card,
+.donaciones-registrar-card {
+  position: relative;
+  box-shadow: var(--shadow-card);
 }
 
 /* Cualquier página puede marcar controles como .no-imprimir; esto además fuerza
@@ -359,9 +406,15 @@ table tbody tr:nth-child(n + 7),
   .finanzas-admin-kpi-card,
   .finanzas-admin-grafico-card,
   .finanzas-admin-tabla-card,
-  .finanzas-admin-gasto-card {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+  .finanzas-admin-gasto-card,
+  .operaciones-tabla-card,
+  .dashboard-alerta-card,
+  .dashboard-cobertura-card,
+  .dashboard-insights-card,
+  .donaciones-total-card,
+  .donaciones-tabla-card,
+  .donaciones-registrar-card {
+    box-shadow: none;
   }
 
   .sidebar,

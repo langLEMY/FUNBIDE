@@ -27,6 +27,8 @@ function renderFila(props: Partial<React.ComponentProps<typeof PacienteRow>> = {
             puedeEditar={false}
             puedeEliminar={false}
             puedeVerHistorial={false}
+            puedeSubirFotoCedula={false}
+            puedeVerFotoCedula={false}
             onActualizado={vi.fn()}
             onEliminado={vi.fn()}
             {...props}
@@ -63,5 +65,19 @@ describe('PacienteRow', () => {
       'href',
       '/pacientes/paciente-1/historial',
     )
+  })
+
+  it('Lemy ve "Subir cédula" cuando el paciente todavía no tiene foto', () => {
+    renderFila({ puedeSubirFotoCedula: true })
+
+    expect(screen.getByRole('button', { name: 'Subir cédula' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Ver cédula' })).not.toBeInTheDocument()
+  })
+
+  it('Admin ve "Ver cédula" solo cuando el paciente ya tiene foto', () => {
+    renderFila({ puedeVerFotoCedula: true, paciente: { ...paciente, tieneFotoCedula: true } })
+
+    expect(screen.getByRole('button', { name: 'Ver cédula' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /subir cédula/i })).not.toBeInTheDocument()
   })
 })

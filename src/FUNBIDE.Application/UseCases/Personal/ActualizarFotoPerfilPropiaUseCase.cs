@@ -31,6 +31,6 @@ public sealed class ActualizarFotoPerfilPropiaUseCase(
 
         await usuarioRepository.GuardarCambiosAsync(cancellationToken);
 
-        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl);
+        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
     }
 }

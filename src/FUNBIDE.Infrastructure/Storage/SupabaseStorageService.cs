@@ -56,6 +56,22 @@ public sealed class SupabaseStorageService(
         return $"{projectUrl}/storage/v1{resultado.SignedURL}";
     }
 
+    public async Task<bool> VerificarConexionAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            // GET del bucket de fotos de perfil: la llamada más barata que existe en la API
+            // de Storage que igual exige la misma autenticación que subir un archivo real.
+            using var respuesta = await httpClient.GetAsync(
+                $"bucket/{storageOptions.Value.BucketFotosPerfil}", cancellationToken);
+            return respuesta.IsSuccessStatusCode;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            return false;
+        }
+    }
+
     private async Task<string> SubirYObtenerUrlPublicaAsync(
         string bucket, string nombreObjeto, Stream contenido, string contentType, CancellationToken cancellationToken)
     {

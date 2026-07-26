@@ -38,10 +38,8 @@
   max-width: 420px;
   border-radius: 18px;
   background: var(--surface-1);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-hairline);
-  box-shadow: 0 30px 70px -20px rgba(20, 25, 20, 0.25);
+  box-shadow: var(--shadow-chrome), 0 30px 70px -20px rgba(20, 25, 20, 0.25);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -67,16 +65,18 @@
   border-radius: 50%;
 }
 
+/* Ligados a las variables del tema (no valores sueltos): si la paleta cambia,
+   estos puntos decorativos cambian solos en vez de quedar desincronizados. */
 .login-punto-rojo {
-  background: #e0705f;
+  background: var(--danger);
 }
 
 .login-punto-amarillo {
-  background: #d4a24e;
+  background: var(--series-dinero);
 }
 
 .login-punto-verde {
-  background: #2fbf8f;
+  background: var(--series-pacientes);
 }
 
 .login-ventana-titulo {
@@ -97,12 +97,13 @@
 }
 
 .login-logo {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 16px;
-  border-radius: 50%;
+  display: block;
+  height: 56px;
+  width: auto;
+  max-width: 240px;
+  margin: 0 auto 20px;
   object-fit: contain;
-  box-shadow: 0 0 0 1px var(--border-hairline), 0 8px 20px rgba(47, 191, 143, 0.35);
+  filter: drop-shadow(0 6px 16px rgba(47, 191, 143, 0.28));
 }
 
 .login-titulo {
