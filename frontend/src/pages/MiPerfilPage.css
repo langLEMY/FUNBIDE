@@ -276,6 +276,17 @@
   gap: 16px;
 }
 
+.mi-perfil-mantenimiento-fila + .mi-perfil-mantenimiento-fila {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.mi-perfil-mantenimiento-fila .mi-perfil-boton-peligro {
+  width: auto;
+  flex-shrink: 0;
+}
+
 /* Interruptor tipo iOS: la perilla se desliza con el mismo timing/easing que el
    resto de la respuesta táctil de la app (--duracion-base / --ease-suave). */
 .mi-perfil-interruptor {

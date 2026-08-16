@@ -27,11 +27,13 @@ public sealed class InventarioController(
 {
     [HttpGet]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Inventario)]
     public async Task<ActionResult<IReadOnlyList<InventarioItemDto>>> ListarAsync(CancellationToken cancellationToken) =>
         Ok(await listarInventario.EjecutarAsync(cancellationToken));
 
     [HttpPost]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Inventario)]
     public async Task<ActionResult<InventarioItemDto>> CrearAsync(
         CrearInventarioItemRequest request, CancellationToken cancellationToken)
     {
@@ -41,12 +43,14 @@ public sealed class InventarioController(
 
     [HttpPatch]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Inventario)]
     public async Task<ActionResult<InventarioItemDto>> EditarAsync(
         EditarInventarioItemRequest request, CancellationToken cancellationToken) =>
         Ok(await editarInventarioItem.EjecutarAsync(request, cancellationToken));
 
     [HttpDelete("{id:guid}")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Inventario)]
     public async Task<IActionResult> EliminarAsync(Guid id, CancellationToken cancellationToken)
     {
         await eliminarInventarioItem.EjecutarAsync(id, cancellationToken);
@@ -55,12 +59,14 @@ public sealed class InventarioController(
 
     [HttpPost("descargo")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Inventario)]
     public async Task<ActionResult<MovimientoInventarioDto>> DescargarAsync(
         DescargarInventarioRequest request, CancellationToken cancellationToken) =>
         Ok(await descargarInventario.EjecutarAsync(request, cancellationToken));
 
     [HttpPost("importar")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Inventario)]
     public async Task<ActionResult<ImportarInventarioResultDto>> ImportarAsync(
         IFormFile archivo, CancellationToken cancellationToken)
     {

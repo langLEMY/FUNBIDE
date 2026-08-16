@@ -31,6 +31,7 @@ public sealed class PacientesController(
 {
     [HttpGet]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Pacientes)]
     public async Task<ActionResult<PacientesPaginadosDto>> ListarAsync(
         [FromQuery] int pagina, [FromQuery] int tamanoPagina, [FromQuery] string? busqueda,
         [FromQuery] EstadoPaciente? estado, CancellationToken cancellationToken) =>
@@ -39,11 +40,13 @@ public sealed class PacientesController(
 
     [HttpGet("{id:guid}")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Pacientes)]
     public async Task<ActionResult<PacienteDto>> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken) =>
         Ok(await obtenerPacientePorId.EjecutarAsync(id, cancellationToken));
 
     [HttpPost]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Pacientes)]
     public async Task<ActionResult<PacienteDto>> CrearAsync(
         CrearPacienteRequest request, CancellationToken cancellationToken)
     {
@@ -53,12 +56,14 @@ public sealed class PacientesController(
 
     [HttpPatch]
     [RequiereRol(RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Pacientes)]
     public async Task<ActionResult<PacienteDto>> EditarAsync(
         EditarPacienteRequest request, CancellationToken cancellationToken) =>
         Ok(await editarPaciente.EjecutarAsync(request, cancellationToken));
 
     [HttpDelete("{id:guid}")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy, RolUsuario.Doctor)]
+    [RequierePermiso(ModuloPermiso.Pacientes)]
     public async Task<IActionResult> EliminarAsync(Guid id, CancellationToken cancellationToken)
     {
         await eliminarPaciente.EjecutarAsync(id, cancellationToken);
@@ -67,6 +72,7 @@ public sealed class PacientesController(
 
     [HttpPost("{id:guid}/foto-cedula")]
     [RequiereRol(RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Pacientes)]
     public async Task<ActionResult<PacienteDto>> ActualizarFotoCedulaAsync(
         Guid id, IFormFile archivo, CancellationToken cancellationToken)
     {
@@ -84,12 +90,14 @@ public sealed class PacientesController(
 
     [HttpGet("{id:guid}/foto-cedula")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Pacientes)]
     public async Task<ActionResult<UrlFotoCedulaDto>> ObtenerUrlFotoCedulaAsync(
         Guid id, CancellationToken cancellationToken) =>
         Ok(await obtenerUrlFotoCedula.EjecutarAsync(id, cancellationToken));
 
     [HttpPost("importar")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Pacientes)]
     public async Task<ActionResult<ImportarPacientesResultDto>> ImportarAsync(
         IFormFile archivo, CancellationToken cancellationToken)
     {

@@ -16,6 +16,7 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
   const rolesAsignables = useMemo(() => rolesAsignablesPara(perfil?.rol), [perfil?.rol])
   const [nombreCompleto, setNombreCompleto] = useState(usuario.nombreCompleto)
   const [correo, setCorreo] = useState(usuario.correo)
+  const [nombreUsuario, setNombreUsuario] = useState(usuario.nombreUsuario)
   const [rol, setRol] = useState<RolUsuario>(usuario.rol)
   // null cuando el doctor todavia no tiene especialidad asignada: por eso NO se
   // usa un default como 'Pediatria' aca — con ese default, guardar cualquier otro
@@ -34,8 +35,17 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
     try {
       let actual = usuario
 
-      if (nombreCompleto !== usuario.nombreCompleto || correo !== usuario.correo) {
-        actual = await api.patch<Usuario>('/api/personal/datos', { usuarioId: usuario.id, nombreCompleto, correo })
+      if (
+        nombreCompleto !== usuario.nombreCompleto ||
+        correo !== usuario.correo ||
+        nombreUsuario !== usuario.nombreUsuario
+      ) {
+        actual = await api.patch<Usuario>('/api/personal/datos', {
+          usuarioId: usuario.id,
+          nombreCompleto,
+          correo,
+          nombreUsuario,
+        })
       }
 
       if (rol !== usuario.rol) {
@@ -84,6 +94,15 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
           type="email"
           value={correo}
           onChange={(event) => setCorreo(event.target.value)}
+          required
+        />
+
+        <label htmlFor="ep-usuario">Nombre de usuario</label>
+        <input
+          id="ep-usuario"
+          value={nombreUsuario}
+          onChange={(event) => setNombreUsuario(event.target.value)}
+          minLength={3}
           required
         />
 

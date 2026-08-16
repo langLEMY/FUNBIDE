@@ -5,4 +5,4 @@ namespace FUNBIDE.Application.DTOs.Auth;
 /// dispositivo que el controlador extrae de la petición HTTP misma (nunca del cuerpo
 /// enviado por el cliente, para que no se puedan falsificar).
 /// </summary>
-public sealed record RegistrarEventoLoginComando(string Correo, bool Exitoso, string Ip, string Dispositivo);
+public sealed record RegistrarEventoLoginComando(string NombreUsuario, bool Exitoso, string Ip, string Dispositivo);

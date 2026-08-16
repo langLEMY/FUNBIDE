@@ -1,7 +1,11 @@
 using System.Security.Claims;
 using FUNBIDE.API.Authorization;
+using FUNBIDE.Domain.Entities;
 using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.Interfaces;
+using FUNBIDE.Infrastructure.Caching;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace FUNBIDE.API.Middleware;
 
@@ -15,7 +19,7 @@ namespace FUNBIDE.API.Middleware;
 /// </summary>
 public sealed class MantenimientoMiddleware(RequestDelegate next)
 {
-    public async Task InvokeAsync(HttpContext context, IConfiguracionSistemaRepository configuracionRepository)
+    public async Task InvokeAsync(HttpContext context, IConfiguracionSistemaRepository configuracionRepository, IMemoryCache cache)
     {
         if (context.User.Identity?.IsAuthenticated != true)
         {
@@ -36,15 +40,28 @@ public sealed class MantenimientoMiddleware(RequestDelegate next)
             return;
         }
 
-        var configuracion = await configuracionRepository.ObtenerAsync(context.RequestAborted);
+        // Cacheado con TTL corto (más la invalidación explícita de
+        // CambiarModoMantenimientoUseCase) para no consultar Postgres por este flag global
+        // en cada request autenticado — antes era una lectura de base por request.
+        if (!cache.TryGetValue(ConfiguracionSistemaCacheClave.Valor, out ConfiguracionSistema? configuracion))
+        {
+            configuracion = await configuracionRepository.ObtenerAsync(context.RequestAborted);
+            cache.Set(ConfiguracionSistemaCacheClave.Valor, configuracion, ConfiguracionSistemaCacheClave.Duracion);
+        }
+
         if (configuracion is { ModoMantenimientoActivo: true })
         {
+            context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
-            await context.Response.WriteAsJsonAsync(new
+            // Detail queda null si LEMY no puso un mensaje propio a propósito: el frontend
+            // (ver ModoMantenimientoScreen.tsx) ya tiene su propio texto genérico para ese
+            // caso — evita mantener el mismo texto por defecto duplicado en dos capas.
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
             {
-                titulo = "Sistema en mantenimiento",
-                detalle = configuracion.ModoMantenimientoMensaje
-                    ?? "El sistema está temporalmente en mantenimiento. Intenta de nuevo más tarde."
+                Title = "Sistema en mantenimiento",
+                Detail = configuracion.ModoMantenimientoMensaje,
+                Status = StatusCodes.Status503ServiceUnavailable,
+                Instance = context.Request.Path
             });
             return;
         }

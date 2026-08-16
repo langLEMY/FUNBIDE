@@ -41,7 +41,10 @@ public sealed class ActualizarMiPerfilUseCase(
             await supabaseAdmin.CambiarCorreoAsync(usuario.SupabaseUserId, correoNormalizado, cancellationToken);
         }
 
-        usuario.ActualizarDatos(request.NombreCompleto, request.Correo);
+        // El nombre de usuario no es autoservicio (evita que alguien se cambie el
+        // identificador de login sin que quede claro para el resto del equipo);
+        // solo LEMY/Admin lo tocan desde EditarUsuarioUseCase.
+        usuario.ActualizarDatos(request.NombreCompleto, request.Correo, usuario.NombreUsuario);
         await usuarioRepository.GuardarCambiosAsync(cancellationToken);
 
         await auditoriaLogService.RegistrarEventoAsync(
@@ -52,6 +55,6 @@ public sealed class ActualizarMiPerfilUseCase(
             codigoRespuestaHttp: 200,
             cancellationToken: cancellationToken);
 
-        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
+        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.NombreUsuario, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
     }
 }

@@ -25,7 +25,8 @@ public sealed class ObtenerResumenCajaUseCase(
     public async Task<ResumenCajaDto> EjecutarAsync(CancellationToken cancellationToken)
     {
         var turno = await turnoCajaRepository.ObtenerAbiertoAsync(cancellationToken);
-        var hoy = DateOnly.FromDateTime(dateTimeProvider.UtcNow.UtcDateTime);
+        var ahoraLocal = TimeZoneInfo.ConvertTime(dateTimeProvider.UtcNow, dateTimeProvider.ZonaHorariaClinica);
+        var hoy = DateOnly.FromDateTime(ahoraLocal.DateTime);
         var salaDeEspera = await citaRepository.ObtenerSalaDeEsperaAsync(hoy, cancellationToken);
         var pendientesDeCobro = await citaRepository.ObtenerPendientesDeCobroAsync(cancellationToken);
         var pacientesConDeuda = await cobroRepository.ContarPacientesConDeudaAsync(cancellationToken);
@@ -50,9 +51,12 @@ public sealed class ObtenerResumenCajaUseCase(
         var cobros = await cobroRepository.ObtenerPorTurnoAsync(turno.Id, cancellationToken);
         var movimientos = await movimientoRepository.ObtenerPorTurnoAsync(turno.Id, cancellationToken);
 
-        var totalEfectivo = cobros.Where(c => c.MetodoPago == MetodoPago.Efectivo).Sum(c => c.MontoPagado);
-        var totalTarjeta = cobros.Where(c => c.MetodoPago == MetodoPago.Tarjeta).Sum(c => c.MontoPagado);
-        var totalTransferencia = cobros.Where(c => c.MetodoPago == MetodoPago.Transferencia).Sum(c => c.MontoPagado);
+        // Se suma por línea de pago (Cobro.Pagos), no por cobro entero: un mismo cobro
+        // puede traer varias líneas con métodos distintos (ver "dividir el pago").
+        var pagos = cobros.SelectMany(c => c.Pagos).ToList();
+        var totalEfectivo = pagos.Where(p => p.Metodo == MetodoPago.Efectivo).Sum(p => p.Monto);
+        var totalTarjeta = pagos.Where(p => p.Metodo == MetodoPago.Tarjeta).Sum(p => p.Monto);
+        var totalTransferencia = pagos.Where(p => p.Metodo == MetodoPago.Transferencia).Sum(p => p.Monto);
         var totalCubiertoPorSeguro = cobros.Sum(c => c.MontoCobertura ?? 0);
         var salidasAutorizadas = movimientos.Where(m => m.Tipo == TipoMovimientoFinanciero.Egreso).Sum(m => m.Monto);
         var ingresosManuales = movimientos.Where(m => m.Tipo == TipoMovimientoFinanciero.Ingreso).Sum(m => m.Monto);

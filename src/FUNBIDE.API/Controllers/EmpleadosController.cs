@@ -27,11 +27,13 @@ public sealed class EmpleadosController(
 {
     [HttpGet]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Directorio)]
     public async Task<ActionResult<IReadOnlyList<EmpleadoDto>>> ListarAsync(CancellationToken cancellationToken) =>
         Ok(await listarEmpleados.EjecutarAsync(cancellationToken));
 
     [HttpPost]
     [RequiereRol(RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Directorio)]
     public async Task<ActionResult<EmpleadoDto>> CrearAsync(
         CrearEmpleadoRequest request, CancellationToken cancellationToken)
     {
@@ -41,12 +43,14 @@ public sealed class EmpleadosController(
 
     [HttpPatch]
     [RequiereRol(RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Directorio)]
     public async Task<ActionResult<EmpleadoDto>> EditarAsync(
         EditarEmpleadoRequest request, CancellationToken cancellationToken) =>
         Ok(await editarEmpleado.EjecutarAsync(request, cancellationToken));
 
     [HttpDelete("{id:guid}")]
     [RequiereRol(RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Directorio)]
     public async Task<IActionResult> EliminarAsync(Guid id, CancellationToken cancellationToken)
     {
         await eliminarEmpleado.EjecutarAsync(id, cancellationToken);
@@ -55,6 +59,7 @@ public sealed class EmpleadosController(
 
     [HttpPost("importar")]
     [RequiereRol(RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Directorio)]
     public async Task<ActionResult<ImportarEmpleadosResultDto>> ImportarAsync(
         IFormFile archivo, CancellationToken cancellationToken)
     {

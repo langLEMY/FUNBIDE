@@ -12,6 +12,15 @@ public sealed class TurnoCajaRepository(FunbideDbContext dbContext) : ITurnoCaja
     public Task<TurnoCaja?> ObtenerAbiertoAsync(CancellationToken cancellationToken) =>
         dbContext.TurnosCaja.FirstOrDefaultAsync(t => t.Estado == EstadoTurnoCaja.Abierto, cancellationToken);
 
+    public async Task<TurnoCaja?> ObtenerAbiertoConBloqueoAsync(CancellationToken cancellationToken)
+    {
+        var resultados = await dbContext.TurnosCaja
+            .FromSqlRaw("SELECT *, xmin FROM funbide.turnos_caja WHERE \"Estado\" = 'Abierto' FOR UPDATE")
+            .ToListAsync(cancellationToken);
+
+        return resultados.SingleOrDefault();
+    }
+
     public Task<TurnoCaja?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.TurnosCaja.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 

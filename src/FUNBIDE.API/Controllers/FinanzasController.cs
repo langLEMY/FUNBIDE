@@ -15,7 +15,7 @@ namespace FUNBIDE.API.Controllers;
 [ApiController]
 [Route("api/finanzas")]
 [Authorize]
-[RequiereRol(RolUsuario.Fondos)]
+[RequierePermiso(ModuloPermiso.Caja)]
 [SoloLecturaEInsercion]
 public sealed class FinanzasController(
     IRegistrarMovimientoFinancieroUseCase registrarMovimiento,

@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { api } from '../../lib/api'
 import { iniciales } from '../../lib/iniciales'
-import type { RolUsuario } from '../../types/usuario'
+import type { ModuloPermiso, RolUsuario } from '../../types/usuario'
 import type { CitaAgenda } from '../../types/cita'
 import { IconoNav, type NombreIconoNav } from './IconoNav'
 import './Sidebar.css'
@@ -14,43 +14,54 @@ interface ItemNav {
   grupo: string
   icono: NombreIconoNav
   badge?: 'pacientesEnEspera'
+  /** Si está presente, el ítem además exige que el usuario tenga este módulo en perfil.permisos (ver Gestionar Permisos). Ausente = no togglable (siempre visible para el rol). */
+  modulo?: ModuloPermiso
 }
 
 const ITEMS_POR_ROL: Partial<Record<RolUsuario, ItemNav[]>> = {
   Admin: [
-    { to: '/dashboard', etiqueta: 'Dashboard', grupo: 'Principal', icono: 'grid' },
-    { to: '/resumen', etiqueta: 'Resumen', grupo: 'Principal', icono: 'chart' },
-    { to: '/finanzas', etiqueta: 'Finanzas', grupo: 'Finanzas', icono: 'dollar' },
-    { to: '/gastos', etiqueta: 'Gastos', grupo: 'Finanzas', icono: 'minuscircle' },
-    { to: '/donaciones', etiqueta: 'Donaciones', grupo: 'Finanzas', icono: 'heart' },
+    { to: '/dashboard', etiqueta: 'Dashboard', grupo: 'Principal', icono: 'grid', modulo: 'Dashboard' },
+    { to: '/resumen', etiqueta: 'Resumen', grupo: 'Principal', icono: 'chart', modulo: 'Resumen' },
+    { to: '/finanzas', etiqueta: 'Finanzas', grupo: 'Finanzas', icono: 'dollar', modulo: 'Finanzas' },
+    { to: '/gastos', etiqueta: 'Gastos', grupo: 'Finanzas', icono: 'minuscircle', modulo: 'Gastos' },
+    { to: '/donaciones', etiqueta: 'Donaciones', grupo: 'Finanzas', icono: 'heart', modulo: 'Donaciones' },
     { to: '/personal', etiqueta: 'Personal', grupo: 'Gestión', icono: 'users' },
-    { to: '/pacientes', etiqueta: 'Pacientes', grupo: 'Gestión', icono: 'medical' },
-    { to: '/operaciones', etiqueta: 'Operaciones', grupo: 'Operaciones', icono: 'activity' },
-    { to: '/inventario', etiqueta: 'Inventario', grupo: 'Operaciones', icono: 'box' },
-    { to: '/aseguradoras', etiqueta: 'Aseguradoras', grupo: 'Operaciones', icono: 'shield' },
-    { to: '/actividad', etiqueta: 'Actividad', grupo: 'Sistema', icono: 'clock' },
+    { to: '/permisos', etiqueta: 'Gestionar Permisos', grupo: 'Gestión', icono: 'lock' },
+    { to: '/pacientes', etiqueta: 'Pacientes', grupo: 'Gestión', icono: 'medical', modulo: 'Pacientes' },
+    { to: '/operaciones', etiqueta: 'Operaciones', grupo: 'Operaciones', icono: 'activity', modulo: 'Operaciones' },
+    { to: '/inventario', etiqueta: 'Inventario', grupo: 'Operaciones', icono: 'box', modulo: 'Inventario' },
+    { to: '/aseguradoras', etiqueta: 'Aseguradoras', grupo: 'Operaciones', icono: 'shield', modulo: 'Aseguradoras' },
+    { to: '/actividad', etiqueta: 'Actividad', grupo: 'Sistema', icono: 'clock', modulo: 'Actividad' },
   ],
   Lemy: [
     { to: '/personal', etiqueta: 'Personal', grupo: 'Gestión', icono: 'users' },
-    { to: '/directorio', etiqueta: 'Directorio', grupo: 'Gestión', icono: 'book' },
-    { to: '/pacientes', etiqueta: 'Pacientes', grupo: 'Gestión', icono: 'medical' },
-    { to: '/inventario', etiqueta: 'Inventario', grupo: 'Operaciones', icono: 'box' },
-    { to: '/aseguradoras', etiqueta: 'Aseguradoras', grupo: 'Operaciones', icono: 'shield' },
-    { to: '/actividad', etiqueta: 'Actividad', grupo: 'Sistema', icono: 'clock' },
+    { to: '/permisos', etiqueta: 'Gestionar Permisos', grupo: 'Gestión', icono: 'lock' },
+    { to: '/directorio', etiqueta: 'Directorio', grupo: 'Gestión', icono: 'book', modulo: 'Directorio' },
+    { to: '/pacientes', etiqueta: 'Pacientes', grupo: 'Gestión', icono: 'medical', modulo: 'Pacientes' },
+    { to: '/inventario', etiqueta: 'Inventario', grupo: 'Operaciones', icono: 'box', modulo: 'Inventario' },
+    { to: '/aseguradoras', etiqueta: 'Aseguradoras', grupo: 'Operaciones', icono: 'shield', modulo: 'Aseguradoras' },
+    { to: '/actividad', etiqueta: 'Actividad', grupo: 'Sistema', icono: 'clock', modulo: 'Actividad' },
   ],
   Doctor: [
     { to: '/dashboard-doctor', etiqueta: 'Dashboard', grupo: 'Principal', icono: 'grid' },
-    { to: '/pacientes', etiqueta: 'Pacientes', grupo: 'Clínico', icono: 'medical' },
+    { to: '/pacientes', etiqueta: 'Pacientes', grupo: 'Clínico', icono: 'medical', modulo: 'Pacientes' },
     { to: '/citas', etiqueta: 'Citas', grupo: 'Clínico', icono: 'calendar' },
-    { to: '/inventario', etiqueta: 'Inventario', grupo: 'Operaciones', icono: 'box' },
+    { to: '/inventario', etiqueta: 'Inventario', grupo: 'Operaciones', icono: 'box', modulo: 'Inventario' },
   ],
   Fondos: [
-    { to: '/caja', etiqueta: 'Caja', grupo: 'Caja', icono: 'card' },
-    { to: '/cobros', etiqueta: 'Cobros', grupo: 'Caja', icono: 'dollar' },
-    { to: '/recepcion', etiqueta: 'Recepción', grupo: 'Agenda', icono: 'inbox', badge: 'pacientesEnEspera' },
-    { to: '/agenda', etiqueta: 'Agenda', grupo: 'Agenda', icono: 'calendar' },
-    { to: '/pacientes', etiqueta: 'Pacientes', grupo: 'Operaciones', icono: 'medical' },
-    { to: '/inventario', etiqueta: 'Inventario', grupo: 'Operaciones', icono: 'box' },
+    { to: '/caja', etiqueta: 'Caja', grupo: 'Caja', icono: 'card', modulo: 'Caja' },
+    { to: '/cobros', etiqueta: 'Cobros', grupo: 'Caja', icono: 'dollar', modulo: 'Cobros' },
+    {
+      to: '/recepcion',
+      etiqueta: 'Recepción',
+      grupo: 'Agenda',
+      icono: 'inbox',
+      badge: 'pacientesEnEspera',
+      modulo: 'Recepcion',
+    },
+    { to: '/agenda', etiqueta: 'Agenda', grupo: 'Agenda', icono: 'calendar', modulo: 'Agenda' },
+    { to: '/pacientes', etiqueta: 'Pacientes', grupo: 'Operaciones', icono: 'medical', modulo: 'Pacientes' },
+    { to: '/inventario', etiqueta: 'Inventario', grupo: 'Operaciones', icono: 'box', modulo: 'Inventario' },
   ],
 }
 
@@ -85,7 +96,9 @@ export function Sidebar() {
     }
   }, [perfil?.rol])
 
-  const items = (perfil && ITEMS_POR_ROL[perfil.rol]) || []
+  const items = ((perfil && ITEMS_POR_ROL[perfil.rol]) || []).filter(
+    (item) => !item.modulo || (perfil?.permisos ?? []).includes(item.modulo),
+  )
 
   let grupoAnterior: string | null = null
 
@@ -95,6 +108,12 @@ export function Sidebar() {
         <img className="sidebar-marca-icono" src="/logo-funbide.png" alt="FUNBIDE" />
         <span>FUNBIDE</span>
       </div>
+
+      {perfil && (
+        <p className="sidebar-saludo">
+          Hola, <strong>{perfil.nombreCompleto.trim().split(/\s+/)[0]}</strong>
+        </p>
+      )}
 
       <nav className="sidebar-nav">
         {items.map((item) => {

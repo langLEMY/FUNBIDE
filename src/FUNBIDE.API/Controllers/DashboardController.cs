@@ -15,7 +15,7 @@ namespace FUNBIDE.API.Controllers;
 [ApiController]
 [Route("api/dashboard")]
 [Authorize]
-[RequiereRol(RolUsuario.Admin)]
+[RequierePermiso(ModuloPermiso.Dashboard)]
 public sealed class DashboardController(
     IObtenerResumenHoyUseCase obtenerResumenHoy,
     IObtenerResumenMesUseCase obtenerResumenMes,

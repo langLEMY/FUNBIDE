@@ -36,7 +36,8 @@ public sealed class CompletarCitaUseCase(
 
             // Una cita completada cuenta como un paciente atendido ese día para el
             // dashboard de ADMIN (tarjeta "Pacientes atendidos hoy" y gráfico "Vista del mes").
-            var hoy = DateOnly.FromDateTime(dateTimeProvider.UtcNow.UtcDateTime);
+            var ahoraLocal = TimeZoneInfo.ConvertTime(dateTimeProvider.UtcNow, dateTimeProvider.ZonaHorariaClinica);
+            var hoy = DateOnly.FromDateTime(ahoraLocal.DateTime);
             var resumen = await resumenDiarioRepository.ObtenerOCrearConBloqueoAsync(hoy, ct);
             resumen.RegistrarPacienteAtendido();
             await resumenDiarioRepository.GuardarCambiosAsync(ct);

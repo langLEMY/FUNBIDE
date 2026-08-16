@@ -25,7 +25,7 @@ public sealed class EstadoBackupService(IConfiguration configuration) : IEstadoB
             return null;
         }
 
-        var rutaEstado = Path.Combine(directorioDestino, DatabaseBackupHostedService.NombreArchivoEstado);
+        var rutaEstado = Path.Combine(directorioDestino, BackupEjecutorService.NombreArchivoEstado);
         if (!File.Exists(rutaEstado))
         {
             return null;

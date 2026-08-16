@@ -10,6 +10,7 @@ namespace FUNBIDE.Application.Tests.UseCases.Sistema;
 public class CambiarModoMantenimientoUseCaseTests
 {
     private readonly IConfiguracionSistemaRepository _configuracionRepository = Substitute.For<IConfiguracionSistemaRepository>();
+    private readonly IConfiguracionSistemaCache _configuracionCache = Substitute.For<IConfiguracionSistemaCache>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
     private readonly IDateTimeProvider _dateTimeProvider = Substitute.For<IDateTimeProvider>();
     private readonly IAuditoriaLogService _auditoriaLogService = Substitute.For<IAuditoriaLogService>();
@@ -21,7 +22,7 @@ public class CambiarModoMantenimientoUseCaseTests
     }
 
     private CambiarModoMantenimientoUseCase CrearCasoDeUso() =>
-        new(_configuracionRepository, _currentUser, _dateTimeProvider, _auditoriaLogService);
+        new(_configuracionRepository, _configuracionCache, _currentUser, _dateTimeProvider, _auditoriaLogService);
 
     [Fact]
     public async Task EjecutarAsync_NoExisteFilaTodavia_LaCreaYLaActiva()
@@ -35,6 +36,7 @@ public class CambiarModoMantenimientoUseCaseTests
         Assert.Equal("Mantenimiento programado", resultado.Mensaje);
         await _configuracionRepository.Received(1).AgregarAsync(Arg.Any<ConfiguracionSistema>(), Arg.Any<CancellationToken>());
         await _configuracionRepository.Received(1).GuardarCambiosAsync(Arg.Any<CancellationToken>());
+        _configuracionCache.Received(1).Invalidar();
     }
 
     [Fact]

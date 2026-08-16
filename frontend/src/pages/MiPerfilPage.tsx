@@ -32,6 +32,19 @@ interface EstadoSistema {
   modoMantenimientoMensaje: string | null
 }
 
+interface ResultadoBackupManual {
+  exitoso: boolean
+  ejecutadoEn: string
+  mensaje: string | null
+}
+
+interface EstadoDisco {
+  unidad: string
+  espacioLibreGb: number
+  espacioTotalGb: number
+  espacioBajo: boolean
+}
+
 export function MiPerfilPage() {
   const { perfil, iniciarSesion, restablecerContrasena, recargarPerfil, cerrarSesion } = useAuth()
   const navigate = useNavigate()
@@ -76,6 +89,17 @@ export function MiPerfilPage() {
 
   const [cambiandoMantenimiento, setCambiandoMantenimiento] = useState(false)
   const [errorMantenimiento, setErrorMantenimiento] = useState<string | null>(null)
+
+  const [reiniciandoServicios, setReiniciandoServicios] = useState(false)
+  const [errorReiniciarServicios, setErrorReiniciarServicios] = useState<string | null>(null)
+
+  const [ejecutandoBackup, setEjecutandoBackup] = useState(false)
+  const [resultadoBackup, setResultadoBackup] = useState<ResultadoBackupManual | null>(null)
+  const [errorBackup, setErrorBackup] = useState<string | null>(null)
+
+  const [verificandoDisco, setVerificandoDisco] = useState(false)
+  const [estadoDisco, setEstadoDisco] = useState<EstadoDisco | null>(null)
+  const [errorDisco, setErrorDisco] = useState<string | null>(null)
 
   const verificarEstadoSistema = async () => {
     setVerificandoEstado(true)
@@ -146,7 +170,7 @@ export function MiPerfilPage() {
 
     setActualizandoContrasena(true)
     try {
-      await iniciarSesion(perfil.correo, contrasenaActual)
+      await iniciarSesion(perfil.nombreUsuario, contrasenaActual)
       await restablecerContrasena(nuevaContrasena)
       setExitoContrasena(true)
       setContrasenaActual('')
@@ -187,7 +211,7 @@ export function MiPerfilPage() {
       // secuestrar la cuenta permanentemente (cambiar el correo y después usar
       // "olvidé mi contraseña" sobre el correo nuevo).
       if (cambiandoCorreo && perfil) {
-        await iniciarSesion(perfil.correo, contrasenaActualCorreo)
+        await iniciarSesion(perfil.nombreUsuario, contrasenaActualCorreo)
       }
 
       await api.patch<Usuario>('/api/mi-perfil', {
@@ -266,6 +290,56 @@ export function MiPerfilPage() {
     }
   }
 
+  const handleReiniciarServicios = async () => {
+    const confirmado = window.confirm(
+      'Esto cerrará todas las sesiones activas de todo el personal, incluida la tuya — todos van a tener que ' +
+        'volver a iniciar sesión. ¿Continuar?',
+    )
+    if (!confirmado) {
+      return
+    }
+
+    setErrorReiniciarServicios(null)
+    setReiniciandoServicios(true)
+    try {
+      await api.post('/api/sistema/avanzado/reiniciar-servicios')
+      await cerrarSesion({ scope: 'global' })
+      navigate('/login', { replace: true })
+    } catch (err) {
+      setErrorReiniciarServicios(
+        err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo reiniciar los servicios.',
+      )
+      setReiniciandoServicios(false)
+    }
+  }
+
+  const handleBackupManual = async () => {
+    setErrorBackup(null)
+    setResultadoBackup(null)
+    setEjecutandoBackup(true)
+    try {
+      const resultado = await api.post<ResultadoBackupManual>('/api/sistema/avanzado/backup-manual')
+      setResultadoBackup(resultado)
+    } catch (err) {
+      setErrorBackup(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo ejecutar el backup.')
+    } finally {
+      setEjecutandoBackup(false)
+    }
+  }
+
+  const handleVerificarEspacioDisco = async () => {
+    setErrorDisco(null)
+    setVerificandoDisco(true)
+    try {
+      const estado = await api.get<EstadoDisco>('/api/sistema/avanzado/espacio-disco')
+      setEstadoDisco(estado)
+    } catch (err) {
+      setErrorDisco(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo verificar el espacio en disco.')
+    } finally {
+      setVerificandoDisco(false)
+    }
+  }
+
   const handleExportarActividad = async () => {
     setExportando(true)
     setErrorExportar(null)
@@ -310,6 +384,7 @@ export function MiPerfilPage() {
 
             <div className="mi-perfil-identidad">
               <p className="mi-perfil-nombre">{perfil.nombreCompleto}</p>
+              <p className="mi-perfil-correo text-muted">@{perfil.nombreUsuario}</p>
               <p className="mi-perfil-correo text-muted">{perfil.correo}</p>
               <span className="mi-perfil-badge-rol">{perfil.rol.toUpperCase()}</span>
             </div>
@@ -323,7 +398,9 @@ export function MiPerfilPage() {
 
           <section className="mi-perfil-card">
             <h2>Editar nombre y correo</h2>
-            <p className="text-secondary mi-perfil-card-subtitulo">Se sincroniza con tu correo de inicio de sesión.</p>
+            <p className="text-secondary mi-perfil-card-subtitulo">
+              Tu usuario para iniciar sesión (@{perfil.nombreUsuario}) lo cambia un administrador desde Personal.
+            </p>
 
             <form className="mi-perfil-form-contrasena" onSubmit={(event) => void handleGuardarPerfil(event)}>
               <label className="mi-perfil-label">
@@ -505,7 +582,7 @@ export function MiPerfilPage() {
                   <span className="mi-perfil-herramienta-icono" aria-hidden="true">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                       <path
-                        d="M4 7h16M9 7V4h6v3m-8 0 1 13a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-13"
+                        d="M7 3h8l4 4v14H7V3Z M9 3v6h6V3 M9 21v-6h6v6"
                         stroke="currentColor"
                         strokeWidth="1.6"
                         strokeLinecap="round"
@@ -514,11 +591,21 @@ export function MiPerfilPage() {
                     </svg>
                   </span>
                   <div className="mi-perfil-herramienta-texto">
-                    <p className="mi-perfil-herramienta-titulo">Vaciar caché del sistema</p>
-                    <p className="text-muted mi-perfil-herramienta-detalle">No aplica: la API no mantiene caché de servidor.</p>
+                    <p className="mi-perfil-herramienta-titulo">Forzar backup ahora</p>
+                    <p className="text-muted mi-perfil-herramienta-detalle">
+                      Ejecuta un respaldo cifrado de la base de datos en este momento, sin esperar al automático.
+                    </p>
+                    {resultadoBackup &&
+                      (resultadoBackup.exitoso ? (
+                        <p className="text-muted mi-perfil-herramienta-detalle">
+                          Backup completado a las {formateadorFechaHora.format(new Date(resultadoBackup.ejecutadoEn))}.
+                        </p>
+                      ) : (
+                        <p className="mi-perfil-error">Falló: {resultadoBackup.mensaje}</p>
+                      ))}
                   </div>
-                  <button type="button" disabled>
-                    No aplica
+                  <button type="button" onClick={() => void handleBackupManual()} disabled={ejecutandoBackup}>
+                    {ejecutandoBackup ? 'Respaldando…' : 'Ejecutar'}
                   </button>
                 </article>
 
@@ -567,40 +654,68 @@ export function MiPerfilPage() {
                 <article className="mi-perfil-herramienta">
                   <span className="mi-perfil-herramienta-icono" aria-hidden="true">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M4 12a8 8 0 0 1 13.66-5.66M20 12a8 8 0 0 1-13.66 5.66M17 3v4h-4M7 21v-4h4"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
+                      <rect x="3" y="8" width="18" height="8" rx="2" stroke="currentColor" strokeWidth="1.6" />
+                      <circle cx="7.5" cy="12" r="1" fill="currentColor" />
+                      <path d="M11 12h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                     </svg>
                   </span>
                   <div className="mi-perfil-herramienta-texto">
-                    <p className="mi-perfil-herramienta-titulo">Forzar sincronización de datos</p>
-                    <p className="text-muted mi-perfil-herramienta-detalle">No aplica: no hay un sistema externo con el que sincronizar.</p>
+                    <p className="mi-perfil-herramienta-titulo">Verificar espacio en disco</p>
+                    <p className="text-muted mi-perfil-herramienta-detalle">
+                      Cuánto espacio libre queda en el disco donde se guardan los backups.
+                    </p>
+                    {estadoDisco && (
+                      <p className={estadoDisco.espacioBajo ? 'mi-perfil-error' : 'text-muted mi-perfil-herramienta-detalle'}>
+                        {estadoDisco.espacioLibreGb} GB libres de {estadoDisco.espacioTotalGb} GB ({estadoDisco.unidad})
+                        {estadoDisco.espacioBajo ? ' — espacio bajo' : ''}
+                      </p>
+                    )}
                   </div>
-                  <button type="button" disabled>
-                    No aplica
+                  <button type="button" onClick={() => void handleVerificarEspacioDisco()} disabled={verificandoDisco}>
+                    {verificandoDisco ? 'Verificando…' : 'Ejecutar'}
                   </button>
                 </article>
               </div>
               {errorExportar && <p className="mi-perfil-error">{errorExportar}</p>}
               {errorEstado && <p className="mi-perfil-error">{errorEstado}</p>}
+              {errorBackup && <p className="mi-perfil-error">{errorBackup}</p>}
+              {errorDisco && <p className="mi-perfil-error">{errorDisco}</p>}
             </section>
             )}
 
             {esLemy && (
               <section className="mi-perfil-card mi-perfil-card-riesgo">
-                <h2>Modo mantenimiento</h2>
+                <h2>Avanzado</h2>
                 <p className="text-secondary mi-perfil-card-subtitulo">
-                  Bloquea el acceso a todo el personal (menos Lemy) mientras resuelves una incidencia.
+                  Acciones de troubleshooting. Úsalas con cuidado: afectan a todo el personal, no solo a tu cuenta.
                 </p>
 
                 <div className="mi-perfil-mantenimiento-fila">
                   <div>
+                    <p className="mi-perfil-herramienta-titulo">Reiniciar servicios</p>
+                    <p className="text-muted mi-perfil-herramienta-detalle">
+                      Cierra todas las sesiones activas (todo el personal, incluida la tuya) y obliga a iniciar
+                      sesión de nuevo.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="mi-perfil-boton-peligro"
+                    onClick={() => void handleReiniciarServicios()}
+                    disabled={reiniciandoServicios}
+                  >
+                    {reiniciandoServicios ? 'Reiniciando…' : 'Reiniciar'}
+                  </button>
+                </div>
+                {errorReiniciarServicios && <p className="mi-perfil-error">{errorReiniciarServicios}</p>}
+
+                <div className="mi-perfil-mantenimiento-fila">
+                  <div>
                     <p className="mi-perfil-herramienta-titulo">
-                      {estadoSistema?.modoMantenimientoActivo ? 'Activo' : 'Apagado'}
+                      Modo mantenimiento — {estadoSistema?.modoMantenimientoActivo ? 'Activo' : 'Apagado'}
+                    </p>
+                    <p className="text-muted mi-perfil-herramienta-detalle">
+                      Bloquea el acceso a todo el personal (menos Lemy) mientras resuelves una incidencia.
                     </p>
                     {estadoSistema?.modoMantenimientoActivo && estadoSistema.modoMantenimientoMensaje && (
                       <p className="text-muted mi-perfil-herramienta-detalle">

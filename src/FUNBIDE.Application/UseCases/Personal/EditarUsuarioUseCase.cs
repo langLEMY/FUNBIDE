@@ -34,6 +34,7 @@ public sealed class EditarUsuarioUseCase(
         }
 
         var correoNormalizado = request.Correo.Trim().ToLowerInvariant();
+        var nombreUsuarioNormalizado = request.NombreUsuario.Trim().ToLowerInvariant();
 
         if (!string.Equals(usuario.Correo, correoNormalizado, StringComparison.Ordinal))
         {
@@ -46,17 +47,28 @@ public sealed class EditarUsuarioUseCase(
             await supabaseAdmin.CambiarCorreoAsync(usuario.SupabaseUserId, correoNormalizado, cancellationToken);
         }
 
-        usuario.ActualizarDatos(request.NombreCompleto, request.Correo);
+        if (!string.Equals(usuario.NombreUsuario, nombreUsuarioNormalizado, StringComparison.Ordinal))
+        {
+            var otroUsuarioConEseNombre = await usuarioRepository.ObtenerPorNombreUsuarioAsync(nombreUsuarioNormalizado, cancellationToken);
+            if (otroUsuarioConEseNombre is not null && otroUsuarioConEseNombre.Id != usuario.Id)
+            {
+                throw new NombreUsuarioEnUsoException(nombreUsuarioNormalizado);
+            }
+        }
+
+        usuario.ActualizarDatos(request.NombreCompleto, request.Correo, nombreUsuarioNormalizado);
         await usuarioRepository.GuardarCambiosAsync(cancellationToken);
 
         await auditoriaLogService.RegistrarEventoAsync(
             accion: "personal.editar",
             recurso: $"usuarios/{usuario.Id}",
-            detalle: new { usuario.NombreCompleto, usuario.Correo },
+            detalle: new { usuario.NombreCompleto, usuario.Correo, usuario.NombreUsuario },
             usuarioId: currentUser.UsuarioId,
             codigoRespuestaHttp: 200,
             cancellationToken: cancellationToken);
 
-        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
+        return new UsuarioDto(
+            usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.NombreUsuario, usuario.Rol,
+            usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
     }
 }

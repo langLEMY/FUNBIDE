@@ -25,6 +25,7 @@ public class RegistrarDonacionUseCaseTests
 
         _currentUser.UsuarioId.Returns(Guid.NewGuid());
         _dateTimeProvider.UtcNow.Returns(DateTimeOffset.UtcNow);
+        _dateTimeProvider.ZonaHorariaClinica.Returns(TimeZoneInfo.Utc);
     }
 
     private RegistrarDonacionUseCase CrearCasoDeUso() => new(

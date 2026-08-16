@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using FUNBIDE.Application.Common.Interfaces;
 using FUNBIDE.Domain.Interfaces;
 using FUNBIDE.Infrastructure.BackgroundServices;
+using FUNBIDE.Infrastructure.Caching;
 using FUNBIDE.Infrastructure.Files;
 using FUNBIDE.Infrastructure.Logging;
 using FUNBIDE.Infrastructure.Persistence;
@@ -42,14 +43,21 @@ public static class DependencyInjection
         services.AddScoped<ITurnoCajaRepository, TurnoCajaRepository>();
         services.AddScoped<ICobroRepository, CobroRepository>();
         services.AddScoped<ISeguroMedicoRepository, SeguroMedicoRepository>();
+        services.AddScoped<ITarifarioProcedimientoRepository, TarifarioProcedimientoRepository>();
         services.AddScoped<IDonacionRepository, DonacionRepository>();
         services.AddScoped<IConfiguracionSistemaRepository, ConfiguracionSistemaRepository>();
+        services.AddScoped<IPermisoUsuarioRepository, PermisoUsuarioRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        services.AddMemoryCache();
+        services.AddSingleton<IConfiguracionSistemaCache, ConfiguracionSistemaCache>();
 
         services.AddScoped<IAuditoriaLogService, AuditoriaLogService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IPermisoResolverService, PermisoResolverService>();
         services.AddScoped<IEstadoBaseDeDatosService, EstadoBaseDeDatosService>();
         services.AddScoped<IEstadoBackupService, EstadoBackupService>();
+        services.AddScoped<IEspacioDiscoService, EspacioDiscoService>();
         services.AddScoped<IExcelLectorService, ExcelLectorService>();
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
@@ -116,7 +124,12 @@ public static class DependencyInjection
                 .Bind(configuration.GetSection(BackupOptions.SeccionConfiguracion))
                 .ValidateOnStart();
             services.AddSingleton<AesBackupEncryptor>();
+            services.AddSingleton<IBackupEjecutorService, BackupEjecutorService>();
             services.AddHostedService<DatabaseBackupHostedService>();
+        }
+        else
+        {
+            services.AddSingleton<IBackupEjecutorService, BackupEjecutorNoDisponibleService>();
         }
 
         return services;

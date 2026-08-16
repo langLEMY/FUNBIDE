@@ -27,11 +27,13 @@ public sealed class CajaController(
 {
     [HttpGet("turnos/actual")]
     [RequiereRol(RolUsuario.Fondos)]
+    [RequierePermiso(ModuloPermiso.Caja, ModuloPermiso.Cobros)]
     public async Task<ActionResult<TurnoCajaDto?>> ObtenerTurnoActualAsync(CancellationToken cancellationToken) =>
         Ok(await obtenerTurnoActual.EjecutarAsync(cancellationToken));
 
     [HttpPost("turnos")]
     [RequiereRol(RolUsuario.Fondos)]
+    [RequierePermiso(ModuloPermiso.Caja)]
     public async Task<ActionResult<TurnoCajaDto>> AbrirTurnoAsync(
         AbrirTurnoCajaRequest request, CancellationToken cancellationToken)
     {
@@ -41,17 +43,20 @@ public sealed class CajaController(
 
     [HttpPatch("turnos/cerrar")]
     [RequiereRol(RolUsuario.Fondos)]
+    [RequierePermiso(ModuloPermiso.Caja)]
     public async Task<ActionResult<TurnoCajaDto>> CerrarTurnoAsync(
         CerrarTurnoCajaRequest request, CancellationToken cancellationToken) =>
         Ok(await cerrarTurno.EjecutarAsync(request, cancellationToken));
 
     [HttpGet("resumen")]
     [RequiereRol(RolUsuario.Fondos)]
+    [RequierePermiso(ModuloPermiso.Caja)]
     public async Task<ActionResult<ResumenCajaDto>> ObtenerResumenAsync(CancellationToken cancellationToken) =>
         Ok(await obtenerResumen.EjecutarAsync(cancellationToken));
 
     [HttpGet("turnos")]
     [RequiereRol(RolUsuario.Admin)]
+    [RequierePermiso(ModuloPermiso.Operaciones)]
     public async Task<ActionResult<IReadOnlyList<TurnoCajaAdminDto>>> ListarTurnosAsync(
         [FromQuery] DateTimeOffset desde, [FromQuery] DateTimeOffset hasta, CancellationToken cancellationToken) =>
         Ok(await listarTurnos.EjecutarAsync(new ListarTurnosCajaRequest(desde, hasta), cancellationToken));

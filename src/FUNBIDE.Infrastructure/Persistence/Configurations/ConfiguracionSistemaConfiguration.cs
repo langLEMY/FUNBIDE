@@ -13,6 +13,7 @@ public sealed class ConfiguracionSistemaConfiguration : IEntityTypeConfiguration
 
         builder.Property(c => c.ModoMantenimientoActivo).IsRequired();
         builder.Property(c => c.ModoMantenimientoMensaje).HasMaxLength(500);
+        builder.Property(c => c.SesionesRevocadasEn);
         builder.Property(c => c.ActualizadoEn).IsRequired();
         builder.Property(c => c.ActualizadoPorUsuarioId).IsRequired();
     }

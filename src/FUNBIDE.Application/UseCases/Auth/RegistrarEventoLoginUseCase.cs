@@ -21,12 +21,13 @@ public sealed class RegistrarEventoLoginUseCase(
 {
     public async Task<bool> EjecutarAsync(RegistrarEventoLoginComando request, CancellationToken cancellationToken)
     {
-        var usuario = await usuarioRepository.ObtenerPorCorreoAsync(request.Correo, cancellationToken);
+        var usuario = await usuarioRepository.ObtenerPorNombreUsuarioAsync(
+            request.NombreUsuario.Trim().ToLowerInvariant(), cancellationToken);
 
         await auditoriaLogService.RegistrarEventoAsync(
             accion: request.Exitoso ? "auth.login.exitoso" : "auth.login.fallido",
             recurso: "auth/login",
-            detalle: new { request.Correo, request.Ip, request.Dispositivo },
+            detalle: new { request.NombreUsuario, request.Ip, request.Dispositivo },
             usuarioId: usuario?.Id,
             codigoRespuestaHttp: request.Exitoso ? 200 : 401,
             cancellationToken: cancellationToken);

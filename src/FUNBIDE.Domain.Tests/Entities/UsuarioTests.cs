@@ -6,7 +6,7 @@ namespace FUNBIDE.Domain.Tests.Entities;
 public class UsuarioTests
 {
     private static Usuario CrearUsuario(RolUsuario rol, EspecialidadMedica? especialidad = null) =>
-        new(Guid.NewGuid(), "Ana Pérez", "ana@funbide.org", rol, especialidad);
+        new(Guid.NewGuid(), "Ana Pérez", "ana@funbide.org", "ana.perez", rol, especialidad);
 
     [Fact]
     public void Constructor_DoctorConEspecialidad_LaAsigna()

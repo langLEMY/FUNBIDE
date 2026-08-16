@@ -20,10 +20,24 @@ public sealed class CobroConfiguration : IEntityTypeConfiguration<Cobro>
         builder.Property(c => c.SeguroMedicoId);
         builder.Property(c => c.PorcentajeCobertura).HasColumnType("decimal(5,2)");
         builder.Property(c => c.MontoCobertura).HasColumnType("decimal(12,2)");
+        builder.Property(c => c.TarifarioProcedimientoId);
         builder.Property(c => c.CodigoAutorizacion).HasMaxLength(100);
-        builder.Property(c => c.MetodoPago).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(c => c.MontoPagado).HasColumnType("decimal(12,2)").IsRequired();
         builder.Property(c => c.RegistradoEn).IsRequired();
+
+        // Desglose de cómo se pagó (ver PagoRecibido): owned collection en su propia
+        // tabla, sin identidad propia — vive y muere con el Cobro dueño. Clave natural
+        // (CobroId, Metodo): un cobro nunca trae dos líneas del mismo método.
+        builder.OwnsMany(c => c.Pagos, pago =>
+        {
+            pago.ToTable("cobros_pagos");
+            pago.WithOwner().HasForeignKey("CobroId");
+            pago.Property<Guid>("CobroId");
+            pago.HasKey("CobroId", nameof(PagoRecibido.Metodo));
+            pago.Property(p => p.Metodo).HasConversion<string>().HasMaxLength(20).IsRequired();
+            pago.Property(p => p.Monto).HasColumnType("decimal(12,2)").IsRequired();
+            pago.ToTable(t => t.HasCheckConstraint("ck_pago_recibido_monto_positivo", "\"Monto\" > 0"));
+        });
 
         builder.Ignore(c => c.MontoACargoPaciente);
         builder.Ignore(c => c.MontoPendiente);

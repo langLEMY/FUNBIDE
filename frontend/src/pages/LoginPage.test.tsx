@@ -35,10 +35,10 @@ describe('LoginPage', () => {
     const usuario = userEvent.setup()
     renderLoginPage()
 
-    await usuario.type(screen.getByPlaceholderText('correo@funbide.org'), 'doctor@funbide.org')
+    await usuario.type(screen.getByPlaceholderText('usuario123'), 'doctor@funbide.org')
     await usuario.type(screen.getByPlaceholderText('Ingresa tu contraseña'), 'clave-incorrecta')
     await usuario.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
 
-    expect(await screen.findByText('Correo o contraseña incorrectos.')).toBeInTheDocument()
+    expect(await screen.findByText('Usuario o contraseña incorrectos.')).toBeInTheDocument()
   })
 })

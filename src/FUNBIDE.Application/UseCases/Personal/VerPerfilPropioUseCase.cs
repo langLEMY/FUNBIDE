@@ -12,17 +12,25 @@ public interface IVerPerfilPropioUseCase : IUseCase<UsuarioDto>
 
 /// <summary>
 /// Alimenta la opción "Ver perfil" del menú de la foto de perfil, disponible para
-/// cualquier rol autenticado (no solo LEMY).
+/// cualquier rol autenticado (no solo LEMY). También es la única fuente de los
+/// permisos efectivos del usuario logueado: el frontend recarga este endpoint al
+/// iniciar sesión y usa <see cref="UsuarioDto.Permisos"/> para decidir qué mostrar en
+/// el menú y qué rutas dejar navegar.
 /// </summary>
 public sealed class VerPerfilPropioUseCase(
     IUsuarioRepository usuarioRepository,
-    ICurrentUserService currentUser) : IVerPerfilPropioUseCase
+    ICurrentUserService currentUser,
+    IPermisoResolverService permisoResolver) : IVerPerfilPropioUseCase
 {
     public async Task<UsuarioDto> EjecutarAsync(CancellationToken cancellationToken)
     {
         var usuario = await usuarioRepository.ObtenerPorSupabaseUserIdAsync(currentUser.UsuarioId, cancellationToken)
             ?? throw new RecursoNoEncontradoException(nameof(Domain.Entities.Usuario), currentUser.UsuarioId);
 
-        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
+        var permisos = await permisoResolver.ObtenerPermisosEfectivosAsync(usuario.SupabaseUserId, usuario.Rol, cancellationToken);
+
+        return new UsuarioDto(
+            usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.NombreUsuario, usuario.Rol, usuario.Activo,
+            usuario.FotoPerfilUrl, usuario.Especialidad, permisos.ToList());
     }
 }

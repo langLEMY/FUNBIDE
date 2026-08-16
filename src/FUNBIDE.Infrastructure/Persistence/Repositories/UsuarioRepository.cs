@@ -23,6 +23,11 @@ public sealed class UsuarioRepository(FunbideDbContext dbContext) : IUsuarioRepo
     public Task<Usuario?> ObtenerPorCorreoAsync(string correo, CancellationToken cancellationToken) =>
         dbContext.Usuarios.AsNoTracking().FirstOrDefaultAsync(u => u.Correo == correo && !u.EliminadoPermanentemente, cancellationToken);
 
+    // Mismo criterio que ObtenerPorCorreoAsync: un usuario borrado permanentemente libera
+    // su nombre de usuario para poder reusarse.
+    public Task<Usuario?> ObtenerPorNombreUsuarioAsync(string nombreUsuario, CancellationToken cancellationToken) =>
+        dbContext.Usuarios.AsNoTracking().FirstOrDefaultAsync(u => u.NombreUsuario == nombreUsuario && !u.EliminadoPermanentemente, cancellationToken);
+
     // Excluye a los borrados permanentemente: ya no existen en Supabase Auth, así que
     // no tiene sentido que sigan apareciendo en el listado de personal.
     public async Task<IReadOnlyList<Usuario>> ObtenerTodosAsync(CancellationToken cancellationToken) =>

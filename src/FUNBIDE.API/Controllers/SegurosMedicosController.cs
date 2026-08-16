@@ -24,12 +24,14 @@ public sealed class SegurosMedicosController(
 {
     [HttpGet]
     [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Aseguradoras, ModuloPermiso.Cobros)]
     public async Task<ActionResult<IReadOnlyList<SeguroMedicoDto>>> ListarAsync(
         [FromQuery] bool incluirInactivos, CancellationToken cancellationToken) =>
         Ok(await listarSeguros.EjecutarAsync(incluirInactivos, cancellationToken));
 
     [HttpPost]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Aseguradoras)]
     public async Task<ActionResult<SeguroMedicoDto>> CrearAsync(
         CrearSeguroMedicoRequest request, CancellationToken cancellationToken)
     {
@@ -39,17 +41,20 @@ public sealed class SegurosMedicosController(
 
     [HttpPatch]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Aseguradoras)]
     public async Task<ActionResult<SeguroMedicoDto>> EditarAsync(
         EditarSeguroMedicoRequest request, CancellationToken cancellationToken) =>
         Ok(await editarSeguro.EjecutarAsync(request, cancellationToken));
 
     [HttpPatch("{id:guid}/desactivar")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Aseguradoras)]
     public async Task<ActionResult<SeguroMedicoDto>> DesactivarAsync(Guid id, CancellationToken cancellationToken) =>
         Ok(await desactivarSeguro.EjecutarAsync(id, cancellationToken));
 
     [HttpPatch("{id:guid}/reactivar")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Aseguradoras)]
     public async Task<ActionResult<SeguroMedicoDto>> ReactivarAsync(Guid id, CancellationToken cancellationToken) =>
         Ok(await reactivarSeguro.EjecutarAsync(id, cancellationToken));
 }

@@ -41,6 +41,37 @@ function notificar(event: string, session: SesionMinima | null) {
   escuchadores.forEach((callback) => callback(event, session))
 }
 
+// setTimeout no dispara solo — sin esto, AuthContext.session queda con la sesión vieja
+// después de que expira el token (getSession() ya devuelve null, pero nadie avisa), y
+// ProtectedRoute nunca se entera de que debe redirigir a /login: el usuario queda
+// atascado viendo 401 en cada request hasta que recarga la página a mano.
+let temporizadorExpiracion: ReturnType<typeof setTimeout> | null = null
+
+function limpiarSesionExpirada() {
+  temporizadorExpiracion = null
+  localStorage.removeItem(CLAVE_STORAGE)
+  notificar('SIGNED_OUT', null)
+}
+
+function programarExpiracion(token: TokenGuardado | null) {
+  if (temporizadorExpiracion) {
+    clearTimeout(temporizadorExpiracion)
+    temporizadorExpiracion = null
+  }
+  if (!token) return
+
+  const msRestantes = new Date(token.expiraEn).getTime() - Date.now()
+  if (msRestantes <= 0) {
+    limpiarSesionExpirada()
+    return
+  }
+  // setTimeout trunca delays mayores a ~24.8 días (2^31-1 ms) a 0, disparando de inmediato;
+  // los tokens de esta app viven horas, pero el clamp es una salvaguarda barata.
+  temporizadorExpiracion = setTimeout(limpiarSesionExpirada, Math.min(msRestantes, 2 ** 31 - 1))
+}
+
+programarExpiracion(leerTokenGuardado())
+
 async function leerDetalleError(respuesta: Response, fallback: string): Promise<Error> {
   const problema = await respuesta.json().catch(() => null)
   return new Error(problema?.detail ?? fallback)
@@ -71,14 +102,13 @@ export const localAuthClient: ClienteAutenticacion = {
       })
 
       if (!respuesta.ok) {
-        return { error: await leerDetalleError(respuesta, 'Correo o contraseña incorrectos.') }
+        return { error: await leerDetalleError(respuesta, 'Usuario o contraseña incorrectos.') }
       }
 
       const cuerpo = (await respuesta.json()) as { accessToken: string; expiraEn: string }
-      localStorage.setItem(
-        CLAVE_STORAGE,
-        JSON.stringify({ accessToken: cuerpo.accessToken, expiraEn: cuerpo.expiraEn } satisfies TokenGuardado),
-      )
+      const token: TokenGuardado = { accessToken: cuerpo.accessToken, expiraEn: cuerpo.expiraEn }
+      localStorage.setItem(CLAVE_STORAGE, JSON.stringify(token))
+      programarExpiracion(token)
       notificar('SIGNED_IN', { access_token: cuerpo.accessToken })
       return { error: null }
     },
@@ -86,6 +116,10 @@ export const localAuthClient: ClienteAutenticacion = {
     async signOut() {
       // Ignora `opciones.scope`: en modo local no hay multi-dispositivo, así que
       // "cerrar todas las sesiones" y "cerrar sesión" son la misma operación.
+      if (temporizadorExpiracion) {
+        clearTimeout(temporizadorExpiracion)
+        temporizadorExpiracion = null
+      }
       localStorage.removeItem(CLAVE_STORAGE)
       notificar('SIGNED_OUT', null)
       return { error: null }

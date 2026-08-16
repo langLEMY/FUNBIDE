@@ -1,0 +1,164 @@
+.editar-permisos-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  animation: funbide-desvanecer var(--duracion-rapida) var(--ease-suave);
+  padding: 24px;
+}
+
+.editar-permisos-modal {
+  position: relative;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-chrome);
+  padding: 24px;
+  width: 480px;
+  max-width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  animation: funbide-aparecer var(--duracion-base) var(--ease-entrada);
+}
+
+.editar-permisos-modal h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.editar-permisos-subtitulo {
+  margin: 0 0 18px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.editar-permisos-grupos {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.editar-permisos-grupo h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.editar-permisos-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.editar-permisos-grupo .editar-permisos-fila:last-child {
+  border-bottom: none;
+}
+
+.editar-permisos-fila-texto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.editar-permisos-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(230, 179, 61, 0.18);
+  color: var(--warning, #e6b33d);
+}
+
+.editar-permisos-interruptor {
+  position: relative;
+  width: 44px;
+  height: 25px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-1);
+  padding: 0;
+  cursor: pointer;
+}
+
+.editar-permisos-interruptor.activo {
+  background: var(--series-pacientes);
+  border-color: var(--series-pacientes);
+}
+
+.editar-permisos-interruptor-perilla {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  transition: transform var(--duracion-base) var(--ease-suave);
+}
+
+.editar-permisos-interruptor.activo .editar-permisos-interruptor-perilla {
+  transform: translateX(19px);
+}
+
+.editar-permisos-interruptor:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.editar-permisos-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 14px 0 0;
+}
+
+.editar-permisos-acciones {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.editar-permisos-acciones button {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border-hairline);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.editar-permisos-cancelar {
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.editar-permisos-cancelar:hover {
+  background: var(--surface-hover);
+}
+
+.editar-permisos-guardar {
+  background: var(--series-pacientes);
+  color: var(--text-primary);
+  border: none;
+  font-weight: 600;
+}
+
+.editar-permisos-guardar:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.editar-permisos-acciones button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

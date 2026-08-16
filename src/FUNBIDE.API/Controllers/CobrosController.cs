@@ -14,7 +14,7 @@ namespace FUNBIDE.API.Controllers;
 [ApiController]
 [Route("api/cobros")]
 [Authorize]
-[RequiereRol(RolUsuario.Fondos)]
+[RequierePermiso(ModuloPermiso.Cobros)]
 [SoloLecturaEInsercion]
 public sealed class CobrosController(
     IRegistrarCobroUseCase registrarCobro,

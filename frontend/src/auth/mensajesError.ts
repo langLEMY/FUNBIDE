@@ -10,7 +10,7 @@ export function traducirErrorAuth(mensaje: string | undefined, fallback: string)
   const normalizado = mensaje.toLowerCase()
 
   if (normalizado.includes('invalid login credentials')) {
-    return 'Correo o contraseña incorrectos.'
+    return 'Usuario o contraseña incorrectos.'
   }
   if (normalizado.includes('banned') || normalizado.includes('disabled')) {
     return 'Esta cuenta fue desactivada. Contacta a un administrador.'
@@ -25,7 +25,7 @@ export function traducirErrorAuth(mensaje: string | undefined, fallback: string)
     return 'La contraseña debe tener al menos 8 caracteres.'
   }
   if (normalizado.includes('user not found')) {
-    return 'No existe una cuenta con ese correo.'
+    return 'No existe una cuenta con ese usuario.'
   }
   if (normalizado.includes('network')) {
     return 'No se pudo conectar. Revisa tu conexión a internet.'

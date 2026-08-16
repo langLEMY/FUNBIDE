@@ -3,6 +3,7 @@ import type { EspecialidadMedica, RolUsuario } from './usuario'
 export interface CrearUsuarioRequest {
   nombreCompleto: string
   correo: string
+  nombreUsuario: string
   contrasenaTemporal: string
   rol: RolUsuario
   especialidad: EspecialidadMedica | null
@@ -12,6 +13,7 @@ export interface EditarUsuarioRequest {
   usuarioId: string
   nombreCompleto: string
   correo: string
+  nombreUsuario: string
 }
 
 export interface CambiarRolRequest {
@@ -34,6 +36,9 @@ export const ESPECIALIDADES: EspecialidadMedica[] = [
   'Diabetologia',
   'Psicologia',
   'Oftalmologia',
+  'MedicinaInterna',
+  'Ortopedia',
+  'Nutricion',
 ]
 
 export const ETIQUETA_ESPECIALIDAD: Record<EspecialidadMedica, string> = {
@@ -46,6 +51,9 @@ export const ETIQUETA_ESPECIALIDAD: Record<EspecialidadMedica, string> = {
   Diabetologia: 'Diabetología',
   Psicologia: 'Psicología',
   Oftalmologia: 'Oftalmología',
+  MedicinaInterna: 'Medicina Interna',
+  Ortopedia: 'Ortopedia y Traumatología',
+  Nutricion: 'Nutrición',
 }
 
 export interface CambiarContrasenaRequest {

@@ -1,5 +1,3 @@
-using FUNBIDE.Domain.Enums;
-
 namespace FUNBIDE.Application.DTOs.Cobros;
 
 public sealed record CobroDto(
@@ -15,9 +13,11 @@ public sealed record CobroDto(
     decimal? PorcentajeCobertura,
     decimal? MontoCobertura,
     string? CodigoAutorizacion,
-    MetodoPago MetodoPago,
+    /// <summary>Desglose de cómo se pagó (ver PagoRecibido) — 0, 1 o varias líneas.</summary>
+    IReadOnlyList<PagoDto> Pagos,
     decimal MontoACargoPaciente,
     decimal MontoPagado,
     decimal MontoPendiente,
     Guid UsuarioId,
-    DateTimeOffset RegistradoEn);
+    DateTimeOffset RegistradoEn,
+    Guid? TarifarioProcedimientoId = null);

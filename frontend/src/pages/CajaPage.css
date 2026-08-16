@@ -4,12 +4,24 @@
 .caja-alertas-card,
 .caja-egreso-card,
 .caja-timeline-card,
-.caja-cierre-card {
+.caja-cierre-card,
+.caja-resultado-arqueo-card {
   background: var(--surface-1);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-card);
   padding: 20px;
   margin-bottom: 20px;
+}
+
+.caja-resultado-arqueo-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.caja-resultado-arqueo-card p {
+  margin: 0;
 }
 
 .caja-card-subtitulo {

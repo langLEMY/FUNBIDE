@@ -1,3 +1,4 @@
+import { avisarMantenimientoActivo } from './mantenimientoBus'
 import { supabase } from './supabaseClient'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL as string
@@ -32,6 +33,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (!response.ok) {
     const problema = await response.json().catch(() => null)
+
+    if (response.status === 503) {
+      avisarMantenimientoActivo(problema?.detail ?? null)
+    }
+
     throw new ApiError(
       problema?.title ?? `Error ${response.status}`,
       response.status,
@@ -52,6 +58,8 @@ export const api = {
     request<T>(path, { method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined }),
   patch: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'PATCH', body: body !== undefined ? JSON.stringify(body) : undefined }),
+  put: <T>(path: string, body?: unknown) =>
+    request<T>(path, { method: 'PUT', body: body !== undefined ? JSON.stringify(body) : undefined }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
   postForm: <T>(path: string, form: FormData) => request<T>(path, { method: 'POST', body: form }),
 }

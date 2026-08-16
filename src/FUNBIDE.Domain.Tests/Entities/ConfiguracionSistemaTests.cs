@@ -40,4 +40,18 @@ public class ConfiguracionSistemaTests
 
         Assert.Null(configuracion.ModoMantenimientoMensaje);
     }
+
+    [Fact]
+    public void RevocarSesiones_GuardaLaMarcaDeTiempoYQuienLaEjecuto()
+    {
+        var configuracion = new ConfiguracionSistema(Guid.NewGuid(), DateTimeOffset.UtcNow);
+        var usuarioId = Guid.NewGuid();
+        var ahora = DateTimeOffset.UtcNow;
+
+        configuracion.RevocarSesiones(usuarioId, ahora);
+
+        Assert.Equal(ahora, configuracion.SesionesRevocadasEn);
+        Assert.Equal(usuarioId, configuracion.ActualizadoPorUsuarioId);
+        Assert.Equal(ahora, configuracion.ActualizadoEn);
+    }
 }

@@ -65,3 +65,14 @@ export const coloresRolPorTema = {
 export function colorRolParaTema(tema: Tema, rol: 'Doctor' | 'Fondos' | 'Lemy'): string {
   return coloresRolPorTema[tema][rol]
 }
+
+/** Paleta para el desglose "Cómo entra el dinero" (Efectivo/Tarjeta/Transferencia) del dashboard de Admin. */
+export const coloresMetodoPago = {
+  Efectivo: '#4fae63',
+  Tarjeta: '#3987e5',
+  Transferencia: '#a983e0',
+} as const
+
+export function colorMetodoPago(metodo: 'Efectivo' | 'Tarjeta' | 'Transferencia'): string {
+  return coloresMetodoPago[metodo]
+}

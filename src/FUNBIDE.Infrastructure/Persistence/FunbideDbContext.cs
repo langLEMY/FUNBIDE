@@ -20,8 +20,10 @@ public sealed class FunbideDbContext(DbContextOptions<FunbideDbContext> options)
     public DbSet<TurnoCaja> TurnosCaja => Set<TurnoCaja>();
     public DbSet<Cobro> Cobros => Set<Cobro>();
     public DbSet<SeguroMedico> SegurosMedicos => Set<SeguroMedico>();
+    public DbSet<TarifarioProcedimiento> TarifarioProcedimientos => Set<TarifarioProcedimiento>();
     public DbSet<Donacion> Donaciones => Set<Donacion>();
     public DbSet<ConfiguracionSistema> ConfiguracionSistema => Set<ConfiguracionSistema>();
+    public DbSet<PermisoUsuario> PermisosUsuario => Set<PermisoUsuario>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

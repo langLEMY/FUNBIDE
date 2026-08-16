@@ -48,12 +48,13 @@ public sealed class ListarCobrosDelTurnoUseCase(
                 c.PorcentajeCobertura,
                 c.MontoCobertura,
                 c.CodigoAutorizacion,
-                c.MetodoPago,
+                c.Pagos.Select(p => new PagoDto(p.Metodo, p.Monto)).ToList(),
                 c.MontoACargoPaciente,
                 c.MontoPagado,
                 c.MontoPendiente,
                 c.UsuarioId,
-                c.RegistradoEn))
+                c.RegistradoEn,
+                c.TarifarioProcedimientoId))
             .ToList();
     }
 }

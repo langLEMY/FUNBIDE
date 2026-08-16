@@ -40,6 +40,10 @@ public sealed class ExceptionHandlingMiddleware(
         {
             await EscribirProblemaAsync(context, StatusCodes.Status409Conflict, "Correo en uso", ex.Message);
         }
+        catch (NombreUsuarioEnUsoException ex)
+        {
+            await EscribirProblemaAsync(context, StatusCodes.Status409Conflict, "Nombre de usuario en uso", ex.Message);
+        }
         catch (CedulaEnUsoException ex)
         {
             await EscribirProblemaAsync(context, StatusCodes.Status409Conflict, "Cédula en uso", ex.Message);

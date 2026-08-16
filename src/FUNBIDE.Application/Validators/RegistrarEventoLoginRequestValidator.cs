@@ -7,6 +7,6 @@ public sealed class RegistrarEventoLoginRequestValidator : AbstractValidator<Reg
 {
     public RegistrarEventoLoginRequestValidator()
     {
-        RuleFor(x => x.Correo).NotEmpty().MaximumLength(320).EmailAddress();
+        RuleFor(x => x.NombreUsuario).NotEmpty().MaximumLength(320);
     }
 }

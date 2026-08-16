@@ -14,6 +14,7 @@ public class CerrarTurnoCajaUseCaseTests
     private readonly ITurnoCajaRepository _turnoCajaRepository = Substitute.For<ITurnoCajaRepository>();
     private readonly ICobroRepository _cobroRepository = Substitute.For<ICobroRepository>();
     private readonly IMovimientoFinancieroRepository _movimientoRepository = Substitute.For<IMovimientoFinancieroRepository>();
+    private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
     private readonly IDateTimeProvider _dateTimeProvider = Substitute.For<IDateTimeProvider>();
     private readonly IAuditoriaLogService _auditoriaLogService = Substitute.For<IAuditoriaLogService>();
@@ -22,15 +23,18 @@ public class CerrarTurnoCajaUseCaseTests
     {
         _currentUser.UsuarioId.Returns(Guid.NewGuid());
         _dateTimeProvider.UtcNow.Returns(DateTimeOffset.UtcNow);
+        _unitOfWork
+            .EjecutarEnTransaccionAsync(Arg.Any<Func<CancellationToken, Task<TurnoCajaDto>>>(), Arg.Any<CancellationToken>())
+            .Returns(call => call.Arg<Func<CancellationToken, Task<TurnoCajaDto>>>()(CancellationToken.None));
     }
 
     private CerrarTurnoCajaUseCase CrearCasoDeUso() => new(
-        _turnoCajaRepository, _cobroRepository, _movimientoRepository, _currentUser, _dateTimeProvider, _auditoriaLogService);
+        _turnoCajaRepository, _cobroRepository, _movimientoRepository, _unitOfWork, _currentUser, _dateTimeProvider, _auditoriaLogService);
 
     [Fact]
     public async Task EjecutarAsync_SinTurnoAbierto_LanzaInvalidOperationException()
     {
-        _turnoCajaRepository.ObtenerAbiertoAsync(Arg.Any<CancellationToken>()).Returns((TurnoCaja?)null);
+        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns((TurnoCaja?)null);
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => CrearCasoDeUso().EjecutarAsync(new CerrarTurnoCajaRequest(1000m, null), CancellationToken.None));
@@ -40,14 +44,14 @@ public class CerrarTurnoCajaUseCaseTests
     public async Task EjecutarAsync_Exitoso_CalculaMontoEsperadoConLaFormulaCompleta()
     {
         var turno = new TurnoCaja(Guid.NewGuid(), 1000m, DateTimeOffset.UtcNow);
-        _turnoCajaRepository.ObtenerAbiertoAsync(Arg.Any<CancellationToken>()).Returns(turno);
+        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(turno);
 
         var paciente1 = Guid.NewGuid();
         var cobros = new List<Cobro>
         {
             // Efectivo: cuenta para el esperado. Tarjeta: NO debe contarse como efectivo en caja.
-            new(paciente1, null, turno.Id, Guid.NewGuid(), "Consulta", 500m, MetodoPago.Efectivo, 500m),
-            new(paciente1, null, turno.Id, Guid.NewGuid(), "Consulta", 300m, MetodoPago.Tarjeta, 300m),
+            new(paciente1, null, turno.Id, Guid.NewGuid(), "Consulta", 500m, [new PagoRecibido(MetodoPago.Efectivo, 500m)]),
+            new(paciente1, null, turno.Id, Guid.NewGuid(), "Consulta", 300m, [new PagoRecibido(MetodoPago.Tarjeta, 300m)]),
         };
         _cobroRepository.ObtenerPorTurnoAsync(turno.Id, Arg.Any<CancellationToken>()).Returns(cobros);
 
@@ -71,7 +75,7 @@ public class CerrarTurnoCajaUseCaseTests
     public async Task EjecutarAsync_ContadoDistintoDelEsperado_RegistraLaDiferencia()
     {
         var turno = new TurnoCaja(Guid.NewGuid(), 0m, DateTimeOffset.UtcNow);
-        _turnoCajaRepository.ObtenerAbiertoAsync(Arg.Any<CancellationToken>()).Returns(turno);
+        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(turno);
         _cobroRepository.ObtenerPorTurnoAsync(turno.Id, Arg.Any<CancellationToken>()).Returns(new List<Cobro>());
         _movimientoRepository.ObtenerPorTurnoAsync(turno.Id, Arg.Any<CancellationToken>()).Returns(new List<MovimientoFinanciero>());
 

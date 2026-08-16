@@ -25,12 +25,14 @@ public sealed class HistorialClinicoController(
 {
     [HttpGet("paciente/{pacienteId:guid}")]
     [RequiereRol(RolUsuario.Doctor, RolUsuario.Admin)]
+    [RequierePermiso(ModuloPermiso.HistorialClinico)]
     public async Task<ActionResult<IReadOnlyList<EntradaHistorialDto>>> ObtenerPorPacienteAsync(
         Guid pacienteId, CancellationToken cancellationToken) =>
         Ok(await obtenerPorPaciente.EjecutarAsync(pacienteId, cancellationToken));
 
     [HttpPost]
     [RequiereRol(RolUsuario.Doctor)]
+    [RequierePermiso(ModuloPermiso.HistorialClinico)]
     public async Task<ActionResult<EntradaHistorialDto>> RegistrarAsync(
         RegistrarEntradaHistorialRequest request, CancellationToken cancellationToken)
     {

@@ -2,6 +2,9 @@ export interface ResumenDiario {
   fecha: string
   pacientesAtendidos: number
   dineroMovido: number
+  dineroEfectivo: number
+  dineroTarjeta: number
+  dineroTransferencia: number
 }
 
 export interface ItemStockBajo {

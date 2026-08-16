@@ -7,10 +7,56 @@
   margin-bottom: 20px;
 }
 
-.aseguradoras-crear-card h2 {
+.aseguradoras-crear-card h2,
+.aseguradoras-tabla-card h2 {
   margin: 0 0 14px;
   font-size: 15px;
   font-weight: 600;
+}
+
+.aseguradoras-tarifario-subtitulo {
+  margin: -8px 0 14px;
+  font-size: 13px;
+}
+
+.aseguradoras-tarifario-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.aseguradoras-tarifario-filtros input[type='search'] {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 200px;
+}
+
+.aseguradoras-tarifario-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.aseguradoras-tarifario-label select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+}
+
+.aseguradoras-tarifario-resultado {
+  font-size: 13px;
+  margin: 10px 0;
 }
 
 .aseguradoras-crear-form {

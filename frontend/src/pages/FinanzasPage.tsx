@@ -65,21 +65,30 @@ export function FinanzasPage() {
     }
   }, [anio])
 
-  const cargarMovimientos = () => {
+  useEffect(() => {
+    let cancelado = false
     const { desde, hasta } = construirRango(anio, mes)
     setCargandoMovimientos(true)
     api
       .get<MovimientoImportante[]>(
         `/api/finanzas-admin/movimientos?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`,
       )
-      .then((datos) => setMovimientos(datos))
-      .catch((err) => {
-        setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar los movimientos.')
+      .then((datos) => {
+        if (!cancelado) setMovimientos(datos)
       })
-      .finally(() => setCargandoMovimientos(false))
-  }
+      .catch((err) => {
+        if (!cancelado) {
+          setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar los movimientos.')
+        }
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoMovimientos(false)
+      })
 
-  useEffect(cargarMovimientos, [anio, mes])
+    return () => {
+      cancelado = true
+    }
+  }, [anio, mes])
 
   const datosGrafico = useMemo(
     () =>

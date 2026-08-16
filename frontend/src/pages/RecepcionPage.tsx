@@ -9,6 +9,11 @@ import './RecepcionPage.css'
 
 const formateadorHora = new Intl.DateTimeFormat('es-DO', { timeStyle: 'short' })
 
+// Mismo intervalo que el badge de sala de espera del Sidebar (ver Sidebar.tsx): sin este
+// polling, la tabla de acá podía quedar mostrando una foto vieja mientras el badge del
+// menú ya reflejaba una llegada o un alta registrada desde otra pestaña/otro puesto.
+const INTERVALO_REFRESCO_MS = 20000
+
 function claseBadgeEstado(estado: CitaAgenda['estado']): string {
   switch (estado) {
     case 'EnEspera':
@@ -65,6 +70,12 @@ export function RecepcionPage() {
     return () => {
       cancelado = true
     }
+  }, [])
+
+  useEffect(() => {
+    const intervalo = setInterval(cargarSalaDeEspera, INTERVALO_REFRESCO_MS)
+    return () => clearInterval(intervalo)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {

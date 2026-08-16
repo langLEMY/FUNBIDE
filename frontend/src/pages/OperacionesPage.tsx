@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { api, ApiError } from '../lib/api'
 import { agruparDoctoresPorEspecialidad } from '../lib/agruparDoctores'
@@ -80,18 +80,33 @@ export function OperacionesPage() {
   const [cargandoSala, setCargandoSala] = useState(true)
   const [errorSala, setErrorSala] = useState<string | null>(null)
 
+  // cargarTurnos se llama a mano desde varios lugares (presets, submit del filtro), no
+  // solo desde un efecto — por eso el guard de "respuesta obsoleta" usa un contador de
+  // petición en vez de la variable local `cancelado` que usan los demás fetches de esta
+  // página. Sin esto, un preset "Hoy" seguido rápido de "Últimos 30 días" podía terminar
+  // mostrando los turnos de un rango que ya no es el seleccionado si la primera respuesta
+  // llegaba después que la segunda.
+  const peticionTurnosRef = useRef(0)
+
   const cargarTurnos = (desdeValor: string, hastaValor: string) => {
+    const idPeticion = ++peticionTurnosRef.current
     setCargandoTurnos(true)
     setErrorTurnos(null)
     const desdeIso = encodeURIComponent(`${desdeValor}T00:00:00.000Z`)
     const hastaIso = encodeURIComponent(`${hastaValor}T23:59:59.999Z`)
     api
       .get<TurnoCajaAdmin[]>(`/api/caja/turnos?desde=${desdeIso}&hasta=${hastaIso}`)
-      .then(setTurnos)
-      .catch((err) => {
-        setErrorTurnos(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar los turnos de caja.')
+      .then((datos) => {
+        if (idPeticion === peticionTurnosRef.current) setTurnos(datos)
       })
-      .finally(() => setCargandoTurnos(false))
+      .catch((err) => {
+        if (idPeticion === peticionTurnosRef.current) {
+          setErrorTurnos(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar los turnos de caja.')
+        }
+      })
+      .finally(() => {
+        if (idPeticion === peticionTurnosRef.current) setCargandoTurnos(false)
+      })
   }
 
   useEffect(() => {

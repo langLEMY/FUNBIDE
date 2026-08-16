@@ -14,5 +14,8 @@ public enum EspecialidadMedica
     MedicinaGeneralYFamiliar,
     Diabetologia,
     Psicologia,
-    Oftalmologia
+    Oftalmologia,
+    MedicinaInterna,
+    Ortopedia,
+    Nutricion
 }

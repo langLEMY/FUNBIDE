@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using FUNBIDE.API.Authorization;
 using FUNBIDE.Domain.Enums;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FUNBIDE.API.Middleware;
 
@@ -24,11 +25,14 @@ public sealed class RoleAuthorizationMiddleware(RequestDelegate next)
 
         if (context.User.Identity?.IsAuthenticated != true)
         {
+            context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsJsonAsync(new
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
             {
-                titulo = "No autenticado",
-                detalle = "Esta operación requiere un token de acceso válido."
+                Title = "No autenticado",
+                Detail = "Esta operación requiere un token de acceso válido.",
+                Status = StatusCodes.Status401Unauthorized,
+                Instance = context.Request.Path
             });
             return;
         }
@@ -39,11 +43,14 @@ public sealed class RoleAuthorizationMiddleware(RequestDelegate next)
             !Enum.TryParse<RolUsuario>(rolClaim, ignoreCase: true, out var rolUsuario) ||
             !requisito.RolesPermitidos.Contains(rolUsuario))
         {
+            context.Response.ContentType = "application/problem+json";
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsJsonAsync(new
+            await context.Response.WriteAsJsonAsync(new ProblemDetails
             {
-                titulo = "Acceso denegado",
-                detalle = $"El rol requerido para este recurso es: {string.Join(", ", requisito.RolesPermitidos)}."
+                Title = "Acceso denegado",
+                Detail = $"El rol requerido para este recurso es: {string.Join(", ", requisito.RolesPermitidos)}.",
+                Status = StatusCodes.Status403Forbidden,
+                Instance = context.Request.Path
             });
             return;
         }

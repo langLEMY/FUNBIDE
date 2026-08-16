@@ -21,6 +21,7 @@ export function PersonalPage() {
 
   const [nombreCompleto, setNombreCompleto] = useState('')
   const [correo, setCorreo] = useState('')
+  const [nombreUsuario, setNombreUsuario] = useState('')
   const [contrasenaTemporal, setContrasenaTemporal] = useState('')
   const [rol, setRol] = useState<RolUsuario>('Doctor')
   const [especialidad, setEspecialidad] = useState<EspecialidadMedica>('Pediatria')
@@ -77,6 +78,7 @@ export function PersonalPage() {
       const nuevo = await api.post<Usuario>('/api/personal', {
         nombreCompleto,
         correo,
+        nombreUsuario,
         contrasenaTemporal,
         rol,
         especialidad: rol === 'Doctor' ? especialidad : null,
@@ -84,6 +86,7 @@ export function PersonalPage() {
       setPersonal((actual) => [...actual, nuevo])
       setNombreCompleto('')
       setCorreo('')
+      setNombreUsuario('')
       setContrasenaTemporal('')
       setRol('Doctor')
       setEspecialidad('Pediatria')
@@ -110,6 +113,13 @@ export function PersonalPage() {
             placeholder="Correo"
             value={correo}
             onChange={(event) => setCorreo(event.target.value)}
+            required
+          />
+          <input
+            placeholder="Nombre de usuario (para iniciar sesión)"
+            value={nombreUsuario}
+            onChange={(event) => setNombreUsuario(event.target.value)}
+            minLength={3}
             required
           />
           <input

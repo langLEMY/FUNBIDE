@@ -5,6 +5,7 @@ using FUNBIDE.Domain.Entities;
 using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
 using NSubstitute;
 
 namespace FUNBIDE.API.Tests.Middleware;
@@ -31,6 +32,8 @@ public class MantenimientoMiddlewareTests
         return contexto;
     }
 
+    private static IMemoryCache CrearCache() => new MemoryCache(new MemoryCacheOptions());
+
     private static ClaimsPrincipal UsuarioConRol(RolUsuario rol) =>
         new(new ClaimsIdentity([new Claim(ClaimTypes.Role, rol.ToString())], "TestAuth"));
 
@@ -49,7 +52,7 @@ public class MantenimientoMiddlewareTests
         var siguienteInvocado = false;
         var middleware = new MantenimientoMiddleware(_ => { siguienteInvocado = true; return Task.CompletedTask; });
 
-        await middleware.InvokeAsync(contexto, repositorio);
+        await middleware.InvokeAsync(contexto, repositorio, CrearCache());
 
         Assert.True(siguienteInvocado);
         await repositorio.DidNotReceive().ObtenerAsync(Arg.Any<CancellationToken>());
@@ -63,7 +66,7 @@ public class MantenimientoMiddlewareTests
         var siguienteInvocado = false;
         var middleware = new MantenimientoMiddleware(_ => { siguienteInvocado = true; return Task.CompletedTask; });
 
-        await middleware.InvokeAsync(contexto, repositorio);
+        await middleware.InvokeAsync(contexto, repositorio, CrearCache());
 
         Assert.True(siguienteInvocado);
         await repositorio.DidNotReceive().ObtenerAsync(Arg.Any<CancellationToken>());
@@ -78,7 +81,7 @@ public class MantenimientoMiddlewareTests
         var siguienteInvocado = false;
         var middleware = new MantenimientoMiddleware(_ => { siguienteInvocado = true; return Task.CompletedTask; });
 
-        await middleware.InvokeAsync(contexto, repositorio);
+        await middleware.InvokeAsync(contexto, repositorio, CrearCache());
 
         Assert.True(siguienteInvocado);
     }
@@ -92,7 +95,7 @@ public class MantenimientoMiddlewareTests
         var siguienteInvocado = false;
         var middleware = new MantenimientoMiddleware(_ => { siguienteInvocado = true; return Task.CompletedTask; });
 
-        await middleware.InvokeAsync(contexto, repositorio);
+        await middleware.InvokeAsync(contexto, repositorio, CrearCache());
 
         Assert.False(siguienteInvocado);
         Assert.Equal(StatusCodes.Status503ServiceUnavailable, contexto.Response.StatusCode);
@@ -107,7 +110,7 @@ public class MantenimientoMiddlewareTests
         var siguienteInvocado = false;
         var middleware = new MantenimientoMiddleware(_ => { siguienteInvocado = true; return Task.CompletedTask; });
 
-        await middleware.InvokeAsync(contexto, repositorio);
+        await middleware.InvokeAsync(contexto, repositorio, CrearCache());
 
         Assert.True(siguienteInvocado);
     }

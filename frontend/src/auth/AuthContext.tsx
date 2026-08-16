@@ -10,11 +10,25 @@ interface AuthContextValue {
   cargando: boolean
   perfilCargando: boolean
   perfilError: string | null
-  iniciarSesion: (correo: string, contrasena: string) => Promise<void>
+  iniciarSesion: (nombreUsuario: string, contrasena: string) => Promise<void>
   cerrarSesion: (opciones?: { scope?: 'global' }) => Promise<void>
   recargarPerfil: () => Promise<void>
-  recuperarContrasena: (correo: string) => Promise<void>
+  recuperarContrasena: (nombreUsuario: string) => Promise<void>
   restablecerContrasena: (nuevaContrasena: string) => Promise<void>
+}
+
+/**
+ * El login/recuperación de contraseña se piden por nombre de usuario, pero Supabase
+ * Auth (y el login local) siguen validando por correo — este paso previo traduce uno
+ * al otro. El endpoint nunca devuelve 404 (ver ResolverCorreoPorNombreUsuarioUseCase
+ * en el backend), así que un nombre de usuario inexistente simplemente termina en
+ * "credenciales inválidas" más adelante, igual que una contraseña incorrecta.
+ */
+async function resolverCorreo(nombreUsuario: string): Promise<string> {
+  const { correo } = await api.get<{ correo: string }>(
+    `/api/auth/resolver-correo?nombreUsuario=${encodeURIComponent(nombreUsuario)}`,
+  )
+  return correo
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -62,7 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [session])
 
-  const iniciarSesion = async (correo: string, contrasena: string) => {
+  const iniciarSesion = async (nombreUsuario: string, contrasena: string) => {
+    const correo = await resolverCorreo(nombreUsuario)
     const { error } = await supabase.auth.signInWithPassword({ email: correo, password: contrasena })
     if (error) {
       throw error
@@ -73,7 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut(opciones)
   }
 
-  const recuperarContrasena = async (correo: string) => {
+  const recuperarContrasena = async (nombreUsuario: string) => {
+    const correo = await resolverCorreo(nombreUsuario)
     const { error } = await supabase.auth.resetPasswordForEmail(correo, {
       redirectTo: `${window.location.origin}/restablecer-contrasena`,
     })

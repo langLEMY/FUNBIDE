@@ -15,7 +15,7 @@ interface RegistroAuditoria {
 }
 
 interface DetalleLogin {
-  Correo?: string
+  NombreUsuario?: string
   Ip?: string
   Dispositivo?: string
 }

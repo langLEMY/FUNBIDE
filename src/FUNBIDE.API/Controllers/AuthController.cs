@@ -17,8 +17,22 @@ namespace FUNBIDE.API.Controllers;
 [Route("api/auth")]
 public sealed class AuthController(
     IRegistrarEventoLoginUseCase registrarEventoLogin,
-    IIniciarSesionLocalUseCase iniciarSesionLocal) : ControllerBase
+    IIniciarSesionLocalUseCase iniciarSesionLocal,
+    IResolverCorreoPorNombreUsuarioUseCase resolverCorreo) : ControllerBase
 {
+    /// <summary>
+    /// El frontend pide login por nombre de usuario, pero la validación real de
+    /// contraseña sigue siendo por correo (tanto contra Supabase Auth como en modo
+    /// Local) — este paso previo, siempre anónimo, resuelve uno al otro. Nunca
+    /// devuelve 404: ver <see cref="ResolverCorreoPorNombreUsuarioUseCase"/>.
+    /// </summary>
+    [HttpGet("resolver-correo")]
+    [AllowAnonymous]
+    [EnableRateLimiting("login-local")]
+    public async Task<ActionResult<ResolverCorreoDto>> ResolverCorreoAsync(
+        [FromQuery] string? nombreUsuario, CancellationToken cancellationToken) =>
+        Ok(await resolverCorreo.EjecutarAsync(nombreUsuario ?? string.Empty, cancellationToken));
+
     [HttpPost("eventos-login")]
     [AllowAnonymous]
     [EnableRateLimiting("eventos-login")]
@@ -26,7 +40,7 @@ public sealed class AuthController(
         RegistrarEventoLoginRequest cuerpo, CancellationToken cancellationToken)
     {
         var comando = new RegistrarEventoLoginComando(
-            cuerpo.Correo,
+            cuerpo.NombreUsuario,
             cuerpo.Exitoso,
             HttpContext.Connection.RemoteIpAddress?.ToString() ?? "desconocida",
             ResumirDispositivo(Request.Headers.UserAgent.ToString()));

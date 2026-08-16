@@ -1,0 +1,138 @@
+.permisos-intro-card,
+.permisos-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.permisos-intro-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+}
+
+.permisos-filtros {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+
+.permisos-buscador {
+  min-width: 220px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  padding: 10px 14px;
+  font-size: 13.5px;
+}
+
+.permisos-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 0 0 10px;
+}
+
+.permisos-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.permisos-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.permisos-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+  vertical-align: middle;
+}
+
+.permisos-row-inactivo {
+  opacity: 0.55;
+}
+
+.permisos-row-identidad {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.permisos-row-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border-hairline);
+}
+
+.permisos-row-avatar-iniciales {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--series-dinero);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.permisos-row-nombre {
+  margin: 0;
+  font-weight: 500;
+}
+
+.permisos-row-correo {
+  margin: 2px 0 0;
+  font-size: 12px;
+}
+
+.permisos-row-rol {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.permisos-row-estado {
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.permisos-row-estado.activo {
+  background: rgba(25, 158, 112, 0.16);
+  color: var(--series-pacientes);
+}
+
+.permisos-row-estado.inactivo {
+  background: rgba(230, 103, 103, 0.16);
+  color: var(--danger);
+}
+
+.permisos-row-acciones {
+  text-align: right;
+}
+
+.permisos-row-acciones button {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  padding: 7px 12px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.permisos-row-acciones button:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}

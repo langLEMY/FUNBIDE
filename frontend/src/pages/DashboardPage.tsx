@@ -7,7 +7,8 @@ import { Sparkline } from '../components/dashboard/Sparkline'
 import { api, ApiError } from '../lib/api'
 import type { AlertasAdmin, ResumenDiario } from '../types/dashboard'
 import type { Usuario } from '../types/usuario'
-import { coloresParaTema, colorRolParaTema } from '../styles/colors'
+import { coloresParaTema, colorMetodoPago, colorRolParaTema } from '../styles/colors'
+import type { MetodoPago } from '../types/cobro'
 import { useTheme } from '../theme/ThemeContext'
 import './DashboardPage.css'
 
@@ -97,6 +98,28 @@ export function DashboardPage() {
 
   const stockBajoCount = alertas?.stockBajo.length ?? 0
   const pacientesConDeudaCount = alertas?.pacientesConDeuda.length ?? 0
+
+  const METODOS: MetodoPago[] = ['Efectivo', 'Tarjeta', 'Transferencia']
+
+  function desglosePorMetodo(efectivo: number, tarjeta: number, transferencia: number) {
+    const total = efectivo + tarjeta + transferencia
+    const montos: Record<MetodoPago, number> = { Efectivo: efectivo, Tarjeta: tarjeta, Transferencia: transferencia }
+    return METODOS.map((metodo) => ({
+      metodo,
+      monto: montos[metodo],
+      color: colorMetodoPago(metodo),
+      porcentaje: total > 0 ? Math.round((montos[metodo] / total) * 100) : 0,
+    }))
+  }
+
+  const desgloseHoy = desglosePorMetodo(
+    resumenHoy?.dineroEfectivo ?? 0, resumenHoy?.dineroTarjeta ?? 0, resumenHoy?.dineroTransferencia ?? 0,
+  )
+  const desgloseMes = desglosePorMetodo(
+    resumenMes.reduce((acumulado, r) => acumulado + r.dineroEfectivo, 0),
+    resumenMes.reduce((acumulado, r) => acumulado + r.dineroTarjeta, 0),
+    resumenMes.reduce((acumulado, r) => acumulado + r.dineroTransferencia, 0),
+  )
 
   return (
     <DashboardLayout titulo="Dashboard">
@@ -195,6 +218,48 @@ export function DashboardPage() {
             color={chartColors.dinero}
             formatearValor={(valor) => formateadorMoneda.format(valor)}
           />
+        </div>
+      </section>
+
+      <section className="dashboard-metodos-pago">
+        <div className="dashboard-cobertura-card">
+          <h2>Cómo entra el dinero — hoy</h2>
+          {desgloseHoy.every((m) => m.monto === 0) ? (
+            <p className="text-secondary">Todavía no se registró ningún cobro hoy.</p>
+          ) : (
+            desgloseHoy.map((m) => (
+              <div key={m.metodo} className="dashboard-cobertura-fila">
+                <div className="dashboard-cobertura-etiqueta">
+                  <span className="dashboard-cobertura-punto" style={{ background: m.color }} />
+                  {m.metodo}
+                  <span className="text-muted">{formateadorMoneda.format(m.monto)}</span>
+                </div>
+                <div className="dashboard-cobertura-barra">
+                  <div className="dashboard-cobertura-relleno" style={{ background: m.color, width: `${m.porcentaje}%` }} />
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="dashboard-cobertura-card">
+          <h2>Cómo entra el dinero — {nombreMes}</h2>
+          {desgloseMes.every((m) => m.monto === 0) ? (
+            <p className="text-secondary">Todavía no se registró ningún cobro este mes.</p>
+          ) : (
+            desgloseMes.map((m) => (
+              <div key={m.metodo} className="dashboard-cobertura-fila">
+                <div className="dashboard-cobertura-etiqueta">
+                  <span className="dashboard-cobertura-punto" style={{ background: m.color }} />
+                  {m.metodo}
+                  <span className="text-muted">{formateadorMoneda.format(m.monto)}</span>
+                </div>
+                <div className="dashboard-cobertura-barra">
+                  <div className="dashboard-cobertura-relleno" style={{ background: m.color, width: `${m.porcentaje}%` }} />
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </section>
 

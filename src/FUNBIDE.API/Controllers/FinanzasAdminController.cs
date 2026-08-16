@@ -15,7 +15,6 @@ namespace FUNBIDE.API.Controllers;
 [ApiController]
 [Route("api/finanzas-admin")]
 [Authorize]
-[RequiereRol(RolUsuario.Admin)]
 [SoloLecturaEInsercion]
 public sealed class FinanzasAdminController(
     IListarMovimientosImportantesUseCase listarMovimientos,
@@ -23,16 +22,19 @@ public sealed class FinanzasAdminController(
     IRegistrarGastoAdminUseCase registrarGasto) : ControllerBase
 {
     [HttpGet("movimientos")]
+    [RequierePermiso(ModuloPermiso.Finanzas)]
     public async Task<ActionResult<IReadOnlyList<MovimientoImportanteDto>>> ListarMovimientosAsync(
         [FromQuery] DateTimeOffset desde, [FromQuery] DateTimeOffset hasta, CancellationToken cancellationToken) =>
         Ok(await listarMovimientos.EjecutarAsync(new ListarMovimientosImportantesRequest(desde, hasta), cancellationToken));
 
     [HttpGet("resumen-anual")]
+    [RequierePermiso(ModuloPermiso.Finanzas, ModuloPermiso.Gastos)]
     public async Task<ActionResult<IReadOnlyList<ResumenMensualDto>>> ObtenerResumenAnualAsync(
         [FromQuery] int anio, CancellationToken cancellationToken) =>
         Ok(await obtenerResumenAnual.EjecutarAsync(anio, cancellationToken));
 
     [HttpPost("gastos")]
+    [RequierePermiso(ModuloPermiso.Gastos)]
     public async Task<ActionResult<MovimientoImportanteDto>> RegistrarGastoAsync(
         RegistrarGastoAdminRequest request, CancellationToken cancellationToken)
     {

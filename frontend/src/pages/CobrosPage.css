@@ -155,6 +155,42 @@
   margin: 0;
 }
 
+.cobros-pagos-divididos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface-2);
+  border-radius: var(--radius-control);
+  padding: 10px;
+}
+
+.cobros-linea-pago {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.cobros-linea-pago button {
+  background: transparent;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--danger);
+  width: 34px;
+  height: 34px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cobros-agregar-linea-pago {
+  background: transparent !important;
+  border: 1px dashed var(--border-hairline) !important;
+  color: var(--text-secondary) !important;
+  font-size: 13px !important;
+  padding: 8px !important;
+}
+
 .cobros-formulario button {
   background: var(--series-dinero);
   color: var(--text-primary);

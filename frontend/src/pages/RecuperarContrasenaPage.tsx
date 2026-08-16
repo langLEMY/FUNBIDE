@@ -7,7 +7,7 @@ import './LoginPage.css'
 export function RecuperarContrasenaPage() {
   const { recuperarContrasena } = useAuth()
 
-  const [correo, setCorreo] = useState('')
+  const [nombreUsuario, setNombreUsuario] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [enviado, setEnviado] = useState(false)
@@ -16,14 +16,14 @@ export function RecuperarContrasenaPage() {
     event.preventDefault()
     setError(null)
 
-    if (!correo.trim()) {
-      setError('Ingresa tu correo.')
+    if (!nombreUsuario.trim()) {
+      setError('Ingresa tu usuario.')
       return
     }
 
     setEnviando(true)
     try {
-      await recuperarContrasena(correo.trim())
+      await recuperarContrasena(nombreUsuario.trim())
       setEnviado(true)
     } catch (err) {
       const mensaje = err instanceof Error ? err.message : undefined
@@ -53,8 +53,8 @@ export function RecuperarContrasenaPage() {
           {enviado ? (
             <>
               <p className="login-subtitulo">
-                Si el correo <strong>{correo}</strong> existe en nuestro sistema, te enviamos un enlace para
-                restablecer tu contraseña.
+                Si el usuario <strong>{nombreUsuario}</strong> existe en nuestro sistema, te enviamos un enlace al
+                correo asociado para restablecer tu contraseña.
               </p>
               <Link className="login-boton login-boton-enlace" to="/login">
                 Volver a iniciar sesión
@@ -62,19 +62,21 @@ export function RecuperarContrasenaPage() {
             </>
           ) : (
             <>
-              <p className="login-subtitulo">Ingresa tu correo y te enviaremos un enlace para restablecerla.</p>
+              <p className="login-subtitulo">
+                Ingresa tu usuario y te enviaremos un enlace al correo asociado para restablecerla.
+              </p>
 
-              <label className="login-label" htmlFor="correo">
-                Correo
+              <label className="login-label" htmlFor="nombreUsuario">
+                Usuario
               </label>
               <input
-                id="correo"
+                id="nombreUsuario"
                 className="login-input"
-                type="email"
-                placeholder="correo@funbide.org"
+                type="text"
+                placeholder="usuario123"
                 autoComplete="username"
-                value={correo}
-                onChange={(event) => setCorreo(event.target.value)}
+                value={nombreUsuario}
+                onChange={(event) => setNombreUsuario(event.target.value)}
               />
 
               {error && <p className="login-error">{error}</p>}

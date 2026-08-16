@@ -14,7 +14,7 @@ namespace FUNBIDE.API.Controllers;
 [ApiController]
 [Route("api/donaciones")]
 [Authorize]
-[RequiereRol(RolUsuario.Admin)]
+[RequierePermiso(ModuloPermiso.Donaciones)]
 [SoloLecturaEInsercion]
 public sealed class DonacionesController(
     IListarDonacionesUseCase listarDonaciones,

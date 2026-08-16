@@ -1,0 +1,93 @@
+.modo-mantenimiento-pantalla {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  text-align: center;
+  background: var(--page-plane);
+  animation: funbide-aparecer var(--duracion-lenta) var(--ease-entrada);
+}
+
+.modo-mantenimiento-marca {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.modo-mantenimiento-icono {
+  margin: 8px 0;
+}
+
+.modo-mantenimiento-icono-hoja {
+  fill: var(--surface-1);
+  stroke: var(--border-hairline);
+  stroke-width: 1.5;
+}
+
+.modo-mantenimiento-icono-carpeta {
+  fill: var(--surface-2);
+  stroke: var(--baseline);
+  stroke-width: 1.5;
+}
+
+.modo-mantenimiento-icono-cara {
+  fill: var(--text-muted);
+}
+
+.modo-mantenimiento-icono-cara-linea {
+  stroke: var(--text-muted);
+}
+
+.modo-mantenimiento-subtitulo {
+  font-size: 15px;
+  max-width: 420px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.modo-mantenimiento-detalle {
+  font-size: 13px;
+  max-width: 420px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.modo-mantenimiento-acciones {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.modo-mantenimiento-boton {
+  background: var(--surface-1);
+  color: var(--text-primary);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modo-mantenimiento-boton:hover {
+  background: var(--surface-hover);
+}
+
+.modo-mantenimiento-boton-secundario {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.modo-mantenimiento-boton-secundario:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}

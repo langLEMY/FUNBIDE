@@ -16,6 +16,9 @@ public sealed class ResumenDiarioConfiguration : IEntityTypeConfiguration<Resume
 
         builder.Property(r => r.PacientesAtendidos).IsRequired();
         builder.Property(r => r.DineroMovido).HasColumnType("decimal(12,2)").IsRequired();
+        builder.Property(r => r.DineroEfectivo).HasColumnType("decimal(12,2)").IsRequired().HasDefaultValue(0m);
+        builder.Property(r => r.DineroTarjeta).HasColumnType("decimal(12,2)").IsRequired().HasDefaultValue(0m);
+        builder.Property(r => r.DineroTransferencia).HasColumnType("decimal(12,2)").IsRequired().HasDefaultValue(0m);
 
         // Usa xmin como token de concurrencia optimista adicional, igual que
         // InventarioItemConfiguration: la garantía primaria es el bloqueo de fila

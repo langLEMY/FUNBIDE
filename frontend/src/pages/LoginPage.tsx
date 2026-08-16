@@ -16,11 +16,11 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL as string
  * digamos explícitamente. Se envía "mejor esfuerzo": si esta llamada falla no debe
  * bloquear ni afectar el flujo de inicio de sesión del usuario.
  */
-function registrarEventoLogin(correo: string, exitoso: boolean) {
+function registrarEventoLogin(nombreUsuario: string, exitoso: boolean) {
   fetch(`${apiBaseUrl}/api/auth/eventos-login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ correo, exitoso }),
+    body: JSON.stringify({ nombreUsuario, exitoso }),
   }).catch(() => {
     // Best-effort: un fallo aquí no debe afectar la experiencia de inicio de sesión.
   })
@@ -31,7 +31,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const { tema } = useTheme()
 
-  const [correo, setCorreo] = useState('')
+  const [nombreUsuario, setNombreUsuario] = useState('')
   const [contrasena, setContrasena] = useState('')
   const [mostrarContrasena, setMostrarContrasena] = useState(false)
   const [recordarme, setRecordarme] = useState(false)
@@ -41,7 +41,7 @@ export function LoginPage() {
   useEffect(() => {
     const guardado = window.localStorage.getItem(CLAVE_USUARIO_RECORDADO)
     if (guardado) {
-      setCorreo(guardado)
+      setNombreUsuario(guardado)
       setRecordarme(true)
     }
   }, [])
@@ -50,23 +50,23 @@ export function LoginPage() {
     event.preventDefault()
     setError(null)
 
-    if (!correo.trim() || !contrasena.trim()) {
+    if (!nombreUsuario.trim() || !contrasena.trim()) {
       setError('Ingresa tu usuario y tu contraseña.')
       return
     }
 
     setEnviando(true)
     try {
-      await iniciarSesion(correo, contrasena)
-      registrarEventoLogin(correo, true)
+      await iniciarSesion(nombreUsuario, contrasena)
+      registrarEventoLogin(nombreUsuario, true)
       if (recordarme) {
-        window.localStorage.setItem(CLAVE_USUARIO_RECORDADO, correo)
+        window.localStorage.setItem(CLAVE_USUARIO_RECORDADO, nombreUsuario)
       } else {
         window.localStorage.removeItem(CLAVE_USUARIO_RECORDADO)
       }
       navigate('/', { replace: true })
     } catch (err) {
-      registrarEventoLogin(correo, false)
+      registrarEventoLogin(nombreUsuario, false)
       const mensaje = err instanceof Error ? err.message : undefined
       setError(traducirErrorAuth(mensaje, 'No se pudo iniciar sesión.'))
     } finally {
@@ -98,17 +98,17 @@ export function LoginPage() {
           <h1 className="login-titulo">Bienvenido de nuevo</h1>
           <p className="login-subtitulo">Ingresa tus credenciales para acceder al panel.</p>
 
-          <label className="login-label" htmlFor="correo">
+          <label className="login-label" htmlFor="nombreUsuario">
             Usuario
           </label>
           <input
-            id="correo"
+            id="nombreUsuario"
             className="login-input"
-            type="email"
-            placeholder="correo@funbide.org"
+            type="text"
+            placeholder="usuario123"
             autoComplete="username"
-            value={correo}
-            onChange={(event) => setCorreo(event.target.value)}
+            value={nombreUsuario}
+            onChange={(event) => setNombreUsuario(event.target.value)}
           />
 
           <label className="login-label" htmlFor="contrasena">

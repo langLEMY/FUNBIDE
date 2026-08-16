@@ -18,6 +18,7 @@ public interface ICambiarModoMantenimientoUseCase : IUseCase<CambiarModoMantenim
 /// </summary>
 public sealed class CambiarModoMantenimientoUseCase(
     IConfiguracionSistemaRepository configuracionRepository,
+    IConfiguracionSistemaCache configuracionCache,
     ICurrentUserService currentUser,
     IDateTimeProvider dateTimeProvider,
     IAuditoriaLogService auditoriaLogService) : ICambiarModoMantenimientoUseCase
@@ -36,6 +37,7 @@ public sealed class CambiarModoMantenimientoUseCase(
 
         configuracion.CambiarModoMantenimiento(request.Activo, request.Mensaje, currentUser.UsuarioId, ahora);
         await configuracionRepository.GuardarCambiosAsync(cancellationToken);
+        configuracionCache.Invalidar();
 
         await auditoriaLogService.RegistrarEventoAsync(
             accion: "sistema.modo-mantenimiento",

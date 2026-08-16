@@ -18,6 +18,9 @@ public sealed class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
         builder.Property(u => u.Correo).HasMaxLength(320).IsRequired();
         builder.HasIndex(u => u.Correo).IsUnique();
 
+        builder.Property(u => u.NombreUsuario).HasMaxLength(50).IsRequired();
+        builder.HasIndex(u => u.NombreUsuario).IsUnique();
+
         builder.Property(u => u.Rol)
             .HasConversion<string>()
             .HasMaxLength(20)

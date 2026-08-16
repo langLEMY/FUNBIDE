@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using NpgsqlTypes;
 using Serilog;
+using Serilog.Filters;
 using Serilog.Sinks.PostgreSQL;
 
 namespace FUNBIDE.Infrastructure.Logging;
@@ -32,12 +33,18 @@ public static class SerilogConfiguration
         return loggerConfiguration
             .Enrich.FromLogContext()
             .WriteTo.Console()
-            .WriteTo.PostgreSQL(
-                connectionString: connectionString,
-                tableName: "auditoria_logs",
-                schemaName: "funbide",
-                columnOptions: columnas,
-                needAutoCreateTable: false,
-                restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information);
+            // Filter.ByExcluding aquí evita que eventos marcados con "ExcluirDeAuditoria"
+            // (p. ej. la contraseña temporal del admin inicial, que sí debe verse en
+            // "docker compose logs" pero no debe quedar persistida indefinidamente en
+            // la tabla de auditoría / backups de la base) lleguen al sink de Postgres.
+            .WriteTo.Logger(sublogger => sublogger
+                .Filter.ByExcluding(Matching.WithProperty("ExcluirDeAuditoria"))
+                .WriteTo.PostgreSQL(
+                    connectionString: connectionString,
+                    tableName: "auditoria_logs",
+                    schemaName: "funbide",
+                    columnOptions: columnas,
+                    needAutoCreateTable: false,
+                    restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information));
     }
 }

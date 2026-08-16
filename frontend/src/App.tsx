@@ -1,6 +1,8 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from './auth/ProtectedRoute'
+import { ModoMantenimientoScreen } from './components/ModoMantenimientoScreen'
+import { suscribirseAMantenimiento } from './lib/mantenimientoBus'
 import { LoginPage } from './pages/LoginPage'
 import { HomeRedirect } from './pages/HomeRedirect'
 
@@ -27,6 +29,7 @@ const PacienteHistorialPage = lazy(() =>
   import('./pages/PacienteHistorialPage').then((m) => ({ default: m.PacienteHistorialPage })),
 )
 const PersonalPage = lazy(() => import('./pages/PersonalPage').then((m) => ({ default: m.PersonalPage })))
+const PermisosPage = lazy(() => import('./pages/PermisosPage').then((m) => ({ default: m.PermisosPage })))
 const DirectorioPage = lazy(() => import('./pages/DirectorioPage').then((m) => ({ default: m.DirectorioPage })))
 const PacientesPage = lazy(() => import('./pages/PacientesPage').then((m) => ({ default: m.PacientesPage })))
 const InventarioPage = lazy(() => import('./pages/InventarioPage').then((m) => ({ default: m.InventarioPage })))
@@ -40,6 +43,14 @@ function CargandoPagina() {
 }
 
 function App() {
+  const [mensajeMantenimiento, setMensajeMantenimiento] = useState<string | null | undefined>(undefined)
+
+  useEffect(() => suscribirseAMantenimiento(setMensajeMantenimiento), [])
+
+  if (mensajeMantenimiento !== undefined) {
+    return <ModoMantenimientoScreen mensaje={mensajeMantenimiento} />
+  }
+
   return (
     <Suspense fallback={<CargandoPagina />}>
       <Routes>
@@ -58,7 +69,7 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute rolesPermitidos="Admin">
+            <ProtectedRoute rolesPermitidos="Admin" modulo="Dashboard">
               <DashboardPage />
             </ProtectedRoute>
           }
@@ -66,7 +77,7 @@ function App() {
         <Route
           path="/resumen"
           element={
-            <ProtectedRoute rolesPermitidos="Admin">
+            <ProtectedRoute rolesPermitidos="Admin" modulo="Resumen">
               <ResumenPage />
             </ProtectedRoute>
           }
@@ -74,7 +85,7 @@ function App() {
         <Route
           path="/finanzas"
           element={
-            <ProtectedRoute rolesPermitidos="Admin">
+            <ProtectedRoute rolesPermitidos="Admin" modulo="Finanzas">
               <FinanzasPage />
             </ProtectedRoute>
           }
@@ -82,7 +93,7 @@ function App() {
         <Route
           path="/gastos"
           element={
-            <ProtectedRoute rolesPermitidos="Admin">
+            <ProtectedRoute rolesPermitidos="Admin" modulo="Gastos">
               <GastosPage />
             </ProtectedRoute>
           }
@@ -90,7 +101,7 @@ function App() {
         <Route
           path="/donaciones"
           element={
-            <ProtectedRoute rolesPermitidos="Admin">
+            <ProtectedRoute rolesPermitidos="Admin" modulo="Donaciones">
               <DonacionesPage />
             </ProtectedRoute>
           }
@@ -104,9 +115,17 @@ function App() {
           }
         />
         <Route
+          path="/permisos"
+          element={
+            <ProtectedRoute rolesPermitidos={['Lemy', 'Admin']}>
+              <PermisosPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/operaciones"
           element={
-            <ProtectedRoute rolesPermitidos="Admin">
+            <ProtectedRoute rolesPermitidos="Admin" modulo="Operaciones">
               <OperacionesPage />
             </ProtectedRoute>
           }
@@ -114,7 +133,7 @@ function App() {
         <Route
           path="/actividad"
           element={
-            <ProtectedRoute rolesPermitidos={['Lemy', 'Admin']}>
+            <ProtectedRoute rolesPermitidos={['Lemy', 'Admin']} modulo="Actividad">
               <ActividadPage />
             </ProtectedRoute>
           }
@@ -122,7 +141,7 @@ function App() {
         <Route
           path="/caja"
           element={
-            <ProtectedRoute rolesPermitidos="Fondos">
+            <ProtectedRoute rolesPermitidos="Fondos" modulo="Caja">
               <CajaPage />
             </ProtectedRoute>
           }
@@ -130,7 +149,7 @@ function App() {
         <Route
           path="/cobros"
           element={
-            <ProtectedRoute rolesPermitidos="Fondos">
+            <ProtectedRoute rolesPermitidos="Fondos" modulo="Cobros">
               <CobrosPage />
             </ProtectedRoute>
           }
@@ -138,7 +157,7 @@ function App() {
         <Route
           path="/recepcion"
           element={
-            <ProtectedRoute rolesPermitidos="Fondos">
+            <ProtectedRoute rolesPermitidos="Fondos" modulo="Recepcion">
               <RecepcionPage />
             </ProtectedRoute>
           }
@@ -146,7 +165,7 @@ function App() {
         <Route
           path="/agenda"
           element={
-            <ProtectedRoute rolesPermitidos="Fondos">
+            <ProtectedRoute rolesPermitidos="Fondos" modulo="Agenda">
               <AgendaPage />
             </ProtectedRoute>
           }
@@ -154,7 +173,7 @@ function App() {
         <Route
           path="/aseguradoras"
           element={
-            <ProtectedRoute rolesPermitidos={['Admin', 'Lemy']}>
+            <ProtectedRoute rolesPermitidos={['Admin', 'Lemy']} modulo="Aseguradoras">
               <AseguradorasPage />
             </ProtectedRoute>
           }
@@ -178,7 +197,7 @@ function App() {
         <Route
           path="/pacientes/:id/historial"
           element={
-            <ProtectedRoute rolesPermitidos={['Doctor', 'Admin']}>
+            <ProtectedRoute rolesPermitidos={['Doctor', 'Admin']} modulo="HistorialClinico">
               <PacienteHistorialPage />
             </ProtectedRoute>
           }
@@ -186,7 +205,7 @@ function App() {
         <Route
           path="/directorio"
           element={
-            <ProtectedRoute rolesPermitidos={['Admin', 'Lemy']}>
+            <ProtectedRoute rolesPermitidos={['Admin', 'Lemy']} modulo="Directorio">
               <DirectorioPage />
             </ProtectedRoute>
           }
@@ -194,7 +213,7 @@ function App() {
         <Route
           path="/pacientes"
           element={
-            <ProtectedRoute rolesPermitidos={['Admin', 'Doctor', 'Fondos', 'Lemy']}>
+            <ProtectedRoute rolesPermitidos={['Admin', 'Doctor', 'Fondos', 'Lemy']} modulo="Pacientes">
               <PacientesPage />
             </ProtectedRoute>
           }
@@ -202,7 +221,7 @@ function App() {
         <Route
           path="/inventario"
           element={
-            <ProtectedRoute rolesPermitidos={['Admin', 'Doctor', 'Fondos', 'Lemy']}>
+            <ProtectedRoute rolesPermitidos={['Admin', 'Doctor', 'Fondos', 'Lemy']} modulo="Inventario">
               <InventarioPage />
             </ProtectedRoute>
           }

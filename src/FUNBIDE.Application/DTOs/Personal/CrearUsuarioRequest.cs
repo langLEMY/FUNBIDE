@@ -5,6 +5,7 @@ namespace FUNBIDE.Application.DTOs.Personal;
 public sealed record CrearUsuarioRequest(
     string NombreCompleto,
     string Correo,
+    string NombreUsuario,
     string ContrasenaTemporal,
     RolUsuario Rol,
     EspecialidadMedica? Especialidad);

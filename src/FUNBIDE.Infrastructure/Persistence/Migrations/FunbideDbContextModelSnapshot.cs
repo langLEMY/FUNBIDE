@@ -117,11 +117,6 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
-                    b.Property<string>("MetodoPago")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<decimal?>("MontoCobertura")
                         .HasColumnType("decimal(12,2)");
 
@@ -141,6 +136,9 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("SeguroMedicoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TarifarioProcedimientoId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("TurnoCajaId")
@@ -185,6 +183,9 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                     b.Property<string>("ModoMantenimientoMensaje")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset?>("SesionesRevocadasEn")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -536,14 +537,60 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                     b.ToTable("pacientes", "funbide");
                 });
 
+            modelBuilder.Entity("FUNBIDE.Domain.Entities.PermisoUsuario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ActualizadoEn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ActualizadoPorUsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Concedido")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Modulo")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<Guid>("UsuarioId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId", "Modulo")
+                        .IsUnique();
+
+                    b.ToTable("permisos_usuario", "funbide");
+                });
+
             modelBuilder.Entity("FUNBIDE.Domain.Entities.ResumenDiario", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<decimal>("DineroEfectivo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(12,2)")
+                        .HasDefaultValue(0m);
+
                     b.Property<decimal>("DineroMovido")
                         .HasColumnType("decimal(12,2)");
+
+                    b.Property<decimal>("DineroTarjeta")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(12,2)")
+                        .HasDefaultValue(0m);
+
+                    b.Property<decimal>("DineroTransferencia")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(12,2)")
+                        .HasDefaultValue(0m);
 
                     b.Property<DateOnly>("Fecha")
                         .HasColumnType("date");
@@ -591,6 +638,45 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("ck_seguro_medico_porcentaje_cobertura_rango", "\"PorcentajeCobertura\" > 0 AND \"PorcentajeCobertura\" <= 100");
                         });
+                });
+
+            modelBuilder.Entity("FUNBIDE.Domain.Entities.TarifarioProcedimiento", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("MontoPaciente")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("MontoSeguro")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("MontoTotal")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Plan")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Procedimiento")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid>("SeguroMedicoId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SeguroMedicoId", "Plan", "Procedimiento")
+                        .IsUnique();
+
+                    b.ToTable("tarifario_procedimientos", "funbide");
                 });
 
             modelBuilder.Entity("FUNBIDE.Domain.Entities.TurnoCaja", b =>
@@ -682,6 +768,11 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("NombreUsuario")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("Rol")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -693,6 +784,9 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Correo")
+                        .IsUnique();
+
+                    b.HasIndex("NombreUsuario")
                         .IsUnique();
 
                     b.HasIndex("SupabaseUserId")
@@ -742,11 +836,48 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                     b.Navigation("Intervalo");
                 });
 
+            modelBuilder.Entity("FUNBIDE.Domain.Entities.Cobro", b =>
+                {
+                    b.OwnsMany("FUNBIDE.Domain.Entities.PagoRecibido", "Pagos", b1 =>
+                        {
+                            b1.Property<Guid>("CobroId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Metodo")
+                                .HasMaxLength(20)
+                                .HasColumnType("character varying(20)");
+
+                            b1.Property<decimal>("Monto")
+                                .HasColumnType("decimal(12,2)");
+
+                            b1.HasKey("CobroId", "Metodo");
+
+                            b1.ToTable("cobros_pagos", "funbide", t =>
+                                {
+                                    t.HasCheckConstraint("ck_pago_recibido_monto_positivo", "\"Monto\" > 0");
+                                });
+
+                            b1.WithOwner()
+                                .HasForeignKey("CobroId");
+                        });
+
+                    b.Navigation("Pagos");
+                });
+
             modelBuilder.Entity("FUNBIDE.Domain.Entities.MovimientoInventario", b =>
                 {
                     b.HasOne("FUNBIDE.Domain.Entities.InventarioItem", null)
                         .WithMany()
                         .HasForeignKey("InventarioItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FUNBIDE.Domain.Entities.PermisoUsuario", b =>
+                {
+                    b.HasOne("FUNBIDE.Domain.Entities.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

@@ -4,9 +4,10 @@ import { api, ApiError } from '../lib/api'
 import type { TurnoCaja } from '../types/turnoCaja'
 import type { Paciente, PacientesPaginados } from '../types/paciente'
 import type { SeguroMedico } from '../types/seguroMedico'
-import type { Cobro, MetodoPago } from '../types/cobro'
+import type { Cobro, MetodoPago, Pago } from '../types/cobro'
 import { METODOS_PAGO } from '../types/cobro'
 import type { CitaAgenda } from '../types/cita'
+import { PLANES_SENASA, type PlanSenasa, type TarifarioProcedimiento } from '../types/tarifarioProcedimiento'
 import './CobrosPage.css'
 
 const formateadorMoneda = new Intl.NumberFormat('es-DO', {
@@ -57,8 +58,14 @@ export function CobrosPage() {
   const [codigoAutorizacion, setCodigoAutorizacion] = useState('')
   const [pagoParcial, setPagoParcial] = useState(false)
   const [montoPagadoParcial, setMontoPagadoParcial] = useState('')
+  const [dividirPago, setDividirPago] = useState(false)
+  const [lineasPago, setLineasPago] = useState<{ metodo: MetodoPago; monto: string }[]>([])
   const [registrando, setRegistrando] = useState(false)
   const [errorCobro, setErrorCobro] = useState<string | null>(null)
+
+  const [planSenasa, setPlanSenasa] = useState<PlanSenasa>('Contributivo')
+  const [tarifario, setTarifario] = useState<TarifarioProcedimiento[]>([])
+  const [tarifarioProcedimientoId, setTarifarioProcedimientoId] = useState('')
 
   const [ultimoCobro, setUltimoCobro] = useState<Cobro | null>(null)
   const [comprobante, setComprobante] = useState<TipoComprobante | null>(null)
@@ -152,16 +159,92 @@ export function CobrosPage() {
   }
 
   const seguroSeleccionado = useMemo(() => seguros.find((s) => s.id === seguroMedicoId) ?? null, [seguros, seguroMedicoId])
+  const esSenasa = seguroSeleccionado?.nombre.toUpperCase().includes('SENASA') ?? false
+
+  useEffect(() => {
+    setTarifarioProcedimientoId('')
+    if (!esSenasa || !seguroMedicoId) {
+      setTarifario([])
+      return
+    }
+
+    let cancelado = false
+    api
+      .get<TarifarioProcedimiento[]>(`/api/tarifario-procedimientos?seguroMedicoId=${seguroMedicoId}&plan=${planSenasa}`)
+      .then((datos) => {
+        if (!cancelado) setTarifario(datos)
+      })
+      .catch(() => {
+        if (!cancelado) setTarifario([])
+      })
+
+    return () => {
+      cancelado = true
+    }
+  }, [esSenasa, seguroMedicoId, planSenasa])
+
+  const procedimientoSeleccionado = useMemo(
+    () => tarifario.find((t) => t.id === tarifarioProcedimientoId) ?? null,
+    [tarifario, tarifarioProcedimientoId],
+  )
+
+  const seleccionarProcedimiento = (id: string) => {
+    setTarifarioProcedimientoId(id)
+    const procedimiento = tarifario.find((t) => t.id === id)
+    if (procedimiento) {
+      setConcepto(procedimiento.procedimiento)
+      setMontoTotal(String(procedimiento.montoTotal))
+    }
+  }
 
   const montoTotalNumero = Number(montoTotal) || 0
   // Redondeo bancario (half-to-even), igual que Math.Round de C# en Cobro.cs: con
   // Math.round de JS (half-up) esta vista previa podía diferir en 1 centavo del monto
   // que realmente guarda y devuelve el backend en un empate exacto de medio centavo.
-  const montoCobertura = seguroSeleccionado
-    ? redondearBancario(montoTotalNumero * (seguroSeleccionado.porcentajeCobertura / 100))
-    : 0
+  // Si hay un procedimiento del tarifario elegido, sus montos son fijos — no se derivan
+  // de ningún porcentaje (ver TarifarioProcedimiento / RegistrarCobroUseCase).
+  const montoCobertura = procedimientoSeleccionado
+    ? procedimientoSeleccionado.montoSeguro
+    : seguroSeleccionado
+      ? redondearBancario(montoTotalNumero * (seguroSeleccionado.porcentajeCobertura / 100))
+      : 0
   const montoACargoPaciente = montoTotalNumero - montoCobertura
   const montoPagadoFinal = pagoParcial ? Number(montoPagadoParcial) || 0 : montoACargoPaciente
+
+  const totalLineasPago = lineasPago.reduce((acumulado, linea) => acumulado + (Number(linea.monto) || 0), 0)
+
+  const handleToggleDividirPago = (activar: boolean) => {
+    setDividirPago(activar)
+    if (activar) {
+      // Arranca con una sola línea que hereda lo que ya había en el flujo simple, para
+      // no perder lo que el cajero ya tipeó al activar "dividir pago".
+      setLineasPago([{ metodo: metodoPago, monto: montoPagadoFinal > 0 ? String(montoPagadoFinal) : '' }])
+    }
+  }
+
+  const agregarLineaPago = () => {
+    const metodoLibre = METODOS_PAGO.find((m) => !lineasPago.some((linea) => linea.metodo === m))
+    if (!metodoLibre) return
+    setLineasPago((actual) => [...actual, { metodo: metodoLibre, monto: '' }])
+  }
+
+  const quitarLineaPago = (indice: number) => {
+    setLineasPago((actual) => actual.filter((_, i) => i !== indice))
+  }
+
+  const actualizarLineaPago = (indice: number, cambios: Partial<{ metodo: MetodoPago; monto: string }>) => {
+    setLineasPago((actual) => actual.map((linea, i) => (i === indice ? { ...linea, ...cambios } : linea)))
+  }
+
+  // Lo que realmente viaja al backend: si no se dividió el pago, una sola línea con el
+  // método simple de siempre (o ninguna, si el cobro queda 100% a deuda).
+  const pagosParaEnviar: Pago[] = dividirPago
+    ? lineasPago
+        .filter((linea) => (Number(linea.monto) || 0) > 0)
+        .map((linea) => ({ metodo: linea.metodo, monto: Number(linea.monto) }))
+    : montoPagadoFinal > 0
+      ? [{ metodo: metodoPago, monto: montoPagadoFinal }]
+      : []
 
   const limpiarFormulario = () => {
     setConcepto('')
@@ -171,6 +254,9 @@ export function CobrosPage() {
     setCodigoAutorizacion('')
     setPagoParcial(false)
     setMontoPagadoParcial('')
+    setTarifarioProcedimientoId('')
+    setDividirPago(false)
+    setLineasPago([])
   }
 
   const handleRegistrarCobro = async (event: FormEvent) => {
@@ -193,6 +279,10 @@ export function CobrosPage() {
       setErrorCobro('El código de autorización es obligatorio cuando el cobro usa seguro médico.')
       return
     }
+    if (dividirPago && totalLineasPago > montoACargoPaciente + 0.001) {
+      setErrorCobro('La suma de los pagos no puede superar el monto a cargo del paciente.')
+      return
+    }
 
     setRegistrando(true)
     try {
@@ -201,10 +291,10 @@ export function CobrosPage() {
         citaId,
         concepto: concepto.trim(),
         montoTotal: montoTotalNumero,
-        metodoPago,
-        montoPagado: montoPagadoFinal,
+        pagos: pagosParaEnviar,
         seguroMedicoId: seguroMedicoId || null,
         codigoAutorizacion: seguroMedicoId ? codigoAutorizacion.trim() : null,
+        tarifarioProcedimientoId: tarifarioProcedimientoId || null,
       })
       setUltimoCobro(cobro)
       limpiarFormulario()
@@ -296,22 +386,6 @@ export function CobrosPage() {
               )}
 
               <form className="cobros-formulario" onSubmit={(event) => void handleRegistrarCobro(event)}>
-                <input
-                  placeholder="Concepto"
-                  value={concepto}
-                  onChange={(event) => setConcepto(event.target.value)}
-                  required
-                />
-                <input
-                  type="number"
-                  min={0.01}
-                  step="0.01"
-                  placeholder="Monto"
-                  value={montoTotal}
-                  onChange={(event) => setMontoTotal(event.target.value)}
-                  required
-                />
-
                 <label className="cobros-label">
                   Seguro médico (opcional)
                   <select value={seguroMedicoId} onChange={(event) => setSeguroMedicoId(event.target.value)}>
@@ -324,10 +398,60 @@ export function CobrosPage() {
                   </select>
                 </label>
 
+                {esSenasa && (
+                  <>
+                    <label className="cobros-label">
+                      Plan de SENASA
+                      <select value={planSenasa} onChange={(event) => setPlanSenasa(event.target.value as PlanSenasa)}>
+                        {PLANES_SENASA.map((plan) => (
+                          <option key={plan} value={plan}>
+                            {plan}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="cobros-label">
+                      Procedimiento del tarifario
+                      <select
+                        value={tarifarioProcedimientoId}
+                        onChange={(event) => seleccionarProcedimiento(event.target.value)}
+                      >
+                        <option value="">— Manual (sin tarifario) —</option>
+                        {tarifario.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.procedimiento} — {formateadorMoneda.format(t.montoTotal)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </>
+                )}
+
+                <input
+                  placeholder="Concepto"
+                  value={concepto}
+                  onChange={(event) => setConcepto(event.target.value)}
+                  readOnly={!!procedimientoSeleccionado}
+                  required
+                />
+                <input
+                  type="number"
+                  min={0.01}
+                  step="0.01"
+                  placeholder="Monto"
+                  value={montoTotal}
+                  onChange={(event) => setMontoTotal(event.target.value)}
+                  readOnly={!!procedimientoSeleccionado}
+                  required
+                />
+
                 {seguroSeleccionado && (
                   <>
                     <div className="cobros-cobertura-info">
-                      <span>Cobertura ({seguroSeleccionado.porcentajeCobertura}%): {formateadorMoneda.format(montoCobertura)}</span>
+                      <span>
+                        Cobertura {procedimientoSeleccionado ? '(tarifario)' : `(${seguroSeleccionado.porcentajeCobertura}%)`}:{' '}
+                        {formateadorMoneda.format(montoCobertura)}
+                      </span>
                       <span>Co-pago del paciente: {formateadorMoneda.format(montoACargoPaciente)}</span>
                     </div>
                     <input
@@ -339,31 +463,89 @@ export function CobrosPage() {
                   </>
                 )}
 
-                <select value={metodoPago} onChange={(event) => setMetodoPago(event.target.value as MetodoPago)}>
-                  {METODOS_PAGO.map((opcion) => (
-                    <option key={opcion} value={opcion}>
-                      {opcion}
-                    </option>
-                  ))}
-                </select>
+                {!dividirPago && (
+                  <>
+                    <select value={metodoPago} onChange={(event) => setMetodoPago(event.target.value as MetodoPago)}>
+                      {METODOS_PAGO.map((opcion) => (
+                        <option key={opcion} value={opcion}>
+                          {opcion}
+                        </option>
+                      ))}
+                    </select>
+
+                    <label className="cobros-label-checkbox">
+                      <input type="checkbox" checked={pagoParcial} onChange={(event) => setPagoParcial(event.target.checked)} />
+                      El paciente paga solo una parte ahora
+                    </label>
+
+                    {pagoParcial ? (
+                      <input
+                        type="number"
+                        min={0}
+                        max={montoACargoPaciente}
+                        step="0.01"
+                        placeholder="Monto recibido ahora"
+                        value={montoPagadoParcial}
+                        onChange={(event) => setMontoPagadoParcial(event.target.value)}
+                      />
+                    ) : (
+                      <p className="cobros-monto-a-cobrar">A cobrar: {formateadorMoneda.format(montoACargoPaciente)}</p>
+                    )}
+                  </>
+                )}
 
                 <label className="cobros-label-checkbox">
-                  <input type="checkbox" checked={pagoParcial} onChange={(event) => setPagoParcial(event.target.checked)} />
-                  El paciente paga solo una parte ahora
+                  <input
+                    type="checkbox"
+                    checked={dividirPago}
+                    onChange={(event) => handleToggleDividirPago(event.target.checked)}
+                  />
+                  Dividir el pago entre varios métodos (ej. parte con tarjeta, parte en efectivo)
                 </label>
 
-                {pagoParcial ? (
-                  <input
-                    type="number"
-                    min={0}
-                    max={montoACargoPaciente}
-                    step="0.01"
-                    placeholder="Monto recibido ahora"
-                    value={montoPagadoParcial}
-                    onChange={(event) => setMontoPagadoParcial(event.target.value)}
-                  />
-                ) : (
-                  <p className="cobros-monto-a-cobrar">A cobrar: {formateadorMoneda.format(montoACargoPaciente)}</p>
+                {dividirPago && (
+                  <div className="cobros-pagos-divididos">
+                    {lineasPago.map((linea, indice) => (
+                      <div key={indice} className="cobros-linea-pago">
+                        <select
+                          value={linea.metodo}
+                          onChange={(event) => actualizarLineaPago(indice, { metodo: event.target.value as MetodoPago })}
+                        >
+                          {METODOS_PAGO.filter(
+                            (m) => m === linea.metodo || !lineasPago.some((otra) => otra.metodo === m),
+                          ).map((opcion) => (
+                            <option key={opcion} value={opcion}>
+                              {opcion}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          placeholder="Monto"
+                          value={linea.monto}
+                          onChange={(event) => actualizarLineaPago(indice, { monto: event.target.value })}
+                        />
+                        <button type="button" onClick={() => quitarLineaPago(indice)} title="Quitar línea">
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    {lineasPago.length < METODOS_PAGO.length && (
+                      <button type="button" className="cobros-agregar-linea-pago" onClick={agregarLineaPago}>
+                        + Agregar método de pago
+                      </button>
+                    )}
+                    <p
+                      className={
+                        totalLineasPago > montoACargoPaciente + 0.001 ? 'cobros-error' : 'cobros-monto-a-cobrar'
+                      }
+                    >
+                      Pagos ingresados: {formateadorMoneda.format(totalLineasPago)} de {formateadorMoneda.format(montoACargoPaciente)} a cobrar
+                      {totalLineasPago < montoACargoPaciente - 0.001 && ' (el resto queda como deuda pendiente)'}
+                    </p>
+                  </div>
                 )}
 
                 <button type="submit" disabled={registrando || !turno}>
@@ -420,12 +602,23 @@ export function CobrosPage() {
           <p>Monto total: {formateadorMoneda.format(ultimoCobro.montoTotal)}</p>
           {ultimoCobro.seguroMedicoNombre && (
             <>
-              <p>Seguro: {ultimoCobro.seguroMedicoNombre} ({ultimoCobro.porcentajeCobertura}%)</p>
+              <p>
+                Seguro: {ultimoCobro.seguroMedicoNombre}{' '}
+                ({ultimoCobro.porcentajeCobertura !== null ? `${ultimoCobro.porcentajeCobertura}%` : 'tarifario'})
+              </p>
               <p>Cubierto por seguro: {formateadorMoneda.format(ultimoCobro.montoCobertura ?? 0)}</p>
               <p>Código de autorización: {ultimoCobro.codigoAutorizacion}</p>
             </>
           )}
-          <p>Método de pago: {ultimoCobro.metodoPago}</p>
+          {ultimoCobro.pagos.length === 0 ? (
+            <p>Pago: nada pagado todavía (a deuda)</p>
+          ) : ultimoCobro.pagos.length === 1 ? (
+            <p>Método de pago: {ultimoCobro.pagos[0].metodo}</p>
+          ) : (
+            <p>
+              Métodos de pago: {ultimoCobro.pagos.map((p) => `${p.metodo} ${formateadorMoneda.format(p.monto)}`).join(' + ')}
+            </p>
+          )}
           <p>Monto pagado: {formateadorMoneda.format(ultimoCobro.montoPagado)}</p>
           {ultimoCobro.montoPendiente > 0 && <p>Saldo pendiente: {formateadorMoneda.format(ultimoCobro.montoPendiente)}</p>}
         </div>

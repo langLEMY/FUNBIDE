@@ -45,19 +45,31 @@ export function DonacionesPage() {
   const [errorRegistrar, setErrorRegistrar] = useState<string | null>(null)
   const [exito, setExito] = useState(false)
 
-  const cargarDonaciones = () => {
+  const [recargarClave, setRecargarClave] = useState(0)
+  const recargar = () => setRecargarClave((clave) => clave + 1)
+
+  useEffect(() => {
+    let cancelado = false
     const { desde, hasta } = construirRango(anio, mes)
     setCargando(true)
     api
       .get<Donacion[]>(`/api/donaciones?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`)
-      .then((datos) => setDonaciones(datos))
-      .catch((err) => {
-        setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar las donaciones.')
+      .then((datos) => {
+        if (!cancelado) setDonaciones(datos)
       })
-      .finally(() => setCargando(false))
-  }
+      .catch((err) => {
+        if (!cancelado) {
+          setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar las donaciones.')
+        }
+      })
+      .finally(() => {
+        if (!cancelado) setCargando(false)
+      })
 
-  useEffect(cargarDonaciones, [anio, mes])
+    return () => {
+      cancelado = true
+    }
+  }, [anio, mes, recargarClave])
 
   const totalDonado = donaciones.reduce((acumulado, donacion) => acumulado + donacion.monto, 0)
   const aniosDisponibles = Array.from({ length: 5 }, (_, i) => anioActual - i)
@@ -94,7 +106,7 @@ export function DonacionesPage() {
       setConcepto('')
       setMonto('')
       setExito(true)
-      cargarDonaciones()
+      recargar()
     } catch (err) {
       setErrorRegistrar(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo registrar la donación.')
     } finally {

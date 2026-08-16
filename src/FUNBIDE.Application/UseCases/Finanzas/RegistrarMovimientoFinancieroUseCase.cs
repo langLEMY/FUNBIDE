@@ -40,7 +40,8 @@ public sealed class RegistrarMovimientoFinancieroUseCase(
             await movimientoRepository.RegistrarAsync(movimiento, ct);
             await movimientoRepository.GuardarCambiosAsync(ct);
 
-            var hoy = DateOnly.FromDateTime(dateTimeProvider.UtcNow.UtcDateTime);
+            var ahoraLocal = TimeZoneInfo.ConvertTime(dateTimeProvider.UtcNow, dateTimeProvider.ZonaHorariaClinica);
+            var hoy = DateOnly.FromDateTime(ahoraLocal.DateTime);
             var resumen = await resumenDiarioRepository.ObtenerOCrearConBloqueoAsync(hoy, ct);
             resumen.AcumularMovimiento(movimiento.MontoConSigno);
             await resumenDiarioRepository.GuardarCambiosAsync(ct);

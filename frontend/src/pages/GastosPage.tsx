@@ -31,18 +31,30 @@ export function GastosPage() {
   const [errorGasto, setErrorGasto] = useState<string | null>(null)
   const [exitoGasto, setExitoGasto] = useState(false)
 
-  const cargarResumen = () => {
+  const [recargarClave, setRecargarClave] = useState(0)
+  const recargar = () => setRecargarClave((clave) => clave + 1)
+
+  useEffect(() => {
+    let cancelado = false
     setCargandoResumen(true)
     api
       .get<ResumenMensual[]>(`/api/finanzas-admin/resumen-anual?anio=${anio}`)
-      .then((datos) => setResumenAnual(datos))
-      .catch((err) => {
-        setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar el resumen.')
+      .then((datos) => {
+        if (!cancelado) setResumenAnual(datos)
       })
-      .finally(() => setCargandoResumen(false))
-  }
+      .catch((err) => {
+        if (!cancelado) {
+          setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar el resumen.')
+        }
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoResumen(false)
+      })
 
-  useEffect(cargarResumen, [anio])
+    return () => {
+      cancelado = true
+    }
+  }, [anio, recargarClave])
 
   const kpis = useMemo(() => {
     const filas = mes ? resumenAnual.filter((m) => m.mes === mes) : resumenAnual
@@ -82,7 +94,7 @@ export function GastosPage() {
       setConcepto('')
       setMonto('')
       setExitoGasto(true)
-      cargarResumen()
+      recargar()
     } catch (err) {
       setErrorGasto(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo registrar el gasto.')
     } finally {

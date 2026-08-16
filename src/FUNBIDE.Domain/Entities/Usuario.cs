@@ -13,6 +13,15 @@ public sealed class Usuario : Entity
     public Guid SupabaseUserId { get; private set; }
     public string NombreCompleto { get; private set; } = string.Empty;
     public string Correo { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Identificador con el que la persona inicia sesión (en vez del correo). Único,
+    /// normalizado a minúsculas. El correo se conserva aparte porque sigue siendo la
+    /// identidad real en Supabase Auth (recuperación de contraseña, etc.) — ver
+    /// <c>IResolverCorreoPorNombreUsuarioUseCase</c>, que traduce uno al otro antes de
+    /// que el frontend llegue a llamar a Supabase.
+    /// </summary>
+    public string NombreUsuario { get; private set; } = string.Empty;
     public RolUsuario Rol { get; private set; }
     public bool Activo { get; private set; } = true;
     public string? FotoPerfilUrl { get; private set; }
@@ -31,7 +40,9 @@ public sealed class Usuario : Entity
 
     private Usuario() { }
 
-    public Usuario(Guid supabaseUserId, string nombreCompleto, string correo, RolUsuario rol, EspecialidadMedica? especialidad = null)
+    public Usuario(
+        Guid supabaseUserId, string nombreCompleto, string correo, string nombreUsuario,
+        RolUsuario rol, EspecialidadMedica? especialidad = null)
     {
         if (string.IsNullOrWhiteSpace(nombreCompleto))
         {
@@ -43,9 +54,15 @@ public sealed class Usuario : Entity
             throw new ArgumentException("El correo es obligatorio.", nameof(correo));
         }
 
+        if (string.IsNullOrWhiteSpace(nombreUsuario))
+        {
+            throw new ArgumentException("El nombre de usuario es obligatorio.", nameof(nombreUsuario));
+        }
+
         SupabaseUserId = supabaseUserId;
         NombreCompleto = nombreCompleto.Trim();
         Correo = correo.Trim().ToLowerInvariant();
+        NombreUsuario = nombreUsuario.Trim().ToLowerInvariant();
         Rol = rol;
         AsignarEspecialidad(especialidad);
     }
@@ -81,11 +98,12 @@ public sealed class Usuario : Entity
     }
 
     /// <summary>
-    /// Actualiza nombre y correo. Igual que <see cref="CambiarRol"/>, quien invoque este
-    /// método (<c>EditarUsuarioUseCase</c>) es responsable de sincronizar primero el
-    /// correo en Supabase Auth si cambió, porque ahí vive la credencial de inicio de sesión.
+    /// Actualiza nombre, correo y nombre de usuario. Igual que <see cref="CambiarRol"/>,
+    /// quien invoque este método (<c>EditarUsuarioUseCase</c>) es responsable de
+    /// sincronizar primero el correo en Supabase Auth si cambió, porque ahí vive la
+    /// credencial de inicio de sesión.
     /// </summary>
-    public void ActualizarDatos(string nombreCompleto, string correo)
+    public void ActualizarDatos(string nombreCompleto, string correo, string nombreUsuario)
     {
         if (string.IsNullOrWhiteSpace(nombreCompleto))
         {
@@ -97,8 +115,14 @@ public sealed class Usuario : Entity
             throw new ArgumentException("El correo es obligatorio.", nameof(correo));
         }
 
+        if (string.IsNullOrWhiteSpace(nombreUsuario))
+        {
+            throw new ArgumentException("El nombre de usuario es obligatorio.", nameof(nombreUsuario));
+        }
+
         NombreCompleto = nombreCompleto.Trim();
         Correo = correo.Trim().ToLowerInvariant();
+        NombreUsuario = nombreUsuario.Trim().ToLowerInvariant();
     }
 
     public void ActualizarFotoPerfil(string url)

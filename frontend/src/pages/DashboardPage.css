@@ -95,15 +95,21 @@
   gap: 16px;
 }
 
-.dashboard-detalle {
+.dashboard-detalle,
+.dashboard-metodos-pago {
   display: grid;
   grid-template-columns: 1.3fr 1fr;
   gap: 16px;
   margin-top: 20px;
 }
 
+.dashboard-metodos-pago {
+  grid-template-columns: 1fr 1fr;
+}
+
 @media (max-width: 860px) {
-  .dashboard-detalle {
+  .dashboard-detalle,
+  .dashboard-metodos-pago {
     grid-template-columns: 1fr;
   }
 }

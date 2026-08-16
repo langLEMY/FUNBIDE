@@ -29,6 +29,15 @@ function construirQuery(fecha: string, doctorId: string): string {
   return params.toString()
 }
 
+// FUNBIDE opera en horario de Santo Domingo (UTC-4 todo el año, sin horario de verano —
+// ver SystemDateTimeProvider.cs en el backend). Construir la fecha con `new Date(...)` e
+// interpretarla en la zona LOCAL DEL NAVEGADOR podía desfasar la cita si el equipo de
+// recepción tenía otra zona configurada; con el offset fijo, el mismo "3:00pm" siempre
+// cae en las 3:00pm de la clínica sin importar dónde esté el navegador.
+function construirFechaHoraClinica(fecha: string, hora: string): string {
+  return `${fecha}T${hora}:00-04:00`
+}
+
 export function AgendaPage() {
   const [doctores, setDoctores] = useState<DoctorSimple[]>([])
   const gruposDoctores = useMemo(() => agruparDoctoresPorEspecialidad(doctores), [doctores])
@@ -53,16 +62,8 @@ export function AgendaPage() {
   const [agendando, setAgendando] = useState(false)
   const [errorAgendar, setErrorAgendar] = useState<string | null>(null)
 
-  const cargarAgenda = () => {
-    setCargandoTabla(true)
-    api
-      .get<CitaAgenda[]>(`/api/citas/agenda?${construirQuery(filtroFecha, filtroDoctorId)}`)
-      .then((datos) => setCitas(datos))
-      .catch((err) => {
-        setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar la agenda.')
-      })
-      .finally(() => setCargandoTabla(false))
-  }
+  const [recargarClave, setRecargarClave] = useState(0)
+  const recargarAgenda = () => setRecargarClave((clave) => clave + 1)
 
   useEffect(() => {
     let cancelado = false
@@ -86,7 +87,27 @@ export function AgendaPage() {
     }
   }, [])
 
-  useEffect(cargarAgenda, [filtroFecha, filtroDoctorId])
+  useEffect(() => {
+    let cancelado = false
+    setCargandoTabla(true)
+    api
+      .get<CitaAgenda[]>(`/api/citas/agenda?${construirQuery(filtroFecha, filtroDoctorId)}`)
+      .then((datos) => {
+        if (!cancelado) setCitas(datos)
+      })
+      .catch((err) => {
+        if (!cancelado) {
+          setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar la agenda.')
+        }
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoTabla(false)
+      })
+
+    return () => {
+      cancelado = true
+    }
+  }, [filtroFecha, filtroDoctorId, recargarClave])
 
   useEffect(() => {
     const temporizador = setTimeout(() => setBusquedaDebounced(busqueda), 300)
@@ -132,9 +153,13 @@ export function AgendaPage() {
       setErrorAgendar('Ingresa fecha y horario.')
       return
     }
+    if (horaFin <= horaInicio) {
+      setErrorAgendar('La hora de fin debe ser posterior a la hora de inicio.')
+      return
+    }
 
-    const inicioIso = new Date(`${fecha}T${horaInicio}`).toISOString()
-    const finIso = new Date(`${fecha}T${horaFin}`).toISOString()
+    const inicioIso = construirFechaHoraClinica(fecha, horaInicio)
+    const finIso = construirFechaHoraClinica(fecha, horaFin)
 
     setAgendando(true)
     try {
@@ -151,7 +176,7 @@ export function AgendaPage() {
       setFecha('')
       setHoraInicio('')
       setHoraFin('')
-      cargarAgenda()
+      recargarAgenda()
     } catch (err) {
       setErrorAgendar(
         err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo agendar la cita.',
@@ -162,10 +187,14 @@ export function AgendaPage() {
   }
 
   const handleCancelar = async (citaId: string) => {
+    if (!window.confirm('¿Cancelar esta cita? No se puede deshacer.')) {
+      return
+    }
+
     setAccionandoId(citaId)
     try {
       await api.patch('/api/citas/cancelar', { citaId })
-      cargarAgenda()
+      recargarAgenda()
     } catch (err) {
       setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cancelar la cita.')
     } finally {
@@ -231,7 +260,13 @@ export function AgendaPage() {
             ))}
           </select>
           <input placeholder="Motivo" value={motivo} onChange={(event) => setMotivo(event.target.value)} required />
-          <input type="date" value={fecha} onChange={(event) => setFecha(event.target.value)} required />
+          <input
+            type="date"
+            min={new Date().toISOString().slice(0, 10)}
+            value={fecha}
+            onChange={(event) => setFecha(event.target.value)}
+            required
+          />
           <input type="time" value={horaInicio} onChange={(event) => setHoraInicio(event.target.value)} required />
           <input type="time" value={horaFin} onChange={(event) => setHoraFin(event.target.value)} required />
           <button type="submit" disabled={agendando}>

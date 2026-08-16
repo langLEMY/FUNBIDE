@@ -16,11 +16,14 @@ public sealed class ObtenerResumenHoyUseCase(
 {
     public async Task<ResumenDiarioDto> EjecutarAsync(CancellationToken cancellationToken)
     {
-        var hoy = DateOnly.FromDateTime(dateTimeProvider.UtcNow.UtcDateTime);
+        var ahoraLocal = TimeZoneInfo.ConvertTime(dateTimeProvider.UtcNow, dateTimeProvider.ZonaHorariaClinica);
+        var hoy = DateOnly.FromDateTime(ahoraLocal.DateTime);
         var resumen = await resumenDiarioRepository.ObtenerPorFechaAsync(hoy, cancellationToken);
 
         return resumen is null
-            ? new ResumenDiarioDto(hoy, 0, 0m)
-            : new ResumenDiarioDto(resumen.Fecha, resumen.PacientesAtendidos, resumen.DineroMovido);
+            ? new ResumenDiarioDto(hoy, 0, 0m, 0m, 0m, 0m)
+            : new ResumenDiarioDto(
+                resumen.Fecha, resumen.PacientesAtendidos, resumen.DineroMovido,
+                resumen.DineroEfectivo, resumen.DineroTarjeta, resumen.DineroTransferencia);
     }
 }

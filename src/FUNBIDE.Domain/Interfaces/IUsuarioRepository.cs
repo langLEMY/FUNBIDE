@@ -11,6 +11,8 @@ public interface IUsuarioRepository
 
     Task<Usuario?> ObtenerPorCorreoAsync(string correo, CancellationToken cancellationToken);
 
+    Task<Usuario?> ObtenerPorNombreUsuarioAsync(string nombreUsuario, CancellationToken cancellationToken);
+
     /// <summary>Nombre completo por SupabaseUserId (no el Id local — así identifica Cita.DoctorId al doctor), en lote: para enriquecer listados de citas/cobros sin hacer N consultas.</summary>
     Task<IReadOnlyDictionary<Guid, string>> ObtenerNombresPorIdsAsync(
         IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);

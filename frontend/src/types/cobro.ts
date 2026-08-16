@@ -2,6 +2,11 @@ export type MetodoPago = 'Efectivo' | 'Tarjeta' | 'Transferencia'
 
 export const METODOS_PAGO: MetodoPago[] = ['Efectivo', 'Tarjeta', 'Transferencia']
 
+export interface Pago {
+  metodo: MetodoPago
+  monto: number
+}
+
 export interface Cobro {
   id: string
   pacienteId: string
@@ -14,8 +19,10 @@ export interface Cobro {
   seguroMedicoNombre: string | null
   porcentajeCobertura: number | null
   montoCobertura: number | null
+  tarifarioProcedimientoId: string | null
   codigoAutorizacion: string | null
-  metodoPago: MetodoPago
+  /** Desglose de cómo se pagó — 0, 1 o varias líneas (ej. una parte con tarjeta y otra en efectivo). */
+  pagos: Pago[]
   montoACargoPaciente: number
   montoPagado: number
   montoPendiente: number
@@ -28,10 +35,10 @@ export interface RegistrarCobroRequest {
   citaId: string | null
   concepto: string
   montoTotal: number
-  metodoPago: MetodoPago
-  montoPagado: number
+  pagos: Pago[]
   seguroMedicoId: string | null
   codigoAutorizacion: string | null
+  tarifarioProcedimientoId?: string | null
 }
 
 export interface DeudaPaciente {

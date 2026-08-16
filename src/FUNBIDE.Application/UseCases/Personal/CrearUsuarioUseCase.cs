@@ -37,10 +37,17 @@ public sealed class CrearUsuarioUseCase(
             throw new CorreoEnUsoException(correoNormalizado);
         }
 
+        var nombreUsuarioNormalizado = request.NombreUsuario.Trim().ToLowerInvariant();
+        if (await usuarioRepository.ObtenerPorNombreUsuarioAsync(nombreUsuarioNormalizado, cancellationToken) is not null)
+        {
+            throw new NombreUsuarioEnUsoException(nombreUsuarioNormalizado);
+        }
+
         var supabaseUserId = await supabaseAdmin.CrearUsuarioAsync(
             request.Correo, request.ContrasenaTemporal, request.Rol, cancellationToken);
 
-        var usuario = new Usuario(supabaseUserId, request.NombreCompleto, request.Correo, request.Rol, request.Especialidad);
+        var usuario = new Usuario(
+            supabaseUserId, request.NombreCompleto, request.Correo, nombreUsuarioNormalizado, request.Rol, request.Especialidad);
 
         try
         {
@@ -56,11 +63,13 @@ public sealed class CrearUsuarioUseCase(
         await auditoriaLogService.RegistrarEventoAsync(
             accion: "personal.crear",
             recurso: $"usuarios/{usuario.Id}",
-            detalle: new { usuario.Correo, usuario.Rol },
+            detalle: new { usuario.Correo, usuario.NombreUsuario, usuario.Rol },
             usuarioId: currentUser.UsuarioId,
             codigoRespuestaHttp: 201,
             cancellationToken: cancellationToken);
 
-        return new UsuarioDto(usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.Rol, usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
+        return new UsuarioDto(
+            usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.NombreUsuario, usuario.Rol,
+            usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
     }
 }

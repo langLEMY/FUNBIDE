@@ -96,6 +96,7 @@ export function PersonalRow({ usuario, onActualizado, onEliminadoPermanentemente
             <div>
               <p className="personal-row-nombre">{usuario.nombreCompleto}</p>
               <p className="personal-row-correo text-muted">{usuario.correo}</p>
+              <p className="personal-row-correo text-muted">@{usuario.nombreUsuario}</p>
             </div>
           </div>
         </td>

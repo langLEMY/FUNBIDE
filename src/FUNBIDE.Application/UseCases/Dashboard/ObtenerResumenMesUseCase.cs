@@ -21,11 +21,13 @@ public sealed class ObtenerResumenMesUseCase(
 {
     public async Task<IReadOnlyList<ResumenDiarioDto>> EjecutarAsync(CancellationToken cancellationToken)
     {
-        var hoy = DateOnly.FromDateTime(dateTimeProvider.UtcNow.UtcDateTime);
+        var ahoraLocal = TimeZoneInfo.ConvertTime(dateTimeProvider.UtcNow, dateTimeProvider.ZonaHorariaClinica);
+        var hoy = DateOnly.FromDateTime(ahoraLocal.DateTime);
         var resumenes = await resumenDiarioRepository.ObtenerPorMesAsync(hoy.Year, hoy.Month, cancellationToken);
 
         return resumenes
-            .Select(r => new ResumenDiarioDto(r.Fecha, r.PacientesAtendidos, r.DineroMovido))
+            .Select(r => new ResumenDiarioDto(
+                r.Fecha, r.PacientesAtendidos, r.DineroMovido, r.DineroEfectivo, r.DineroTarjeta, r.DineroTransferencia))
             .ToList();
     }
 }

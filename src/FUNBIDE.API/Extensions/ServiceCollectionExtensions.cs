@@ -12,6 +12,7 @@ using FUNBIDE.Application.UseCases.FinanzasAdmin;
 using FUNBIDE.Application.UseCases.HistorialClinico;
 using FUNBIDE.Application.UseCases.Inventario;
 using FUNBIDE.Application.UseCases.Pacientes;
+using FUNBIDE.Application.UseCases.Permisos;
 using FUNBIDE.Application.UseCases.Personal;
 using FUNBIDE.Application.UseCases.SegurosMedicos;
 using FUNBIDE.Application.UseCases.Sistema;
@@ -55,6 +56,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEditarSeguroMedicoUseCase, EditarSeguroMedicoUseCase>();
         services.AddScoped<IDesactivarSeguroMedicoUseCase, DesactivarSeguroMedicoUseCase>();
         services.AddScoped<IReactivarSeguroMedicoUseCase, ReactivarSeguroMedicoUseCase>();
+        services.AddScoped<IListarTarifarioUseCase, ListarTarifarioUseCase>();
+        services.AddScoped<IImportarTarifarioUseCase, ImportarTarifarioUseCase>();
 
         services.AddScoped<IRegistrarEntradaHistorialUseCase, RegistrarEntradaHistorialUseCase>();
         services.AddScoped<IObtenerHistorialPorPacienteUseCase, ObtenerHistorialPorPacienteUseCase>();
@@ -70,9 +73,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IObtenerLogsAuditoriaUseCase, ObtenerLogsAuditoriaUseCase>();
         services.AddScoped<IVerificarEstadoSistemaUseCase, VerificarEstadoSistemaUseCase>();
         services.AddScoped<ICambiarModoMantenimientoUseCase, CambiarModoMantenimientoUseCase>();
+        services.AddScoped<IReiniciarServiciosUseCase, ReiniciarServiciosUseCase>();
+        services.AddScoped<IEjecutarBackupManualUseCase, EjecutarBackupManualUseCase>();
+        services.AddScoped<IVerificarEspacioDiscoUseCase, VerificarEspacioDiscoUseCase>();
 
         services.AddScoped<IRegistrarEventoLoginUseCase, RegistrarEventoLoginUseCase>();
         services.AddScoped<IIniciarSesionLocalUseCase, IniciarSesionLocalUseCase>();
+        services.AddScoped<IResolverCorreoPorNombreUsuarioUseCase, ResolverCorreoPorNombreUsuarioUseCase>();
 
         services.AddScoped<IListarPersonalUseCase, ListarPersonalUseCase>();
         services.AddScoped<IListarDoctoresUseCase, ListarDoctoresUseCase>();
@@ -117,6 +124,9 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IListarDonacionesUseCase, ListarDonacionesUseCase>();
         services.AddScoped<IRegistrarDonacionUseCase, RegistrarDonacionUseCase>();
+
+        services.AddScoped<IObtenerPermisosDeUsuarioUseCase, ObtenerPermisosDeUsuarioUseCase>();
+        services.AddScoped<IActualizarPermisosDeUsuarioUseCase, ActualizarPermisosDeUsuarioUseCase>();
 
         return services;
     }

@@ -19,7 +19,7 @@ namespace FUNBIDE.API.Controllers;
 [ApiController]
 [Route("api/auditoria")]
 [Authorize]
-[RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]
+[RequierePermiso(ModuloPermiso.Actividad, ModuloPermiso.Resumen)]
 [SoloLecturaEInsercion]
 public sealed class AuditoriaController(IObtenerLogsAuditoriaUseCase obtenerLogs) : ControllerBase
 {

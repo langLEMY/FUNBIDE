@@ -9,7 +9,7 @@ import './CajaPage.css'
 const formateadorMoneda = new Intl.NumberFormat('es-DO', {
   style: 'currency',
   currency: 'DOP',
-  maximumFractionDigits: 0,
+  maximumFractionDigits: 2,
 })
 const formateadorFechaHora = new Intl.DateTimeFormat('es-DO', { dateStyle: 'short', timeStyle: 'short' })
 
@@ -46,6 +46,13 @@ export function CajaPage() {
   const [errorEgreso, setErrorEgreso] = useState<string | null>(null)
 
   const recargar = () => setRecargarClave((clave) => clave + 1)
+
+  const actualizarResumen = () => {
+    api
+      .get<ResumenCaja>('/api/caja/resumen')
+      .then((datos) => setResumen(datos))
+      .catch(() => undefined)
+  }
 
   useEffect(() => {
     let cancelado = false
@@ -119,6 +126,7 @@ export function CajaPage() {
     try {
       await api.post<TurnoCaja>('/api/caja/turnos', { montoInicial: monto })
       setMontoInicial('')
+      setUltimoCierre(null)
       recargar()
     } catch (err) {
       setErrorAbrir(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo abrir la caja.')
@@ -199,6 +207,19 @@ export function CajaPage() {
     <DashboardLayout titulo="Caja">
       {error && <p className="caja-error">{error}</p>}
 
+      {ultimoCierre && ultimoCierre.diferencia !== null && (
+        <section className="caja-resultado-arqueo-card">
+          <p className={ultimoCierre.diferencia === 0 ? 'caja-arqueo-cuadrado' : 'caja-arqueo-diferencia'}>
+            {ultimoCierre.diferencia === 0
+              ? 'Arqueo cuadrado sin diferencias.'
+              : `Arqueo con ${ultimoCierre.diferencia > 0 ? 'sobrante' : 'faltante'} de ${formateadorMoneda.format(Math.abs(ultimoCierre.diferencia))} (esperado ${formateadorMoneda.format(ultimoCierre.montoEsperado ?? 0)}, contado ${formateadorMoneda.format(ultimoCierre.montoFinalContado ?? 0)}).`}
+          </p>
+          <button type="button" onClick={() => setUltimoCierre(null)}>
+            Entendido
+          </button>
+        </section>
+      )}
+
       {!turno ? (
         <section className="caja-apertura-card">
           <h2>Abrir caja</h2>
@@ -270,7 +291,8 @@ export function CajaPage() {
             <section className="caja-alertas-card">
               {resumen && resumen.consultasPendientesDeCobro > 0 && (
                 <p className="caja-alerta">
-                  {resumen.consultasPendientesDeCobro} doctor(es) finalizaron consulta — pasa a caja.
+                  {resumen.consultasPendientesDeCobro} consulta{resumen.consultasPendientesDeCobro === 1 ? '' : 's'} finalizada
+                  {resumen.consultasPendientesDeCobro === 1 ? '' : 's'} sin cobrar — pasa a Cobros.
                 </p>
               )}
               {resumen && resumen.pacientesConDeudaPendiente > 0 && (
@@ -327,13 +349,6 @@ export function CajaPage() {
           </section>
 
           <section className="caja-cierre-card">
-            {ultimoCierre && ultimoCierre.diferencia !== null && (
-              <p className={ultimoCierre.diferencia === 0 ? 'caja-arqueo-cuadrado' : 'caja-arqueo-diferencia'}>
-                {ultimoCierre.diferencia === 0
-                  ? 'Arqueo cuadrado sin diferencias.'
-                  : `Arqueo con ${ultimoCierre.diferencia > 0 ? 'sobrante' : 'faltante'} de ${formateadorMoneda.format(Math.abs(ultimoCierre.diferencia))} (esperado ${formateadorMoneda.format(ultimoCierre.montoEsperado ?? 0)}, contado ${formateadorMoneda.format(ultimoCierre.montoFinalContado ?? 0)}).`}
-              </p>
-            )}
             {resumen && resumen.gastosAdminEnElTurno > 0 && (
               <p className="caja-aviso-gastos-admin">
                 Admin registró {formateadorMoneda.format(resumen.gastosAdminEnElTurno)} en gastos durante este turno
@@ -341,7 +356,14 @@ export function CajaPage() {
               </p>
             )}
             {!mostrarCierre ? (
-              <button type="button" className="caja-boton-cerrar" onClick={() => setMostrarCierre(true)}>
+              <button
+                type="button"
+                className="caja-boton-cerrar"
+                onClick={() => {
+                  actualizarResumen()
+                  setMostrarCierre(true)
+                }}
+              >
                 Cerrar caja
               </button>
             ) : (

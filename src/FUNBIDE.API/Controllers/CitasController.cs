@@ -84,11 +84,13 @@ public sealed class CitasController(
 
     [HttpPatch("cancelar")]
     [RequiereRol(RolUsuario.Doctor, RolUsuario.Fondos)]
+    [RequierePermiso(ModuloPermiso.Agenda)]
     public async Task<ActionResult<CitaDto>> CancelarAsync(CancelarCitaRequest request, CancellationToken cancellationToken) =>
         Ok(await cancelarCita.EjecutarAsync(request, cancellationToken));
 
     [HttpPost("agendar")]
     [RequiereRol(RolUsuario.Fondos)]
+    [RequierePermiso(ModuloPermiso.Agenda)]
     public async Task<ActionResult<CitaDto>> AgendarAsync(AgendarCitaRequest request, CancellationToken cancellationToken)
     {
         var cita = await agendarCita.EjecutarAsync(request, cancellationToken);
@@ -97,12 +99,14 @@ public sealed class CitasController(
 
     [HttpPatch("registrar-llegada")]
     [RequiereRol(RolUsuario.Fondos)]
+    [RequierePermiso(ModuloPermiso.Recepcion)]
     public async Task<ActionResult<CitaDto>> RegistrarLlegadaAsync(
         RegistrarLlegadaRequest request, CancellationToken cancellationToken) =>
         Ok(await registrarLlegada.EjecutarAsync(request, cancellationToken));
 
     [HttpPost("llegada-directa")]
     [RequiereRol(RolUsuario.Fondos)]
+    [RequierePermiso(ModuloPermiso.Recepcion)]
     public async Task<ActionResult<CitaDto>> RegistrarLlegadaSinCitaAsync(
         RegistrarLlegadaSinCitaRequest request, CancellationToken cancellationToken)
     {
@@ -112,17 +116,20 @@ public sealed class CitasController(
 
     [HttpGet("agenda")]
     [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin)]
+    [RequierePermiso(ModuloPermiso.Agenda, ModuloPermiso.Operaciones)]
     public async Task<ActionResult<IReadOnlyList<CitaAgendaDto>>> ObtenerAgendaAsync(
         [FromQuery] DateOnly? fecha, [FromQuery] Guid? doctorId, CancellationToken cancellationToken) =>
         Ok(await listarAgenda.EjecutarAsync(new ListarAgendaRequest(fecha, doctorId), cancellationToken));
 
     [HttpGet("sala-espera")]
     [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin)]
+    [RequierePermiso(ModuloPermiso.Recepcion, ModuloPermiso.Operaciones)]
     public async Task<ActionResult<IReadOnlyList<CitaAgendaDto>>> ObtenerSalaDeEsperaAsync(CancellationToken cancellationToken) =>
         Ok(await listarSalaDeEspera.EjecutarAsync(cancellationToken));
 
     [HttpGet("pendientes-de-cobro")]
     [RequiereRol(RolUsuario.Fondos)]
+    [RequierePermiso(ModuloPermiso.Cobros)]
     public async Task<ActionResult<IReadOnlyList<CitaAgendaDto>>> ObtenerPendientesDeCobroAsync(CancellationToken cancellationToken) =>
         Ok(await listarPendientesDeCobro.EjecutarAsync(cancellationToken));
 }
