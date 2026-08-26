@@ -6,8 +6,10 @@ namespace FUNBIDE.Domain.Tests.Entities;
 public class TarifarioProcedimientoTests
 {
     private static TarifarioProcedimiento Crear(
-        decimal montoSeguro = 690m, decimal montoPaciente = 100m, decimal montoTotal = 790m) =>
-        new(Guid.NewGuid(), PlanSenasa.Contributivo, "Consulta odontológica general", montoSeguro, montoPaciente, montoTotal);
+        decimal montoSeguro = 690m, decimal montoPaciente = 100m, decimal montoTotal = 790m,
+        decimal? montoFondo = null, EspecialidadMedica? especialidad = null) =>
+        new(Guid.NewGuid(), PlanAseguradora.Contributivo, "Consulta odontológica general",
+            montoSeguro, montoPaciente, montoTotal, montoFondo, especialidad);
 
     [Fact]
     public void Constructor_DatosValidos_QuedaActivoConLosMontosDados()
@@ -24,7 +26,7 @@ public class TarifarioProcedimientoTests
     public void Constructor_ProcedimientoVacio_LanzaArgumentException()
     {
         Assert.Throws<ArgumentException>(
-            () => new TarifarioProcedimiento(Guid.NewGuid(), PlanSenasa.Contributivo, "  ", 690m, 100m, 790m));
+            () => new TarifarioProcedimiento(Guid.NewGuid(), PlanAseguradora.Contributivo, "  ", 690m, 100m, 790m));
     }
 
     [Fact]
@@ -40,6 +42,39 @@ public class TarifarioProcedimientoTests
     }
 
     [Fact]
+    public void Constructor_MontoFondoNegativo_LanzaArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => Crear(montoFondo: -1m));
+    }
+
+    [Fact]
+    public void Constructor_SinMontoFondo_QuedaNulo()
+    {
+        var tarifario = Crear();
+
+        Assert.Null(tarifario.MontoFondo);
+    }
+
+    [Fact]
+    public void Constructor_ConMontoFondoYEspecialidad_LosGuardaTalCual()
+    {
+        var tarifario = Crear(montoFondo: 250m, especialidad: EspecialidadMedica.Odontologia);
+
+        Assert.Equal(250m, tarifario.MontoFondo);
+        Assert.Equal(EspecialidadMedica.Odontologia, tarifario.Especialidad);
+    }
+
+    [Fact]
+    public void AsignarEspecialidad_CambiaLaEspecialidad()
+    {
+        var tarifario = Crear();
+
+        tarifario.AsignarEspecialidad(EspecialidadMedica.Pediatria);
+
+        Assert.Equal(EspecialidadMedica.Pediatria, tarifario.Especialidad);
+    }
+
+    [Fact]
     public void ActualizarMontos_CambiaLosTresMontos()
     {
         var tarifario = Crear();
@@ -49,6 +84,17 @@ public class TarifarioProcedimientoTests
         Assert.Equal(400m, tarifario.MontoSeguro);
         Assert.Equal(200m, tarifario.MontoPaciente);
         Assert.Equal(600m, tarifario.MontoTotal);
+        Assert.Null(tarifario.MontoFondo);
+    }
+
+    [Fact]
+    public void ActualizarMontos_ConMontoFondo_LoActualizaTambien()
+    {
+        var tarifario = Crear(montoFondo: 100m);
+
+        tarifario.ActualizarMontos(500m, 100m, 600m, 250m);
+
+        Assert.Equal(250m, tarifario.MontoFondo);
     }
 
     [Fact]

@@ -59,6 +59,30 @@
   margin: 10px 0;
 }
 
+.aseguradoras-tarifario-agregar {
+  margin: 14px 0;
+}
+
+.aseguradoras-tarifario-agregar summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.aseguradoras-tarifario-agregar .aseguradoras-crear-form {
+  margin-top: 10px;
+}
+
+.aseguradoras-tarifario-agregar select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 160px;
+}
+
 .aseguradoras-crear-form {
   display: flex;
   flex-wrap: wrap;

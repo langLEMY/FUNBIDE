@@ -3,8 +3,18 @@ import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { ImportarExcel } from '../components/ImportarExcel'
 import { api, ApiError } from '../lib/api'
 import type { SeguroMedico } from '../types/seguroMedico'
-import { PLANES_SENASA, type ImportarTarifarioResult, type PlanSenasa, type TarifarioProcedimiento } from '../types/tarifarioProcedimiento'
+import {
+  ETIQUETA_PLAN,
+  PLANES_ASEGURADORA,
+  type ImportarTarifarioResult,
+  type PlanAseguradora,
+  type TarifarioProcedimiento,
+} from '../types/tarifarioProcedimiento'
+import type { EspecialidadMedica } from '../types/usuario'
+import { ESPECIALIDADES, ETIQUETA_ESPECIALIDAD } from '../types/personal'
 import './AseguradorasPage.css'
+
+const SIN_ESPECIALIDAD = ''
 
 const formateadorMoneda = new Intl.NumberFormat('es-DO', {
   style: 'currency',
@@ -30,12 +40,29 @@ export function AseguradorasPage() {
   const [procesandoId, setProcesandoId] = useState<string | null>(null)
 
   const [seguroTarifarioId, setSeguroTarifarioId] = useState('')
-  const [planTarifario, setPlanTarifario] = useState<PlanSenasa>('Contributivo')
+  const [planTarifario, setPlanTarifario] = useState<PlanAseguradora>('Contributivo')
   const [tarifario, setTarifario] = useState<TarifarioProcedimiento[]>([])
   const [cargandoTarifario, setCargandoTarifario] = useState(false)
   const [errorTarifario, setErrorTarifario] = useState<string | null>(null)
   const [busquedaTarifario, setBusquedaTarifario] = useState('')
   const [resultadoImport, setResultadoImport] = useState<ImportarTarifarioResult | null>(null)
+
+  const [editandoTarifarioId, setEditandoTarifarioId] = useState<string | null>(null)
+  const [montoSeguroEdit, setMontoSeguroEdit] = useState('')
+  const [montoPacienteEdit, setMontoPacienteEdit] = useState('')
+  const [montoTotalEdit, setMontoTotalEdit] = useState('')
+  const [montoFondoEdit, setMontoFondoEdit] = useState('')
+  const [guardandoTarifario, setGuardandoTarifario] = useState(false)
+  const [errorFilaTarifario, setErrorFilaTarifario] = useState<string | null>(null)
+
+  const [procedimientoNuevo, setProcedimientoNuevo] = useState('')
+  const [montoSeguroNuevo, setMontoSeguroNuevo] = useState('')
+  const [montoPacienteNuevo, setMontoPacienteNuevo] = useState('')
+  const [montoTotalNuevo, setMontoTotalNuevo] = useState('')
+  const [montoFondoNuevo, setMontoFondoNuevo] = useState('')
+  const [especialidadNueva, setEspecialidadNueva] = useState<EspecialidadMedica | typeof SIN_ESPECIALIDAD>(SIN_ESPECIALIDAD)
+  const [creandoTarifario, setCreandoTarifario] = useState(false)
+  const [errorCrearTarifario, setErrorCrearTarifario] = useState<string | null>(null)
 
   const cargar = () => {
     setCargando(true)
@@ -57,6 +84,14 @@ export function AseguradorasPage() {
     setSeguroTarifarioId((senasa ?? seguros[0]).id)
   }, [seguros, seguroTarifarioId])
 
+  // El selector de plan queda siempre visible (no solo para Senasa): cualquier aseguradora
+  // nueva puede tener su propia subdivisión de planes, y "Estandar" sigue disponible para
+  // las que no la tienen (Renacer, Aps). Al cambiar de aseguradora se resetea a Estandar en
+  // vez de arrastrar el plan de la aseguradora anterior.
+  useEffect(() => {
+    setPlanTarifario('Estandar')
+  }, [seguroTarifarioId])
+
   const cargarTarifario = () => {
     if (!seguroTarifarioId) return
     setCargandoTarifario(true)
@@ -77,6 +112,114 @@ export function AseguradorasPage() {
     if (!texto) return tarifario
     return tarifario.filter((t) => t.procedimiento.toLowerCase().includes(texto))
   }, [tarifario, busquedaTarifario])
+
+  const iniciarEdicionTarifario = (fila: TarifarioProcedimiento) => {
+    setEditandoTarifarioId(fila.id)
+    setMontoSeguroEdit(String(fila.montoSeguro))
+    setMontoPacienteEdit(String(fila.montoPaciente))
+    setMontoTotalEdit(String(fila.montoTotal))
+    setMontoFondoEdit(fila.montoFondo ? String(fila.montoFondo) : '')
+    setErrorFilaTarifario(null)
+  }
+
+  const guardarEdicionTarifario = async (fila: TarifarioProcedimiento) => {
+    const montoSeguroNumero = Number(montoSeguroEdit)
+    const montoPacienteNumero = Number(montoPacienteEdit)
+    const montoTotalNumero = Number(montoTotalEdit)
+    const montoFondoNumero = montoFondoEdit.trim() ? Number(montoFondoEdit) : null
+
+    if (!Number.isFinite(montoSeguroNumero) || montoSeguroNumero < 0) {
+      setErrorFilaTarifario('El monto que cubre el seguro no puede ser negativo.')
+      return
+    }
+    if (!Number.isFinite(montoPacienteNumero) || montoPacienteNumero < 0) {
+      setErrorFilaTarifario('El monto a cargo del paciente no puede ser negativo.')
+      return
+    }
+    if (!Number.isFinite(montoTotalNumero) || montoTotalNumero <= 0) {
+      setErrorFilaTarifario('El monto total debe ser mayor que cero.')
+      return
+    }
+    if (montoFondoNumero !== null && (!Number.isFinite(montoFondoNumero) || montoFondoNumero < 0)) {
+      setErrorFilaTarifario('La ganancia para el fondo interno no puede ser negativa.')
+      return
+    }
+
+    setGuardandoTarifario(true)
+    setErrorFilaTarifario(null)
+    try {
+      const actualizada = await api.patch<TarifarioProcedimiento>('/api/tarifario-procedimientos', {
+        tarifarioProcedimientoId: fila.id,
+        montoSeguro: montoSeguroNumero,
+        montoPaciente: montoPacienteNumero,
+        montoTotal: montoTotalNumero,
+        montoFondo: montoFondoNumero,
+        especialidad: fila.especialidad,
+      })
+      setTarifario((actual) => actual.map((t) => (t.id === actualizada.id ? actualizada : t)))
+      setEditandoTarifarioId(null)
+    } catch (err) {
+      setErrorFilaTarifario(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo guardar el procedimiento.')
+    } finally {
+      setGuardandoTarifario(false)
+    }
+  }
+
+  const handleCrearTarifario = async (event: FormEvent) => {
+    event.preventDefault()
+    setErrorCrearTarifario(null)
+
+    const montoSeguroNumero = Number(montoSeguroNuevo)
+    const montoPacienteNumero = Number(montoPacienteNuevo)
+    const montoTotalNumero = Number(montoTotalNuevo)
+    const montoFondoNumero = montoFondoNuevo.trim() ? Number(montoFondoNuevo) : null
+
+    if (!procedimientoNuevo.trim()) {
+      setErrorCrearTarifario('El nombre del procedimiento es obligatorio.')
+      return
+    }
+    if (!Number.isFinite(montoSeguroNumero) || montoSeguroNumero < 0) {
+      setErrorCrearTarifario('El monto que cubre el seguro no puede ser negativo.')
+      return
+    }
+    if (!Number.isFinite(montoPacienteNumero) || montoPacienteNumero < 0) {
+      setErrorCrearTarifario('El monto a cargo del paciente no puede ser negativo.')
+      return
+    }
+    if (!Number.isFinite(montoTotalNumero) || montoTotalNumero <= 0) {
+      setErrorCrearTarifario('El monto total debe ser mayor que cero.')
+      return
+    }
+    if (montoFondoNumero !== null && (!Number.isFinite(montoFondoNumero) || montoFondoNumero < 0)) {
+      setErrorCrearTarifario('La ganancia para el fondo interno no puede ser negativa.')
+      return
+    }
+
+    setCreandoTarifario(true)
+    try {
+      const creado = await api.post<TarifarioProcedimiento>('/api/tarifario-procedimientos', {
+        seguroMedicoId: seguroTarifarioId,
+        plan: planTarifario,
+        procedimiento: procedimientoNuevo.trim(),
+        montoSeguro: montoSeguroNumero,
+        montoPaciente: montoPacienteNumero,
+        montoTotal: montoTotalNumero,
+        montoFondo: montoFondoNumero,
+        especialidad: especialidadNueva || null,
+      })
+      setTarifario((actual) => [...actual, creado].sort((a, b) => a.procedimiento.localeCompare(b.procedimiento)))
+      setProcedimientoNuevo('')
+      setMontoSeguroNuevo('')
+      setMontoPacienteNuevo('')
+      setMontoTotalNuevo('')
+      setMontoFondoNuevo('')
+      setEspecialidadNueva(SIN_ESPECIALIDAD)
+    } catch (err) {
+      setErrorCrearTarifario(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo agregar el procedimiento.')
+    } finally {
+      setCreandoTarifario(false)
+    }
+  }
 
   const importarEndpoint = seguroTarifarioId
     ? `/api/tarifario-procedimientos/importar?seguroMedicoId=${seguroTarifarioId}&plan=${planTarifario}`
@@ -257,8 +400,11 @@ export function AseguradorasPage() {
       <section className="aseguradoras-tabla-card">
         <h2>Tarifario por procedimiento</h2>
         <p className="text-secondary aseguradoras-tarifario-subtitulo">
-          Montos fijos negociados por procedimiento (hoy SENASA, con sus 3 planes). Al cobrar con esta aseguradora,
-          el procedimiento elegido define el monto exacto — no un porcentaje.
+          Montos fijos negociados por procedimiento (Senasa con sus 3 planes; Renacer y Aps con un único plan).
+          Al cobrar con esta aseguradora, el procedimiento elegido define el monto exacto — no un porcentaje.
+          La columna "Ganancia (fondo interno)" es el excedente que paga la aseguradora por encima de lo reconocido
+          al paciente: no se le cobra a nadie, entra directo como ingreso interno de la fundación en cada cobro.
+          Editá cualquier fila para ajustarla sin tener que rehacer el import de Excel.
         </p>
 
         <div className="aseguradoras-tarifario-filtros">
@@ -274,10 +420,10 @@ export function AseguradorasPage() {
           </label>
           <label className="aseguradoras-tarifario-label">
             Plan
-            <select value={planTarifario} onChange={(event) => setPlanTarifario(event.target.value as PlanSenasa)}>
-              {PLANES_SENASA.map((plan) => (
+            <select value={planTarifario} onChange={(event) => setPlanTarifario(event.target.value as PlanAseguradora)}>
+              {PLANES_ASEGURADORA.map((plan) => (
                 <option key={plan} value={plan}>
-                  {plan}
+                  {ETIQUETA_PLAN[plan]}
                 </option>
               ))}
             </select>
@@ -298,6 +444,70 @@ export function AseguradorasPage() {
               cargarTarifario()
             }}
           />
+        )}
+
+        {seguroTarifarioId && (
+          <details className="aseguradoras-tarifario-agregar">
+            <summary>Agregar un procedimiento a mano (sin Excel)</summary>
+            <form className="aseguradoras-crear-form" onSubmit={(event) => void handleCrearTarifario(event)}>
+              <input
+                placeholder="Nombre del procedimiento"
+                value={procedimientoNuevo}
+                onChange={(event) => setProcedimientoNuevo(event.target.value)}
+                required
+              />
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="Cubre el seguro"
+                value={montoSeguroNuevo}
+                onChange={(event) => setMontoSeguroNuevo(event.target.value)}
+                required
+              />
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="Paga el paciente"
+                value={montoPacienteNuevo}
+                onChange={(event) => setMontoPacienteNuevo(event.target.value)}
+                required
+              />
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="Total"
+                value={montoTotalNuevo}
+                onChange={(event) => setMontoTotalNuevo(event.target.value)}
+                required
+              />
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="Ganancia / fondo interno (opcional)"
+                value={montoFondoNuevo}
+                onChange={(event) => setMontoFondoNuevo(event.target.value)}
+              />
+              <select
+                value={especialidadNueva}
+                onChange={(event) => setEspecialidadNueva(event.target.value as EspecialidadMedica)}
+              >
+                <option value={SIN_ESPECIALIDAD}>Sin especialidad</option>
+                {ESPECIALIDADES.map((opcion) => (
+                  <option key={opcion} value={opcion}>
+                    {ETIQUETA_ESPECIALIDAD[opcion]}
+                  </option>
+                ))}
+              </select>
+              <button type="submit" disabled={creandoTarifario}>
+                {creandoTarifario ? 'Agregando…' : 'Agregar procedimiento'}
+              </button>
+            </form>
+            {errorCrearTarifario && <p className="aseguradoras-error">{errorCrearTarifario}</p>}
+          </details>
         )}
         {resultadoImport && (
           <p className="text-secondary aseguradoras-tarifario-resultado">
@@ -320,6 +530,7 @@ export function AseguradorasPage() {
         )}
 
         {errorTarifario && <p className="aseguradoras-error">{errorTarifario}</p>}
+        {errorFilaTarifario && <p className="aseguradoras-error">{errorFilaTarifario}</p>}
 
         {cargandoTarifario ? (
           <p className="text-secondary cargando-pulso">Cargando tarifario…</p>
@@ -337,17 +548,76 @@ export function AseguradorasPage() {
                 <th>Cubre el seguro</th>
                 <th>Paga el paciente</th>
                 <th>Total</th>
+                <th>Ganancia (fondo interno)</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {tarifarioFiltrado.map((fila) => (
-                <tr key={fila.id}>
-                  <td>{fila.procedimiento}</td>
-                  <td>{formateadorMoneda.format(fila.montoSeguro)}</td>
-                  <td>{formateadorMoneda.format(fila.montoPaciente)}</td>
-                  <td>{formateadorMoneda.format(fila.montoTotal)}</td>
-                </tr>
-              ))}
+              {tarifarioFiltrado.map((fila) =>
+                editandoTarifarioId === fila.id ? (
+                  <tr key={fila.id}>
+                    <td>{fila.procedimiento}</td>
+                    <td>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={montoSeguroEdit}
+                        onChange={(event) => setMontoSeguroEdit(event.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={montoPacienteEdit}
+                        onChange={(event) => setMontoPacienteEdit(event.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={montoTotalEdit}
+                        onChange={(event) => setMontoTotalEdit(event.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        placeholder="Sin ganancia"
+                        value={montoFondoEdit}
+                        onChange={(event) => setMontoFondoEdit(event.target.value)}
+                      />
+                    </td>
+                    <td className="aseguradoras-acciones">
+                      <button type="button" onClick={() => void guardarEdicionTarifario(fila)} disabled={guardandoTarifario}>
+                        {guardandoTarifario ? 'Guardando…' : 'Guardar'}
+                      </button>
+                      <button type="button" onClick={() => setEditandoTarifarioId(null)} disabled={guardandoTarifario}>
+                        Cancelar
+                      </button>
+                    </td>
+                  </tr>
+                ) : (
+                  <tr key={fila.id}>
+                    <td>{fila.procedimiento}</td>
+                    <td>{formateadorMoneda.format(fila.montoSeguro)}</td>
+                    <td>{formateadorMoneda.format(fila.montoPaciente)}</td>
+                    <td>{formateadorMoneda.format(fila.montoTotal)}</td>
+                    <td>{fila.montoFondo ? formateadorMoneda.format(fila.montoFondo) : '—'}</td>
+                    <td className="aseguradoras-acciones">
+                      <button type="button" onClick={() => iniciarEdicionTarifario(fila)}>
+                        Editar
+                      </button>
+                    </td>
+                  </tr>
+                ),
+              )}
             </tbody>
           </table>
         )}

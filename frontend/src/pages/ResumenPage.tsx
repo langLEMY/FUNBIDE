@@ -4,7 +4,13 @@ import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { api, ApiError } from '../lib/api'
 import { coloresParaTema } from '../styles/colors'
 import { useTheme } from '../theme/ThemeContext'
+import type { DoctorSimple } from '../types/doctor'
 import './ResumenPage.css'
+
+interface ResumenPorDoctor {
+  pacientesAtendidos: number
+  dineroGenerado: number
+}
 
 interface RegistroAuditoria {
   id: string
@@ -64,6 +70,7 @@ const formateadorMoneda = new Intl.NumberFormat('es-DO', {
   currency: 'DOP',
   maximumFractionDigits: 0,
 })
+const formateadorEntero = new Intl.NumberFormat('es-DO')
 
 export function ResumenPage() {
   const { tema } = useTheme()
@@ -75,6 +82,12 @@ export function ResumenPage() {
   const [registros, setRegistros] = useState<RegistroAuditoria[]>([])
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const [doctores, setDoctores] = useState<DoctorSimple[]>([])
+  const [doctorSeleccionado, setDoctorSeleccionado] = useState('')
+  const [resumenDoctor, setResumenDoctor] = useState<ResumenPorDoctor | null>(null)
+  const [cargandoDoctor, setCargandoDoctor] = useState(false)
+  const [errorDoctor, setErrorDoctor] = useState<string | null>(null)
 
   const cargar = async (desdeValor: string, hastaValor: string) => {
     setCargando(true)
@@ -93,11 +106,48 @@ export function ResumenPage() {
     }
   }
 
+  const cargarResumenDoctor = async (doctorId: string, desdeValor: string, hastaValor: string) => {
+    if (!doctorId) return
+    setCargandoDoctor(true)
+    setErrorDoctor(null)
+    try {
+      const desdeIso = encodeURIComponent(`${desdeValor}T00:00:00.000Z`)
+      const hastaIso = encodeURIComponent(`${hastaValor}T23:59:59.999Z`)
+      const datos = await api.get<ResumenPorDoctor>(
+        `/api/resumen/por-doctor?doctorId=${doctorId}&desde=${desdeIso}&hasta=${hastaIso}`,
+      )
+      setResumenDoctor(datos)
+    } catch (err) {
+      setErrorDoctor(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar el resumen del doctor.')
+    } finally {
+      setCargandoDoctor(false)
+    }
+  }
+
   useEffect(() => {
     void cargar(desde, hasta)
+    api
+      .get<DoctorSimple[]>('/api/personal/doctores')
+      .then((datos) => {
+        setDoctores(datos)
+        if (datos.length > 0) {
+          setDoctorSeleccionado(datos[0].id)
+        }
+      })
+      .catch(() => {
+        setErrorDoctor('No se pudo cargar la lista de doctores.')
+      })
     // Solo al montar: los filtros posteriores se disparan por el usuario, no por cambios de estado.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (doctorSeleccionado) {
+      void cargarResumenDoctor(doctorSeleccionado, desde, hasta)
+    }
+    // Cambiar de doctor sí refresca solo: no hay un botón "aplicar" aparte para ese selector.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doctorSeleccionado])
 
   const aplicarPreset = (preset: (typeof PRESETS)[number]) => {
     const fin = inicioDeHoy()
@@ -108,11 +158,13 @@ export function ResumenPage() {
     setHasta(hastaValor)
     setPresetActivo(preset.etiqueta)
     void cargar(desdeValor, hastaValor)
+    void cargarResumenDoctor(doctorSeleccionado, desdeValor, hastaValor)
   }
 
   const handleFiltrar = (event: FormEvent) => {
     event.preventDefault()
     void cargar(desde, hasta)
+    void cargarResumenDoctor(doctorSeleccionado, desde, hasta)
   }
 
   const datosGrafico = useMemo(() => {
@@ -186,6 +238,43 @@ export function ResumenPage() {
       </p>
 
       {error && <p className="resumen-error">{error}</p>}
+
+      <section className="resumen-doctor-card">
+        <div className="resumen-doctor-header">
+          <h2>Por doctor</h2>
+          <label className="resumen-doctor-selector no-imprimir">
+            Doctor
+            <select value={doctorSeleccionado} onChange={(event) => setDoctorSeleccionado(event.target.value)}>
+              {doctores.map((doctor) => (
+                <option key={doctor.id} value={doctor.id}>
+                  {doctor.nombreCompleto}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {errorDoctor && <p className="resumen-error">{errorDoctor}</p>}
+
+        {doctores.length === 0 ? (
+          <p className="text-secondary">No hay doctores registrados.</p>
+        ) : (
+          <div className="resumen-doctor-widgets">
+            <div className="resumen-doctor-widget">
+              <p className="text-secondary">Pacientes atendidos</p>
+              <p className="resumen-doctor-widget-valor">
+                {cargandoDoctor ? '—' : formateadorEntero.format(resumenDoctor?.pacientesAtendidos ?? 0)}
+              </p>
+            </div>
+            <div className="resumen-doctor-widget">
+              <p className="text-secondary">Dinero generado</p>
+              <p className="resumen-doctor-widget-valor" style={{ color: chartColors.actividad }}>
+                {cargandoDoctor ? '—' : formateadorMoneda.format(resumenDoctor?.dineroGenerado ?? 0)}
+              </p>
+            </div>
+          </div>
+        )}
+      </section>
 
       <section className="resumen-grafico-card no-imprimir">
         <p className="resumen-grafico-titulo text-secondary">Neto por día (ingresos − egresos)</p>

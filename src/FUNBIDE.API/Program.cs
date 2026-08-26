@@ -85,8 +85,18 @@ var app = builder.Build();
 // Despliegue de un solo contenedor sin paso de migración separado: aplica al
 // arrancar cualquier migración pendiente contra la base de datos, para que el
 // esquema nunca quede desincronizado con el código desplegado.
-using (var scope = app.Services.CreateScope())
+//
+// Database:AplicarMigracionesAlIniciar (default true) queda en false en la copia de
+// escritorio (Auth:Provider=Local apuntando a la misma base compartida de producción,
+// ver publicar-offline.ps1 e instalacion/FUNBIDE.iss): ahí cada instalación de personal
+// abre su propio proceso contra la MISMA base, así que dejarlas migrar sería una
+// carrera entre varias copias corriendo DDL a la vez — y el rol acotado que usa esa
+// copia (funbide_app, sin privilegios de esquema) ni siquiera podría aplicarlas. El
+// esquema real ya lo migra el único despliegue de servidor (Railway), que sigue usando
+// el rol con privilegios completos.
+if (builder.Configuration.GetValue("Database:AplicarMigracionesAlIniciar", true))
 {
+    using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<FunbideDbContext>();
     await dbContext.Database.MigrateAsync();
 

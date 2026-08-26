@@ -14,7 +14,10 @@ using FUNBIDE.Application.UseCases.Inventario;
 using FUNBIDE.Application.UseCases.Pacientes;
 using FUNBIDE.Application.UseCases.Permisos;
 using FUNBIDE.Application.UseCases.Personal;
+using FUNBIDE.Application.UseCases.Resumen;
 using FUNBIDE.Application.UseCases.SegurosMedicos;
+using FUNBIDE.Application.UseCases.Servicios;
+using FUNBIDE.Application.UseCases.Sesiones;
 using FUNBIDE.Application.UseCases.Sistema;
 
 namespace FUNBIDE.API.Extensions;
@@ -57,7 +60,16 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDesactivarSeguroMedicoUseCase, DesactivarSeguroMedicoUseCase>();
         services.AddScoped<IReactivarSeguroMedicoUseCase, ReactivarSeguroMedicoUseCase>();
         services.AddScoped<IListarTarifarioUseCase, ListarTarifarioUseCase>();
+        services.AddScoped<ICrearTarifarioProcedimientoUseCase, CrearTarifarioProcedimientoUseCase>();
+        services.AddScoped<IEditarTarifarioProcedimientoUseCase, EditarTarifarioProcedimientoUseCase>();
         services.AddScoped<IImportarTarifarioUseCase, ImportarTarifarioUseCase>();
+
+        services.AddScoped<IListarServiciosUseCase, ListarServiciosUseCase>();
+        services.AddScoped<ICrearServicioUseCase, CrearServicioUseCase>();
+        services.AddScoped<IEditarServicioUseCase, EditarServicioUseCase>();
+        services.AddScoped<IDesactivarServicioUseCase, DesactivarServicioUseCase>();
+        services.AddScoped<IReactivarServicioUseCase, ReactivarServicioUseCase>();
+        services.AddScoped<IImportarServiciosUseCase, ImportarServiciosUseCase>();
 
         services.AddScoped<IRegistrarEntradaHistorialUseCase, RegistrarEntradaHistorialUseCase>();
         services.AddScoped<IObtenerHistorialPorPacienteUseCase, ObtenerHistorialPorPacienteUseCase>();
@@ -74,6 +86,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IVerificarEstadoSistemaUseCase, VerificarEstadoSistemaUseCase>();
         services.AddScoped<ICambiarModoMantenimientoUseCase, CambiarModoMantenimientoUseCase>();
         services.AddScoped<IReiniciarServiciosUseCase, ReiniciarServiciosUseCase>();
+        services.AddScoped<IRegistrarLatidoUseCase, RegistrarLatidoUseCase>();
+        services.AddScoped<IContarSesionesActivasUseCase, ContarSesionesActivasUseCase>();
         services.AddScoped<IEjecutarBackupManualUseCase, EjecutarBackupManualUseCase>();
         services.AddScoped<IVerificarEspacioDiscoUseCase, VerificarEspacioDiscoUseCase>();
 
@@ -102,6 +116,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IObtenerResumenHoyUseCase, ObtenerResumenHoyUseCase>();
         services.AddScoped<IObtenerResumenMesUseCase, ObtenerResumenMesUseCase>();
+        services.AddScoped<IObtenerPacientesPorDoctorUseCase, ObtenerPacientesPorDoctorUseCase>();
+        services.AddScoped<IObtenerResumenPorDoctorUseCase, ObtenerResumenPorDoctorUseCase>();
 
         services.AddScoped<IListarMovimientosImportantesUseCase, ListarMovimientosImportantesUseCase>();
         services.AddScoped<IObtenerResumenAnualUseCase, ObtenerResumenAnualUseCase>();

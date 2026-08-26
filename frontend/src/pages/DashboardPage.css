@@ -95,6 +95,52 @@
   gap: 16px;
 }
 
+.dashboard-pacientes-doctor-card {
+  border-radius: var(--radius-card);
+  padding: 22px;
+  margin-top: 20px;
+}
+
+.dashboard-pacientes-doctor-card h2 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dashboard-pacientes-doctor-subtitulo {
+  margin: 0 0 16px;
+  font-size: 13px;
+}
+
+.dashboard-pacientes-doctor-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.dashboard-pacientes-doctor-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.dashboard-pacientes-doctor-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.dashboard-pacientes-doctor-tabla tr:last-child td {
+  border-bottom: none;
+}
+
+.dashboard-pacientes-doctor-destacado {
+  font-weight: 700;
+}
+
 .dashboard-detalle,
 .dashboard-metodos-pago {
   display: grid;

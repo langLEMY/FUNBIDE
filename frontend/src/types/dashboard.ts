@@ -25,3 +25,15 @@ export interface AlertasAdmin {
   stockBajo: ItemStockBajo[]
   pacientesConDeuda: PacienteConDeuda[]
 }
+
+export interface SesionesActivas {
+  cantidad: number
+}
+
+export interface PacientesPorDoctor {
+  doctorId: string
+  nombreCompleto: string
+  especialidad: string | null
+  citasCompletadas: number
+  pacientesDistintos: number
+}

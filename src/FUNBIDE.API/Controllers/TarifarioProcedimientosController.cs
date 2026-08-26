@@ -20,17 +20,34 @@ namespace FUNBIDE.API.Controllers;
 [RequierePermiso(ModuloPermiso.Aseguradoras)]
 public sealed class TarifarioProcedimientosController(
     IListarTarifarioUseCase listarTarifario,
+    ICrearTarifarioProcedimientoUseCase crearTarifario,
+    IEditarTarifarioProcedimientoUseCase editarTarifario,
     IImportarTarifarioUseCase importarTarifario) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<TarifarioProcedimientoDto>>> ListarAsync(
-        [FromQuery] Guid seguroMedicoId, [FromQuery] PlanSenasa plan, CancellationToken cancellationToken) =>
+        [FromQuery] Guid seguroMedicoId, [FromQuery] PlanAseguradora plan, CancellationToken cancellationToken) =>
         Ok(await listarTarifario.EjecutarAsync(new ListarTarifarioRequest(seguroMedicoId, plan), cancellationToken));
+
+    [HttpPost]
+    [RequiereRol(RolUsuario.Lemy, RolUsuario.Admin)]
+    public async Task<ActionResult<TarifarioProcedimientoDto>> CrearAsync(
+        CrearTarifarioProcedimientoRequest request, CancellationToken cancellationToken)
+    {
+        var tarifario = await crearTarifario.EjecutarAsync(request, cancellationToken);
+        return Created("api/tarifario-procedimientos", tarifario);
+    }
+
+    [HttpPatch]
+    [RequiereRol(RolUsuario.Lemy, RolUsuario.Admin)]
+    public async Task<ActionResult<TarifarioProcedimientoDto>> EditarAsync(
+        EditarTarifarioProcedimientoRequest request, CancellationToken cancellationToken) =>
+        Ok(await editarTarifario.EjecutarAsync(request, cancellationToken));
 
     [HttpPost("importar")]
     [RequiereRol(RolUsuario.Lemy, RolUsuario.Admin)]
     public async Task<ActionResult<ImportarTarifarioResultDto>> ImportarAsync(
-        [FromQuery] Guid seguroMedicoId, [FromQuery] PlanSenasa plan, IFormFile archivo, CancellationToken cancellationToken)
+        [FromQuery] Guid seguroMedicoId, [FromQuery] PlanAseguradora plan, IFormFile archivo, CancellationToken cancellationToken)
     {
         if (!archivo.EsExcelValido(out var error))
         {

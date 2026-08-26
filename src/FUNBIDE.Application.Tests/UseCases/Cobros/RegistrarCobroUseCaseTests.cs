@@ -17,6 +17,7 @@ public class RegistrarCobroUseCaseTests
     private readonly ITurnoCajaRepository _turnoCajaRepository = Substitute.For<ITurnoCajaRepository>();
     private readonly ISeguroMedicoRepository _seguroMedicoRepository = Substitute.For<ISeguroMedicoRepository>();
     private readonly ITarifarioProcedimientoRepository _tarifarioRepository = Substitute.For<ITarifarioProcedimientoRepository>();
+    private readonly IMovimientoFinancieroRepository _movimientoFinancieroRepository = Substitute.For<IMovimientoFinancieroRepository>();
     private readonly IPacienteRepository _pacienteRepository = Substitute.For<IPacienteRepository>();
     private readonly IResumenDiarioRepository _resumenDiarioRepository = Substitute.For<IResumenDiarioRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
@@ -46,8 +47,8 @@ public class RegistrarCobroUseCaseTests
     }
 
     private RegistrarCobroUseCase CrearCasoDeUso() => new(
-        _cobroRepository, _turnoCajaRepository, _seguroMedicoRepository, _tarifarioRepository, _pacienteRepository,
-        _resumenDiarioRepository, _unitOfWork, _currentUser, _dateTimeProvider, _auditoriaLogService);
+        _cobroRepository, _turnoCajaRepository, _seguroMedicoRepository, _tarifarioRepository, _movimientoFinancieroRepository,
+        _pacienteRepository, _resumenDiarioRepository, _unitOfWork, _currentUser, _dateTimeProvider, _auditoriaLogService);
 
     private static RegistrarCobroRequest CrearRequest(Guid pacienteId, Guid? seguroMedicoId = null, decimal montoPagado = 1000m) =>
         new(pacienteId, null, "Consulta general", 1000m, PagoEfectivo(montoPagado), seguroMedicoId, seguroMedicoId is null ? null : "AUTH-1");
@@ -187,7 +188,7 @@ public class RegistrarCobroUseCaseTests
         _seguroMedicoRepository.ObtenerPorIdAsync(seguro.Id, Arg.Any<CancellationToken>()).Returns(seguro);
 
         var tarifario = new TarifarioProcedimiento(
-            seguro.Id, PlanSenasa.Contributivo, "Consulta odontológica general", 690m, 100m, 790m);
+            seguro.Id, PlanAseguradora.Contributivo, "Consulta odontológica general", 690m, 100m, 790m);
         _tarifarioRepository.ObtenerPorIdAsync(tarifario.Id, Arg.Any<CancellationToken>()).Returns(tarifario);
 
         // El cliente manda un montoTotal distinto (999) a propósito: debe ganar el del tarifario (790).
@@ -205,6 +206,63 @@ public class RegistrarCobroUseCaseTests
     }
 
     [Fact]
+    public async Task EjecutarAsync_ConTarifarioConFondo_CreaMovimientoFinancieroYLoAcumulaEnElResumen()
+    {
+        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        var paciente = CrearPaciente();
+        _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
+
+        var seguro = new SeguroMedico("Renacer", 50m);
+        _seguroMedicoRepository.ObtenerPorIdAsync(seguro.Id, Arg.Any<CancellationToken>()).Returns(seguro);
+
+        var tarifario = new TarifarioProcedimiento(
+            seguro.Id, PlanAseguradora.Estandar, "Consulta general", 500m, 100m, 600m, montoFondo: 250m);
+        _tarifarioRepository.ObtenerPorIdAsync(tarifario.Id, Arg.Any<CancellationToken>()).Returns(tarifario);
+
+        var resumen = new ResumenDiario(DateOnly.FromDateTime(DateTime.UtcNow));
+        _resumenDiarioRepository.ObtenerOCrearConBloqueoAsync(Arg.Any<DateOnly>(), Arg.Any<CancellationToken>()).Returns(resumen);
+
+        var request = new RegistrarCobroRequest(
+            paciente.Id, null, "Consulta general", 600m, PagoEfectivo(100m), seguro.Id, "AUTH-1", tarifario.Id);
+
+        var resultado = await CrearCasoDeUso().EjecutarAsync(request, CancellationToken.None);
+
+        Assert.Equal(250m, resultado.MontoFondo);
+        // El fondo no es dinero de caja: MontoPagado (100) es lo único que suma a
+        // DineroMovido antes del fondo aparte, pero el fondo también se reconoce como
+        // ingreso de la fundación en el mismo resumen — total 100 (paciente) + 250 (fondo).
+        Assert.Equal(350m, resumen.DineroMovido);
+        await _movimientoFinancieroRepository.Received(1).RegistrarAsync(
+            Arg.Is<Domain.Entities.MovimientoFinanciero>(m =>
+                m.Monto == 250m && m.Tipo == TipoMovimientoFinanciero.Ingreso && m.TurnoCajaId != null),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task EjecutarAsync_ConTarifarioSinFondo_NoCreaMovimientoFinanciero()
+    {
+        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        var paciente = CrearPaciente();
+        _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
+
+        var seguro = new SeguroMedico("SENASA", 50m);
+        _seguroMedicoRepository.ObtenerPorIdAsync(seguro.Id, Arg.Any<CancellationToken>()).Returns(seguro);
+
+        var tarifario = new TarifarioProcedimiento(
+            seguro.Id, PlanAseguradora.Contributivo, "Consulta odontológica general", 690m, 100m, 790m);
+        _tarifarioRepository.ObtenerPorIdAsync(tarifario.Id, Arg.Any<CancellationToken>()).Returns(tarifario);
+
+        var request = new RegistrarCobroRequest(
+            paciente.Id, null, "Consulta odontológica general", 790m, PagoEfectivo(100m), seguro.Id, "AUTH-1", tarifario.Id);
+
+        var resultado = await CrearCasoDeUso().EjecutarAsync(request, CancellationToken.None);
+
+        Assert.Null(resultado.MontoFondo);
+        await _movimientoFinancieroRepository.DidNotReceive().RegistrarAsync(
+            Arg.Any<Domain.Entities.MovimientoFinanciero>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task EjecutarAsync_TarifarioDeOtraAseguradora_LanzaInvalidOperationException()
     {
         _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
@@ -215,7 +273,7 @@ public class RegistrarCobroUseCaseTests
         _seguroMedicoRepository.ObtenerPorIdAsync(seguro.Id, Arg.Any<CancellationToken>()).Returns(seguro);
 
         var tarifario = new TarifarioProcedimiento(
-            Guid.NewGuid(), PlanSenasa.Contributivo, "Consulta odontológica general", 690m, 100m, 790m);
+            Guid.NewGuid(), PlanAseguradora.Contributivo, "Consulta odontológica general", 690m, 100m, 790m);
         _tarifarioRepository.ObtenerPorIdAsync(tarifario.Id, Arg.Any<CancellationToken>()).Returns(tarifario);
 
         var request = new RegistrarCobroRequest(
@@ -236,7 +294,7 @@ public class RegistrarCobroUseCaseTests
         _seguroMedicoRepository.ObtenerPorIdAsync(seguro.Id, Arg.Any<CancellationToken>()).Returns(seguro);
 
         var tarifario = new TarifarioProcedimiento(
-            seguro.Id, PlanSenasa.Contributivo, "Consulta odontológica general", 690m, 100m, 790m);
+            seguro.Id, PlanAseguradora.Contributivo, "Consulta odontológica general", 690m, 100m, 790m);
         tarifario.Desactivar();
         _tarifarioRepository.ObtenerPorIdAsync(tarifario.Id, Arg.Any<CancellationToken>()).Returns(tarifario);
 

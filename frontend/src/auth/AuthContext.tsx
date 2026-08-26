@@ -2,7 +2,10 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { SesionMinima as Session } from './tiposSesion'
 import { supabase } from '../lib/supabaseClient'
 import { api, ApiError } from '../lib/api'
+import { obtenerSessionId } from '../lib/sessionId'
 import type { Usuario } from '../types/usuario'
+
+const INTERVALO_LATIDO_MS = 60_000
 
 interface AuthContextValue {
   session: Session | null
@@ -74,6 +77,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPerfil(null)
       setPerfilError(null)
     }
+  }, [session])
+
+  useEffect(() => {
+    if (!session) return
+
+    // Latido de presencia: le dice al backend "este dispositivo sigue con la app abierta"
+    // para que Admin pueda ver cuántas sesiones/máquinas están activas ahora mismo (ver
+    // SesionesController). Los fallos se ignoran a propósito — un latido perdido no debe
+    // interrumpir el uso normal de la app.
+    const enviarLatido = () => {
+      api.post('/api/sesiones/latido', { sessionId: obtenerSessionId() }).catch(() => {})
+    }
+
+    enviarLatido()
+    const intervalo = setInterval(enviarLatido, INTERVALO_LATIDO_MS)
+    return () => clearInterval(intervalo)
   }, [session])
 
   const iniciarSesion = async (nombreUsuario: string, contrasena: string) => {

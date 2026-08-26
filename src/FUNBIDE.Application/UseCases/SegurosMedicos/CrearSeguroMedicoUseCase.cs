@@ -37,6 +37,7 @@ public sealed class CrearSeguroMedicoUseCase(
             codigoRespuestaHttp: 201,
             cancellationToken: cancellationToken);
 
-        return new SeguroMedicoDto(seguro.Id, seguro.Nombre, seguro.PorcentajeCobertura, seguro.Activo);
+        // Recién creada: por definición todavía no puede tener filas de tarifario.
+        return new SeguroMedicoDto(seguro.Id, seguro.Nombre, seguro.PorcentajeCobertura, seguro.Activo, TieneTarifario: false);
     }
 }

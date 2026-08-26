@@ -60,6 +60,10 @@ public sealed class ExceptionHandlingMiddleware(
         {
             await EscribirProblemaAsync(context, StatusCodes.Status409Conflict, "Nombre en uso", ex.Message);
         }
+        catch (CodigoServicioEnUsoException ex)
+        {
+            await EscribirProblemaAsync(context, StatusCodes.Status409Conflict, "Código en uso", ex.Message);
+        }
         catch (HorarioNoDisponibleException ex)
         {
             await EscribirProblemaAsync(context, StatusCodes.Status409Conflict, "Horario no disponible", ex.Message);

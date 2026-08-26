@@ -14,6 +14,7 @@ public interface IEditarSeguroMedicoUseCase : IUseCase<EditarSeguroMedicoRequest
 
 public sealed class EditarSeguroMedicoUseCase(
     ISeguroMedicoRepository seguroMedicoRepository,
+    ITarifarioProcedimientoRepository tarifarioRepository,
     ICurrentUserService currentUser,
     IAuditoriaLogService auditoriaLogService) : IEditarSeguroMedicoUseCase
 {
@@ -42,6 +43,7 @@ public sealed class EditarSeguroMedicoUseCase(
             codigoRespuestaHttp: 200,
             cancellationToken: cancellationToken);
 
-        return new SeguroMedicoDto(seguro.Id, seguro.Nombre, seguro.PorcentajeCobertura, seguro.Activo);
+        var tieneTarifario = (await tarifarioRepository.ObtenerSeguroIdsConTarifarioActivoAsync(cancellationToken)).Contains(seguro.Id);
+        return new SeguroMedicoDto(seguro.Id, seguro.Nombre, seguro.PorcentajeCobertura, seguro.Activo, tieneTarifario);
     }
 }

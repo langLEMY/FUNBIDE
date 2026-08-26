@@ -15,20 +15,22 @@ public class ImportarTarifarioUseCaseTests
 
     private ImportarTarifarioUseCase CrearCasoDeUso() => new(_excelLector, _tarifarioRepository);
 
-    private static Dictionary<string, string?> Fila(string procedimiento, string seguro, string paciente, string? total = null) =>
+    private static Dictionary<string, string?> Fila(
+        string procedimiento, string seguro, string paciente, string? total = null, string? fondo = null) =>
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["Procedimiento"] = procedimiento,
             ["Seguro"] = seguro,
             ["Paciente"] = paciente,
             ["Total"] = total,
+            ["Fondo"] = fondo,
         };
 
     [Fact]
     public async Task EjecutarAsync_ProcedimientoNuevo_LoCrea()
     {
         _tarifarioRepository
-            .ObtenerParaImportarAsync(Arg.Any<Guid>(), Arg.Any<PlanSenasa>(), Arg.Any<CancellationToken>())
+            .ObtenerParaImportarAsync(Arg.Any<Guid>(), Arg.Any<PlanAseguradora>(), Arg.Any<CancellationToken>())
             .Returns(new List<TarifarioProcedimiento>());
         _excelLector.LeerFilas(Arg.Any<Stream>()).Returns(
         [
@@ -37,7 +39,7 @@ public class ImportarTarifarioUseCaseTests
 
         var seguroId = Guid.NewGuid();
         var resultado = await CrearCasoDeUso().EjecutarAsync(
-            new ImportarTarifarioRequest(seguroId, PlanSenasa.Contributivo, Stream.Null), CancellationToken.None);
+            new ImportarTarifarioRequest(seguroId, PlanAseguradora.Contributivo, Stream.Null), CancellationToken.None);
 
         Assert.Equal(1, resultado.Creados);
         Assert.Equal(0, resultado.Actualizados);
@@ -53,9 +55,9 @@ public class ImportarTarifarioUseCaseTests
     {
         var seguroId = Guid.NewGuid();
         var existente = new TarifarioProcedimiento(
-            seguroId, PlanSenasa.Contributivo, "Consulta odontológica general", 100m, 50m, 150m);
+            seguroId, PlanAseguradora.Contributivo, "Consulta odontológica general", 100m, 50m, 150m);
         _tarifarioRepository
-            .ObtenerParaImportarAsync(seguroId, PlanSenasa.Contributivo, Arg.Any<CancellationToken>())
+            .ObtenerParaImportarAsync(seguroId, PlanAseguradora.Contributivo, Arg.Any<CancellationToken>())
             .Returns(new List<TarifarioProcedimiento> { existente });
         _excelLector.LeerFilas(Arg.Any<Stream>()).Returns(
         [
@@ -63,7 +65,7 @@ public class ImportarTarifarioUseCaseTests
         ]);
 
         var resultado = await CrearCasoDeUso().EjecutarAsync(
-            new ImportarTarifarioRequest(seguroId, PlanSenasa.Contributivo, Stream.Null), CancellationToken.None);
+            new ImportarTarifarioRequest(seguroId, PlanAseguradora.Contributivo, Stream.Null), CancellationToken.None);
 
         Assert.Equal(0, resultado.Creados);
         Assert.Equal(1, resultado.Actualizados);
@@ -76,7 +78,7 @@ public class ImportarTarifarioUseCaseTests
     public async Task EjecutarAsync_TotalEnBlanco_LoDerivaDeSeguroMasPaciente()
     {
         _tarifarioRepository
-            .ObtenerParaImportarAsync(Arg.Any<Guid>(), Arg.Any<PlanSenasa>(), Arg.Any<CancellationToken>())
+            .ObtenerParaImportarAsync(Arg.Any<Guid>(), Arg.Any<PlanAseguradora>(), Arg.Any<CancellationToken>())
             .Returns(new List<TarifarioProcedimiento>());
         _excelLector.LeerFilas(Arg.Any<Stream>()).Returns(
         [
@@ -84,17 +86,53 @@ public class ImportarTarifarioUseCaseTests
         ]);
 
         await CrearCasoDeUso().EjecutarAsync(
-            new ImportarTarifarioRequest(Guid.NewGuid(), PlanSenasa.Contributivo, Stream.Null), CancellationToken.None);
+            new ImportarTarifarioRequest(Guid.NewGuid(), PlanAseguradora.Contributivo, Stream.Null), CancellationToken.None);
 
         await _tarifarioRepository.Received(1).AgregarAsync(
             Arg.Is<TarifarioProcedimiento>(t => t.MontoTotal == 950m), Arg.Any<CancellationToken>());
     }
 
     [Fact]
+    public async Task EjecutarAsync_ConColumnaFondo_LaGuardaEnLaFilaNueva()
+    {
+        _tarifarioRepository
+            .ObtenerParaImportarAsync(Arg.Any<Guid>(), Arg.Any<PlanAseguradora>(), Arg.Any<CancellationToken>())
+            .Returns(new List<TarifarioProcedimiento>());
+        _excelLector.LeerFilas(Arg.Any<Stream>()).Returns(
+        [
+            Fila("Consulta general", "500", "100", "600", fondo: "250"),
+        ]);
+
+        await CrearCasoDeUso().EjecutarAsync(
+            new ImportarTarifarioRequest(Guid.NewGuid(), PlanAseguradora.Estandar, Stream.Null), CancellationToken.None);
+
+        await _tarifarioRepository.Received(1).AgregarAsync(
+            Arg.Is<TarifarioProcedimiento>(t => t.MontoFondo == 250m), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task EjecutarAsync_SinColumnaFondo_QuedaNulo()
+    {
+        _tarifarioRepository
+            .ObtenerParaImportarAsync(Arg.Any<Guid>(), Arg.Any<PlanAseguradora>(), Arg.Any<CancellationToken>())
+            .Returns(new List<TarifarioProcedimiento>());
+        _excelLector.LeerFilas(Arg.Any<Stream>()).Returns(
+        [
+            Fila("Consulta odontológica general", "690", "100", "790"),
+        ]);
+
+        await CrearCasoDeUso().EjecutarAsync(
+            new ImportarTarifarioRequest(Guid.NewGuid(), PlanAseguradora.Contributivo, Stream.Null), CancellationToken.None);
+
+        await _tarifarioRepository.Received(1).AgregarAsync(
+            Arg.Is<TarifarioProcedimiento>(t => t.MontoFondo == null), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task EjecutarAsync_FilaSinNombreDeProcedimiento_LaOmite()
     {
         _tarifarioRepository
-            .ObtenerParaImportarAsync(Arg.Any<Guid>(), Arg.Any<PlanSenasa>(), Arg.Any<CancellationToken>())
+            .ObtenerParaImportarAsync(Arg.Any<Guid>(), Arg.Any<PlanAseguradora>(), Arg.Any<CancellationToken>())
             .Returns(new List<TarifarioProcedimiento>());
         _excelLector.LeerFilas(Arg.Any<Stream>()).Returns(
         [
@@ -102,7 +140,7 @@ public class ImportarTarifarioUseCaseTests
         ]);
 
         var resultado = await CrearCasoDeUso().EjecutarAsync(
-            new ImportarTarifarioRequest(Guid.NewGuid(), PlanSenasa.Contributivo, Stream.Null), CancellationToken.None);
+            new ImportarTarifarioRequest(Guid.NewGuid(), PlanAseguradora.Contributivo, Stream.Null), CancellationToken.None);
 
         Assert.Equal(0, resultado.Creados);
         Assert.Equal(1, resultado.Omitidos);

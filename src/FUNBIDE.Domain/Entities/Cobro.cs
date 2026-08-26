@@ -27,6 +27,16 @@ public sealed class Cobro : AppendOnlyEntity
     public Guid? TarifarioProcedimientoId { get; private set; }
     public string? CodigoAutorizacion { get; private set; }
 
+    /// <summary>
+    /// Excedente que la aseguradora paga por encima de <see cref="MontoCobertura"/> y que
+    /// no se le reconoce al paciente ni entra a la caja física — congelado acá desde
+    /// <see cref="TarifarioProcedimiento.MontoFondo"/> al momento del cobro. Nunca
+    /// participa en <see cref="MontoACargoPaciente"/> ni en <see cref="MontoPagado"/>;
+    /// <c>RegistrarCobroUseCase</c> lo vuelca aparte a un <see cref="MovimientoFinanciero"/>
+    /// como ingreso interno de la fundación.
+    /// </summary>
+    public decimal? MontoFondo { get; private set; }
+
     private readonly List<PagoRecibido> _pagos = [];
     /// <summary>Cómo entró el dinero de este cobro, desglosado por método. Puede estar vacía (nada pagado todavía, todo a deuda).</summary>
     public IReadOnlyList<PagoRecibido> Pagos => _pagos.AsReadOnly();
@@ -68,6 +78,11 @@ public sealed class Cobro : AppendOnlyEntity
     /// deriva de un porcentaje sobre <paramref name="montoTotal"/>. Reemplaza el cálculo
     /// porcentual cuando se informa.
     /// </param>
+    /// <param name="montoFondoExacto">
+    /// Excedente del tarifario que va al fondo interno de la fundación (ver
+    /// <see cref="MontoFondo"/>) — solo tiene sentido junto con
+    /// <paramref name="montoCoberturaExacto"/>, nunca con <paramref name="porcentajeCobertura"/>.
+    /// </param>
     public Cobro(
         Guid pacienteId,
         Guid? citaId,
@@ -80,7 +95,8 @@ public sealed class Cobro : AppendOnlyEntity
         decimal? porcentajeCobertura = null,
         string? codigoAutorizacion = null,
         Guid? tarifarioProcedimientoId = null,
-        decimal? montoCoberturaExacto = null)
+        decimal? montoCoberturaExacto = null,
+        decimal? montoFondoExacto = null)
     {
         if (string.IsNullOrWhiteSpace(concepto))
         {
@@ -119,6 +135,11 @@ public sealed class Cobro : AppendOnlyEntity
                 throw new ArgumentException(
                     "El código de autorización es obligatorio cuando el cobro usa seguro médico.", nameof(codigoAutorizacion));
             }
+
+            if (montoFondoExacto is < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(montoFondoExacto), "El monto del fondo interno no puede ser negativo.");
+            }
         }
 
         PacienteId = pacienteId;
@@ -134,6 +155,7 @@ public sealed class Cobro : AppendOnlyEntity
             ? montoCoberturaExacto ?? Math.Round(montoTotal * porcentajeCobertura!.Value / 100m, 2)
             : null;
         CodigoAutorizacion = seguroMedicoId.HasValue ? codigoAutorizacion!.Trim() : null;
+        MontoFondo = seguroMedicoId.HasValue ? montoFondoExacto : null;
 
         var montoPagado = pagos.Sum(p => p.Monto);
         if (montoPagado < 0 || montoPagado > MontoACargoPaciente)

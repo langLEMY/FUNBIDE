@@ -5,7 +5,12 @@ import { agruparDoctoresPorEspecialidad } from '../lib/agruparDoctores'
 import type { CitaAgenda } from '../types/cita'
 import type { Paciente, PacientesPaginados } from '../types/paciente'
 import type { DoctorSimple } from '../types/doctor'
+import type { Servicio } from '../types/servicio'
+import type { EspecialidadMedica } from '../types/usuario'
+import { ESPECIALIDADES, ETIQUETA_ESPECIALIDAD } from '../types/personal'
 import './AgendaPage.css'
+
+const SIN_ESPECIALIDAD = ''
 
 const formateadorFechaHora = new Intl.DateTimeFormat('es-DO', { dateStyle: 'short', timeStyle: 'short' })
 
@@ -54,6 +59,9 @@ export function AgendaPage() {
   const [busquedaDebounced, setBusquedaDebounced] = useState('')
   const [resultados, setResultados] = useState<Paciente[]>([])
   const [pacienteSeleccionado, setPacienteSeleccionado] = useState<Paciente | null>(null)
+  const [servicios, setServicios] = useState<Servicio[]>([])
+  const [especialidadCita, setEspecialidadCita] = useState<EspecialidadMedica | typeof SIN_ESPECIALIDAD>(SIN_ESPECIALIDAD)
+  const [servicioId, setServicioId] = useState('')
   const [doctorId, setDoctorId] = useState('')
   const [motivo, setMotivo] = useState('')
   const [fecha, setFecha] = useState('')
@@ -65,13 +73,26 @@ export function AgendaPage() {
   const [recargarClave, setRecargarClave] = useState(0)
   const recargarAgenda = () => setRecargarClave((clave) => clave + 1)
 
+  // Selección encadenada para "Cita rápida": elegir el área primero acota tanto los
+  // servicios como los doctores que se ofrecen a elegir después — el mismo catálogo de
+  // Servicios que usa Cobros para pago particular, reutilizado acá como motivos comunes.
+  const gruposDoctoresFormulario = useMemo(
+    () => agruparDoctoresPorEspecialidad(especialidadCita ? doctores.filter((d) => d.especialidad === especialidadCita) : doctores),
+    [doctores, especialidadCita],
+  )
+  const serviciosFiltrados = useMemo(
+    () => (especialidadCita ? servicios.filter((s) => s.especialidad === especialidadCita) : servicios),
+    [servicios, especialidadCita],
+  )
+
   useEffect(() => {
     let cancelado = false
 
-    api
-      .get<DoctorSimple[]>('/api/personal/doctores')
-      .then((datos) => {
-        if (!cancelado) setDoctores(datos)
+    Promise.all([api.get<DoctorSimple[]>('/api/personal/doctores'), api.get<Servicio[]>('/api/servicios')])
+      .then(([listaDoctores, listaServicios]) => {
+        if (cancelado) return
+        setDoctores(listaDoctores)
+        setServicios(listaServicios)
       })
       .catch((err) => {
         if (!cancelado) {
@@ -133,6 +154,15 @@ export function AgendaPage() {
     }
   }, [busquedaDebounced])
 
+  const seleccionarServicioCita = (id: string) => {
+    setServicioId(id)
+    if (!id) return
+    const servicio = servicios.find((s) => s.id === id)
+    if (servicio) {
+      setMotivo(servicio.nombre)
+    }
+  }
+
   const handleAgendar = async (event: FormEvent) => {
     event.preventDefault()
     setErrorAgendar(null)
@@ -171,6 +201,8 @@ export function AgendaPage() {
         fin: finIso,
       })
       setPacienteSeleccionado(null)
+      setEspecialidadCita(SIN_ESPECIALIDAD)
+      setServicioId('')
       setDoctorId('')
       setMotivo('')
       setFecha('')
@@ -215,7 +247,11 @@ export function AgendaPage() {
       {error && <p className="agenda-error">{error}</p>}
 
       <section className="agenda-crear-card">
-        <h2>Cita rápida</h2>
+        <h2>Agendar una cita nueva</h2>
+        <p className="text-secondary agenda-crear-subtitulo">
+          Busca al paciente, elige el área y el motivo de la lista (o escríbelo si no aparece), y asigna un doctor y
+          un horario.
+        </p>
         <div className="agenda-buscador">
           <input
             type="search"
@@ -247,9 +283,32 @@ export function AgendaPage() {
         </div>
 
         <form className="agenda-crear-form" onSubmit={(event) => void handleAgendar(event)}>
+          <select
+            value={especialidadCita}
+            onChange={(event) => {
+              setEspecialidadCita(event.target.value as EspecialidadMedica)
+              setServicioId('')
+              setDoctorId('')
+            }}
+          >
+            <option value={SIN_ESPECIALIDAD}>Área (todas)</option>
+            {ESPECIALIDADES.map((opcion) => (
+              <option key={opcion} value={opcion}>
+                {ETIQUETA_ESPECIALIDAD[opcion]}
+              </option>
+            ))}
+          </select>
+          <select value={servicioId} onChange={(event) => seleccionarServicioCita(event.target.value)}>
+            <option value="">Motivo — elegir de la lista (opcional)</option>
+            {serviciosFiltrados.map((servicio) => (
+              <option key={servicio.id} value={servicio.id}>
+                {servicio.nombre}
+              </option>
+            ))}
+          </select>
           <select value={doctorId} onChange={(event) => setDoctorId(event.target.value)}>
             <option value="">Selecciona un doctor…</option>
-            {gruposDoctores.map((grupo) => (
+            {gruposDoctoresFormulario.map((grupo) => (
               <optgroup key={grupo.etiqueta} label={grupo.etiqueta}>
                 {grupo.doctores.map((doctor) => (
                   <option key={doctor.id} value={doctor.id}>

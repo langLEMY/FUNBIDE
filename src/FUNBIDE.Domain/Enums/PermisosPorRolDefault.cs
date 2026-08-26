@@ -1,12 +1,19 @@
 namespace FUNBIDE.Domain.Enums;
 
 /// <summary>
-/// Reproduce exactamente el acceso a módulos que cada <see cref="RolUsuario"/> ya
-/// tenía antes de existir <see cref="ModuloPermiso"/>, para que ningún usuario sin
-/// overrides explícitos (ver <c>PermisoUsuario</c>) note un cambio de comportamiento.
-/// Única desviación intencional: Admin no incluye <see cref="ModuloPermiso.Directorio"/>
-/// — esa ruta nunca apareció en su menú (solo era alcanzable tecleando la URL), así
-/// que se trata como "nunca estuvo habilitada" en vez de perpetuar el descuido.
+/// Acceso a módulos por defecto para cada <see cref="RolUsuario"/> sin overrides
+/// explícitos (ver <c>PermisoUsuario</c>). Originalmente reproducía tal cual el acceso
+/// previo a que existiera <see cref="ModuloPermiso"/> (única desviación intencional de
+/// esa época: Admin no incluye <see cref="ModuloPermiso.Directorio"/>, porque esa ruta
+/// nunca apareció en su menú). Se le siguen agregando módulos nuevos a medida que se
+/// habilitan features para un rol (p. ej. <see cref="ModuloPermiso.Servicios"/> para
+/// Admin/Lemy, o <see cref="ModuloPermiso.Recepcion"/> de solo lectura para Lemy).
+///
+/// Fondos es el puesto de caja/recepción: agenda citas, asigna doctor, gestiona la sala
+/// de espera, y además opera la caja (abre/cierra turno, cobra con seguro/ARS aplicando
+/// sus descuentos) — es el rol de cajera de la fundación. Admin también tiene
+/// <see cref="ModuloPermiso.Caja"/>/<see cref="ModuloPermiso.Cobros"/> para supervisión,
+/// igual que el resto del dinero de la fundación (Finanzas/Gastos/Donaciones).
 /// </summary>
 public static class PermisosPorRolDefault
 {
@@ -23,9 +30,12 @@ public static class PermisosPorRolDefault
                 ModuloPermiso.Operaciones,
                 ModuloPermiso.Inventario,
                 ModuloPermiso.Aseguradoras,
+                ModuloPermiso.Servicios,
                 ModuloPermiso.Actividad,
                 ModuloPermiso.Pacientes,
                 ModuloPermiso.HistorialClinico,
+                ModuloPermiso.Caja,
+                ModuloPermiso.Cobros,
             },
             [RolUsuario.Lemy] = new HashSet<ModuloPermiso>
             {
@@ -33,7 +43,12 @@ public static class PermisosPorRolDefault
                 ModuloPermiso.Pacientes,
                 ModuloPermiso.Inventario,
                 ModuloPermiso.Aseguradoras,
+                ModuloPermiso.Servicios,
                 ModuloPermiso.Actividad,
+                // Solo lectura: ListarSalaDeEsperaUseCase es la única acción de Recepción
+                // a la que Lemy tiene ruta/página — no puede registrar llegadas ni llegadas
+                // directas, esas siguen siendo exclusivas de Fondos por rol.
+                ModuloPermiso.Recepcion,
             },
             [RolUsuario.Doctor] = new HashSet<ModuloPermiso>
             {

@@ -3,6 +3,7 @@ using FUNBIDE.Application.Common.Interfaces;
 using FUNBIDE.Application.DTOs.Cobros;
 using FUNBIDE.Application.Exceptions;
 using FUNBIDE.Domain.Entities;
+using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.Exceptions;
 using FUNBIDE.Domain.Interfaces;
 
@@ -19,13 +20,19 @@ public interface IRegistrarCobroUseCase : IUseCase<RegistrarCobroRequest, CobroD
 /// <see cref="Cobro.MontoPagado"/> (lo efectivamente cobrado, no lo cubierto por
 /// seguro) en el <see cref="ResumenDiario"/> del día, igual que
 /// <c>RegistrarMovimientoFinancieroUseCase</c> — sin esto, el neto que ve el
-/// dashboard de Admin no incluiría ningún ingreso cobrado en Caja.
+/// dashboard de Admin no incluiría ningún ingreso cobrado en Caja. Cuando el
+/// procedimiento del tarifario trae <see cref="TarifarioProcedimiento.MontoFondo"/> (hoy
+/// solo Renacer), además crea un <see cref="MovimientoFinanciero"/> de ingreso por ese
+/// excedente — mismo patrón que <c>RegistrarDonacionUseCase</c>, pero con
+/// <see cref="MovimientoFinanciero.TurnoCajaId"/> informado porque acá sí hay un turno
+/// abierto ya bloqueado.
 /// </summary>
 public sealed class RegistrarCobroUseCase(
     ICobroRepository cobroRepository,
     ITurnoCajaRepository turnoCajaRepository,
     ISeguroMedicoRepository seguroMedicoRepository,
     ITarifarioProcedimientoRepository tarifarioRepository,
+    IMovimientoFinancieroRepository movimientoFinancieroRepository,
     IPacienteRepository pacienteRepository,
     IResumenDiarioRepository resumenDiarioRepository,
     IUnitOfWork unitOfWork,
@@ -103,7 +110,8 @@ public sealed class RegistrarCobroUseCase(
                 tarifario is null ? seguro?.PorcentajeCobertura : null,
                 request.CodigoAutorizacion,
                 tarifario?.Id,
-                tarifario?.MontoSeguro);
+                tarifario?.MontoSeguro,
+                tarifario?.MontoFondo);
 
             await cobroRepository.AgregarAsync(cobro, ct);
             await cobroRepository.GuardarCambiosAsync(ct);
@@ -119,12 +127,31 @@ public sealed class RegistrarCobroUseCase(
                 // sacar cuánto entró en efectivo vs. tarjeta vs. transferencia por día.
                 resumen.AcumularPago(pago.Metodo, pago.Monto);
             }
+
+            if (cobro.MontoFondo is > 0)
+            {
+                // Excedente que la aseguradora paga por encima de lo reconocido como
+                // cobertura normal (ver TarifarioProcedimiento.MontoFondo) — no es dinero
+                // que haya pasado por la caja física, pero sí se reconoce como ingreso de
+                // la fundación, igual que RegistrarDonacionUseCase.
+                var movimientoFondo = new MovimientoFinanciero(
+                    TipoMovimientoFinanciero.Ingreso,
+                    cobro.MontoFondo.Value,
+                    $"Fondo interno — {tarifario!.Procedimiento} ({seguro!.Nombre})",
+                    currentUser.UsuarioId,
+                    request.CitaId,
+                    turno.Id);
+                await movimientoFinancieroRepository.RegistrarAsync(movimientoFondo, ct);
+                await movimientoFinancieroRepository.GuardarCambiosAsync(ct);
+                resumen.AcumularMovimiento(movimientoFondo.MontoConSigno);
+            }
+
             await resumenDiarioRepository.GuardarCambiosAsync(ct);
 
             await auditoriaLogService.RegistrarEventoAsync(
                 accion: "cobros.registrar",
                 recurso: $"cobros/{cobro.Id}",
-                detalle: new { cobro.PacienteId, cobro.MontoTotal, Pagos = cobro.Pagos.Select(p => new { p.Metodo, p.Monto }), cobro.SeguroMedicoId },
+                detalle: new { cobro.PacienteId, cobro.MontoTotal, Pagos = cobro.Pagos.Select(p => new { p.Metodo, p.Monto }), cobro.SeguroMedicoId, cobro.MontoFondo },
                 usuarioId: currentUser.UsuarioId,
                 codigoRespuestaHttp: 201,
                 cancellationToken: ct);
@@ -134,7 +161,7 @@ public sealed class RegistrarCobroUseCase(
                 cobro.MontoTotal, cobro.SeguroMedicoId, seguro?.Nombre, cobro.PorcentajeCobertura, cobro.MontoCobertura,
                 cobro.CodigoAutorizacion, cobro.Pagos.Select(p => new PagoDto(p.Metodo, p.Monto)).ToList(),
                 cobro.MontoACargoPaciente, cobro.MontoPagado, cobro.MontoPendiente,
-                cobro.UsuarioId, cobro.RegistradoEn, cobro.TarifarioProcedimientoId);
+                cobro.UsuarioId, cobro.RegistradoEn, cobro.TarifarioProcedimientoId, cobro.MontoFondo);
         }, cancellationToken);
     }
 }

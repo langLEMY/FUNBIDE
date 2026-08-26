@@ -66,6 +66,12 @@ public sealed class AutenticacionLocalService(
             new Claim(JwtRegisteredClaimNames.Sub, usuario.SupabaseUserId.ToString()),
             new Claim("role", usuario.Rol.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, usuario.Correo),
+            // Requerido por SesionRevocadaMiddleware para comparar contra
+            // ConfiguracionSistema.SesionesRevocadasEn — el constructor de
+            // JwtSecurityToken usado abajo NO lo agrega solo (a diferencia de "nbf"/"exp",
+            // que sí toma de notBefore/expires), así que sin esto todo token local queda
+            // sin "iat" y el middleware lo trata como anterior a cualquier revocación.
+            new Claim(JwtRegisteredClaimNames.Iat, ahora.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
         };
 
         var signingKey = new SymmetricSecurityKey(Convert.FromBase64String(opts.SigningKeyBase64));

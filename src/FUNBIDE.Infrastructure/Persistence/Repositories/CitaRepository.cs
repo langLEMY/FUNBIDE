@@ -8,16 +8,19 @@ namespace FUNBIDE.Infrastructure.Persistence.Repositories;
 
 public sealed class CitaRepository(FunbideDbContext dbContext, IDateTimeProvider dateTimeProvider) : ICitaRepository
 {
-    // Los cortes de "día" deben calcularse con el offset de la clínica, no en UTC (offset
-    // cero): de lo contrario una cita de la noche local cae en el día UTC siguiente y
-    // desaparece de Agenda/Sala de Espera de "hoy". America/Santo_Domingo no tiene horario
-    // de verano, así que el offset es siempre el mismo, pero se pide igual vía TimeZoneInfo
-    // en vez de hardcodear "-4" para que quede explícito de dónde sale.
+    // El corte de "día" se calcula con el offset de la clínica, no en UTC (offset cero):
+    // de lo contrario una cita de la noche local cae en el día UTC siguiente y desaparece
+    // de Agenda/Sala de Espera de "hoy". America/Santo_Domingo no tiene horario de
+    // verano, así que el offset es siempre el mismo, pero se pide igual vía TimeZoneInfo
+    // en vez de hardcodear "-4" para que quede explícito de dónde sale. Se normaliza a
+    // UTC (.ToUniversalTime()) antes de usarlo como parámetro de la consulta — mismo
+    // instante, pero Npgsql rechaza un DateTimeOffset con offset distinto de cero al
+    // compararlo contra una columna timestamptz.
     private DateTimeOffset InicioDeDiaLocal(DateOnly dia)
     {
         var mediaNocheIngenua = dia.ToDateTime(TimeOnly.MinValue);
         var offset = dateTimeProvider.ZonaHorariaClinica.GetUtcOffset(mediaNocheIngenua);
-        return new DateTimeOffset(mediaNocheIngenua, offset);
+        return new DateTimeOffset(mediaNocheIngenua, offset).ToUniversalTime();
     }
 
     public Task<Cita?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken) =>
@@ -38,6 +41,26 @@ public sealed class CitaRepository(FunbideDbContext dbContext, IDateTimeProvider
             .Select(c => c.PacienteId)
             .Distinct()
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<(Guid DoctorId, Guid PacienteId)>> ObtenerDoctorYPacientePorCompletadasAsync(CancellationToken cancellationToken)
+    {
+        var filas = await dbContext.Citas
+            .AsNoTracking()
+            .Where(c => c.Estado == EstadoCita.Completada)
+            .Select(c => new { c.DoctorId, c.PacienteId })
+            .ToListAsync(cancellationToken);
+
+        return filas.Select(f => (f.DoctorId, f.PacienteId)).ToList();
+    }
+
+    public async Task<IReadOnlyDictionary<Guid, Guid>> ObtenerDoctorIdsPorCitaIdsAsync(
+        IReadOnlyCollection<Guid> citaIds, CancellationToken cancellationToken) =>
+        (await dbContext.Citas
+            .AsNoTracking()
+            .Where(c => citaIds.Contains(c.Id))
+            .Select(c => new { c.Id, c.DoctorId })
+            .ToListAsync(cancellationToken))
+            .ToDictionary(c => c.Id, c => c.DoctorId);
 
     public Task<bool> ExisteAlgunaParaPacienteAsync(Guid pacienteId, CancellationToken cancellationToken) =>
         dbContext.Citas.AnyAsync(c => c.PacienteId == pacienteId, cancellationToken);

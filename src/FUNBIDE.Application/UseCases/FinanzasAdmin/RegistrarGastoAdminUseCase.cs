@@ -13,7 +13,7 @@ public interface IRegistrarGastoAdminUseCase : IUseCase<RegistrarGastoAdminReque
 
 /// <summary>
 /// Registra un gasto organizacional (alquiler, nómina, insumos) desde el panel de Admin.
-/// A diferencia de <c>RegistrarMovimientoFinancieroUseCase</c> (el de Caja/Fondos), este
+/// A diferencia de <c>RegistrarMovimientoFinancieroUseCase</c> (el del turno de Caja), este
 /// caso de uso NO exige un turno de caja abierto: son conceptos distintos — Caja
 /// reconcilia efectivo físico de un turno, Admin registra gastos de la fundación en
 /// cualquier momento. Ambos escriben en la misma tabla (<see cref="MovimientoFinanciero"/>)

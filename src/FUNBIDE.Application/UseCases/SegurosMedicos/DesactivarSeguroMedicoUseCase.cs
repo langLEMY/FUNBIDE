@@ -13,6 +13,7 @@ public interface IDesactivarSeguroMedicoUseCase : IUseCase<Guid, SeguroMedicoDto
 
 public sealed class DesactivarSeguroMedicoUseCase(
     ISeguroMedicoRepository seguroMedicoRepository,
+    ITarifarioProcedimientoRepository tarifarioRepository,
     ICurrentUserService currentUser,
     IAuditoriaLogService auditoriaLogService) : IDesactivarSeguroMedicoUseCase
 {
@@ -32,6 +33,7 @@ public sealed class DesactivarSeguroMedicoUseCase(
             codigoRespuestaHttp: 200,
             cancellationToken: cancellationToken);
 
-        return new SeguroMedicoDto(seguro.Id, seguro.Nombre, seguro.PorcentajeCobertura, seguro.Activo);
+        var tieneTarifario = (await tarifarioRepository.ObtenerSeguroIdsConTarifarioActivoAsync(cancellationToken)).Contains(seguro.Id);
+        return new SeguroMedicoDto(seguro.Id, seguro.Nombre, seguro.PorcentajeCobertura, seguro.Activo, tieneTarifario);
     }
 }

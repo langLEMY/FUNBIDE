@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
+import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import type { TurnoCaja, ResumenCaja } from '../types/turnoCaja'
 import type { Cobro } from '../types/cobro'
@@ -22,6 +23,9 @@ interface MovimientoTimeline {
 }
 
 export function CajaPage() {
+  const { perfil } = useAuth()
+  const puedeRegistrarGastos = perfil?.rol === 'Admin'
+
   const [turno, setTurno] = useState<TurnoCaja | null>(null)
   const [resumen, setResumen] = useState<ResumenCaja | null>(null)
   const [timeline, setTimeline] = useState<MovimientoTimeline[]>([])
@@ -303,30 +307,32 @@ export function CajaPage() {
             </section>
           )}
 
-          <section className="caja-egreso-card">
-            <h2>Registrar salida autorizada</h2>
-            <form className="caja-egreso-form" onSubmit={(event) => void handleRegistrarEgreso(event)}>
-              <input
-                placeholder="Concepto"
-                value={egresoConcepto}
-                onChange={(event) => setEgresoConcepto(event.target.value)}
-                required
-              />
-              <input
-                type="number"
-                min={0.01}
-                step="0.01"
-                placeholder="Monto"
-                value={egresoMonto}
-                onChange={(event) => setEgresoMonto(event.target.value)}
-                required
-              />
-              <button type="submit" disabled={registrandoEgreso}>
-                {registrandoEgreso ? 'Registrando…' : 'Registrar salida'}
-              </button>
-            </form>
-            {errorEgreso && <p className="caja-error">{errorEgreso}</p>}
-          </section>
+          {puedeRegistrarGastos && (
+            <section className="caja-egreso-card">
+              <h2>Registrar salida autorizada</h2>
+              <form className="caja-egreso-form" onSubmit={(event) => void handleRegistrarEgreso(event)}>
+                <input
+                  placeholder="Concepto"
+                  value={egresoConcepto}
+                  onChange={(event) => setEgresoConcepto(event.target.value)}
+                  required
+                />
+                <input
+                  type="number"
+                  min={0.01}
+                  step="0.01"
+                  placeholder="Monto"
+                  value={egresoMonto}
+                  onChange={(event) => setEgresoMonto(event.target.value)}
+                  required
+                />
+                <button type="submit" disabled={registrandoEgreso}>
+                  {registrandoEgreso ? 'Registrando…' : 'Registrar salida'}
+                </button>
+              </form>
+              {errorEgreso && <p className="caja-error">{errorEgreso}</p>}
+            </section>
+          )}
 
           <section className="caja-timeline-card">
             <h2>Movimientos del turno</h2>
@@ -349,7 +355,7 @@ export function CajaPage() {
           </section>
 
           <section className="caja-cierre-card">
-            {resumen && resumen.gastosAdminEnElTurno > 0 && (
+            {puedeRegistrarGastos && resumen && resumen.gastosAdminEnElTurno > 0 && (
               <p className="caja-aviso-gastos-admin">
                 Admin registró {formateadorMoneda.format(resumen.gastosAdminEnElTurno)} en gastos durante este turno
                 (no incluidos en "Salidas autorizadas" de Caja) — revisá que no se dupliquen.

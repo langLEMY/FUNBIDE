@@ -5,8 +5,9 @@ import { StatCard } from '../components/dashboard/StatCard'
 import { MonthlyMetricChart } from '../components/dashboard/MonthlyMetricChart'
 import { Sparkline } from '../components/dashboard/Sparkline'
 import { api, ApiError } from '../lib/api'
-import type { AlertasAdmin, ResumenDiario } from '../types/dashboard'
-import type { Usuario } from '../types/usuario'
+import type { AlertasAdmin, PacientesPorDoctor, ResumenDiario, SesionesActivas } from '../types/dashboard'
+import type { EspecialidadMedica, Usuario } from '../types/usuario'
+import { ETIQUETA_ESPECIALIDAD } from '../types/personal'
 import { coloresParaTema, colorMetodoPago, colorRolParaTema } from '../styles/colors'
 import type { MetodoPago } from '../types/cobro'
 import { useTheme } from '../theme/ThemeContext'
@@ -35,6 +36,8 @@ export function DashboardPage() {
   const [resumenMes, setResumenMes] = useState<ResumenDiario[]>([])
   const [alertas, setAlertas] = useState<AlertasAdmin | null>(null)
   const [personal, setPersonal] = useState<Usuario[]>([])
+  const [pacientesPorDoctor, setPacientesPorDoctor] = useState<PacientesPorDoctor[]>([])
+  const [sesionesActivas, setSesionesActivas] = useState<SesionesActivas | null>(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -45,17 +48,21 @@ export function DashboardPage() {
       setCargando(true)
       setError(null)
       try {
-        const [hoy, mes, alertasAdmin, personalLista] = await Promise.all([
+        const [hoy, mes, alertasAdmin, personalLista, porDoctor, sesiones] = await Promise.all([
           api.get<ResumenDiario>('/api/dashboard/resumen-hoy'),
           api.get<ResumenDiario[]>('/api/dashboard/resumen-mes'),
           api.get<AlertasAdmin>('/api/dashboard/alertas'),
           api.get<Usuario[]>('/api/personal'),
+          api.get<PacientesPorDoctor[]>('/api/dashboard/pacientes-por-doctor'),
+          api.get<SesionesActivas>('/api/sesiones/activas'),
         ])
         if (!cancelado) {
           setResumenHoy(hoy)
           setResumenMes(mes)
           setAlertas(alertasAdmin)
           setPersonal(personalLista)
+          setPacientesPorDoctor(porDoctor)
+          setSesionesActivas(sesiones)
         }
       } catch (err) {
         if (!cancelado) {
@@ -152,6 +159,12 @@ export function DashboardPage() {
           colorSerie={chartColors.actividad}
           icono="users"
         />
+        <StatCard
+          etiqueta="Sesiones activas"
+          valor={cargando ? '—' : formateadorEntero.format(sesionesActivas?.cantidad ?? 0)}
+          colorSerie={chartColors.pacientes}
+          icono="activity"
+        />
       </section>
 
       {alertas && (alertas.stockBajo.length > 0 || alertas.pacientesConDeuda.length > 0) && (
@@ -219,6 +232,41 @@ export function DashboardPage() {
             formatearValor={(valor) => formateadorMoneda.format(valor)}
           />
         </div>
+      </section>
+
+      <section className="dashboard-pacientes-doctor-card">
+        <h2>Pacientes atendidos por doctor</h2>
+        <p className="text-secondary dashboard-pacientes-doctor-subtitulo">
+          Histórico acumulado de citas completadas por cada doctor activo.
+        </p>
+        {cargando ? (
+          <p className="text-secondary cargando-pulso">Cargando…</p>
+        ) : pacientesPorDoctor.length === 0 ? (
+          <p className="text-secondary">No hay doctores activos registrados.</p>
+        ) : (
+          <table className="dashboard-pacientes-doctor-tabla">
+            <thead>
+              <tr>
+                <th>Doctor</th>
+                <th>Especialidad</th>
+                <th>Citas completadas</th>
+                <th>Pacientes distintos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pacientesPorDoctor.map((doctor) => (
+                <tr key={doctor.doctorId}>
+                  <td>{doctor.nombreCompleto}</td>
+                  <td className="text-muted">
+                    {doctor.especialidad ? ETIQUETA_ESPECIALIDAD[doctor.especialidad as EspecialidadMedica] : '—'}
+                  </td>
+                  <td>{formateadorEntero.format(doctor.citasCompletadas)}</td>
+                  <td className="dashboard-pacientes-doctor-destacado">{formateadorEntero.format(doctor.pacientesDistintos)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
 
       <section className="dashboard-metodos-pago">

@@ -95,6 +95,7 @@ export function RecuperarContrasenaPage() {
       </form>
 
       <p className="login-footer">© {new Date().getFullYear()} Fundación Bienestar y Desarrollo</p>
+      <p className="login-footer login-footer-autor">© By Lemy</p>
     </div>
   )
 }

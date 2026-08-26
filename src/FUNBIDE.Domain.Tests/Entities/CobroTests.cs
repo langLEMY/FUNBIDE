@@ -115,6 +115,41 @@ public class CobroTests
     }
 
     [Fact]
+    public void Constructor_ConMontoFondo_LoGuardaSinAfectarLoQuePagaElPaciente()
+    {
+        var cobro = new Cobro(
+            Guid.NewGuid(), null, Guid.NewGuid(), Guid.NewGuid(), "Consulta general", 600m,
+            PagoEfectivo(100m), seguroMedicoId: Guid.NewGuid(),
+            porcentajeCobertura: null, codigoAutorizacion: "AUTH-1",
+            montoCoberturaExacto: 500m, montoFondoExacto: 250m);
+
+        Assert.Equal(250m, cobro.MontoFondo);
+        Assert.Equal(500m, cobro.MontoCobertura);
+        Assert.Equal(100m, cobro.MontoACargoPaciente);
+        Assert.Equal(0m, cobro.MontoPendiente);
+    }
+
+    [Fact]
+    public void Constructor_SinSeguro_MontoFondoQuedaNuloAunqueSeInforme()
+    {
+        var cobro = new Cobro(
+            Guid.NewGuid(), null, Guid.NewGuid(), Guid.NewGuid(), "Consulta general", 600m,
+            PagoEfectivo(600m), montoFondoExacto: 250m);
+
+        Assert.Null(cobro.MontoFondo);
+    }
+
+    [Fact]
+    public void Constructor_ConMontoFondoNegativo_LanzaArgumentOutOfRangeException()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new Cobro(
+            Guid.NewGuid(), null, Guid.NewGuid(), Guid.NewGuid(), "Consulta general", 600m,
+            PagoEfectivo(100m), seguroMedicoId: Guid.NewGuid(),
+            porcentajeCobertura: null, codigoAutorizacion: "AUTH-1",
+            montoCoberturaExacto: 500m, montoFondoExacto: -1m));
+    }
+
+    [Fact]
     public void Constructor_ConVariosMetodosDePago_SumaTodasLasLineasEnMontoPagado()
     {
         var pagos = new List<PagoRecibido> { new(MetodoPago.Tarjeta, 300m), new(MetodoPago.Efectivo, 200m) };

@@ -18,6 +18,7 @@ public enum ModuloPermiso
     Operaciones,
     Inventario,
     Aseguradoras,
+    Servicios,
     Actividad,
     Pacientes,
     HistorialClinico,

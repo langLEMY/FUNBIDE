@@ -14,13 +14,13 @@ public class ListarTarifarioUseCaseTests
     {
         var seguroId = Guid.NewGuid();
         var tarifarioRepository = Substitute.For<ITarifarioProcedimientoRepository>();
-        var fila = new TarifarioProcedimiento(seguroId, PlanSenasa.Pensionado, "Consulta odontológica general", 140m, 360m, 500m);
+        var fila = new TarifarioProcedimiento(seguroId, PlanAseguradora.Pensionado, "Consulta odontológica general", 140m, 360m, 500m);
         tarifarioRepository
-            .ObtenerPorSeguroYPlanAsync(seguroId, PlanSenasa.Pensionado, Arg.Any<CancellationToken>())
+            .ObtenerPorSeguroYPlanAsync(seguroId, PlanAseguradora.Pensionado, Arg.Any<CancellationToken>())
             .Returns(new List<TarifarioProcedimiento> { fila });
 
         var resultado = await new ListarTarifarioUseCase(tarifarioRepository).EjecutarAsync(
-            new ListarTarifarioRequest(seguroId, PlanSenasa.Pensionado), CancellationToken.None);
+            new ListarTarifarioRequest(seguroId, PlanAseguradora.Pensionado), CancellationToken.None);
 
         var dto = Assert.Single(resultado);
         Assert.Equal(fila.Id, dto.Id);

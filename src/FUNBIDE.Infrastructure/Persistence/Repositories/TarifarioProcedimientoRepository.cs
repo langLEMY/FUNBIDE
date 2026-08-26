@@ -8,7 +8,7 @@ namespace FUNBIDE.Infrastructure.Persistence.Repositories;
 public sealed class TarifarioProcedimientoRepository(FunbideDbContext dbContext) : ITarifarioProcedimientoRepository
 {
     public async Task<IReadOnlyList<TarifarioProcedimiento>> ObtenerPorSeguroYPlanAsync(
-        Guid seguroMedicoId, PlanSenasa plan, CancellationToken cancellationToken) =>
+        Guid seguroMedicoId, PlanAseguradora plan, CancellationToken cancellationToken) =>
         await dbContext.TarifarioProcedimientos
             .AsNoTracking()
             .Where(t => t.SeguroMedicoId == seguroMedicoId && t.Plan == plan && t.Activo)
@@ -19,10 +19,19 @@ public sealed class TarifarioProcedimientoRepository(FunbideDbContext dbContext)
         dbContext.TarifarioProcedimientos.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<TarifarioProcedimiento>> ObtenerParaImportarAsync(
-        Guid seguroMedicoId, PlanSenasa plan, CancellationToken cancellationToken) =>
+        Guid seguroMedicoId, PlanAseguradora plan, CancellationToken cancellationToken) =>
         await dbContext.TarifarioProcedimientos
             .Where(t => t.SeguroMedicoId == seguroMedicoId && t.Plan == plan)
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlySet<Guid>> ObtenerSeguroIdsConTarifarioActivoAsync(CancellationToken cancellationToken) =>
+        (await dbContext.TarifarioProcedimientos
+            .AsNoTracking()
+            .Where(t => t.Activo)
+            .Select(t => t.SeguroMedicoId)
+            .Distinct()
+            .ToListAsync(cancellationToken))
+        .ToHashSet();
 
     public async Task AgregarAsync(TarifarioProcedimiento tarifario, CancellationToken cancellationToken) =>
         await dbContext.TarifarioProcedimientos.AddAsync(tarifario, cancellationToken);

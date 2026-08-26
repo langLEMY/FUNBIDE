@@ -1,0 +1,144 @@
+.servicios-subtitulo {
+  margin: -8px 0 16px;
+  font-size: 13px;
+}
+
+.servicios-crear-card,
+.servicios-tabla-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.servicios-crear-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.servicios-crear-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.servicios-crear-form input,
+.servicios-crear-form select,
+.servicios-tabla input,
+.servicios-tabla select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+}
+
+.servicios-crear-form input {
+  flex: 1 1 140px;
+}
+
+.servicios-crear-form select {
+  flex: 1 1 180px;
+}
+
+.servicios-crear-form button,
+.servicios-acciones button {
+  background: var(--series-dinero);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.servicios-crear-form button:disabled,
+.servicios-acciones button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.servicios-error {
+  color: var(--danger);
+  font-size: 13px;
+  margin: 10px 0 0;
+}
+
+.servicios-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.servicios-filtros input[type='search'] {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  flex: 1 1 200px;
+}
+
+.servicios-resultado-import {
+  font-size: 13px;
+  margin: 10px 0;
+}
+
+.servicios-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.servicios-tabla th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 10px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.servicios-tabla td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.servicios-fila-inactiva {
+  opacity: 0.55;
+}
+
+.servicios-estado {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.servicios-estado.activo {
+  background: color-mix(in srgb, var(--series-pacientes) 20%, transparent);
+  color: var(--series-pacientes);
+}
+
+.servicios-estado.inactivo {
+  background: color-mix(in srgb, var(--text-muted) 25%, transparent);
+  color: var(--text-secondary);
+}
+
+.servicios-acciones {
+  display: flex;
+  gap: 8px;
+}
+
+.servicios-acciones button:last-child {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}

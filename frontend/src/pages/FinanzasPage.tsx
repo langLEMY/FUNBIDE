@@ -98,6 +98,7 @@ export function FinanzasPage() {
         ingresos: m.ingresos,
         gastos: m.gastos,
         ganancia: m.ganancia,
+        fondoGanancias: m.fondoGanancias,
       })),
     [resumenAnual],
   )
@@ -109,8 +110,9 @@ export function FinanzasPage() {
         ingresos: acumulado.ingresos + fila.ingresos,
         gastos: acumulado.gastos + fila.gastos,
         ganancia: acumulado.ganancia + fila.ganancia,
+        fondoGanancias: acumulado.fondoGanancias + fila.fondoGanancias,
       }),
-      { ingresos: 0, gastos: 0, ganancia: 0 },
+      { ingresos: 0, gastos: 0, ganancia: 0, fondoGanancias: 0 },
     )
   }, [resumenAnual, mes])
 
@@ -182,6 +184,12 @@ export function FinanzasPage() {
             {formateadorMoneda.format(kpis.ganancia)}
           </p>
         </section>
+        <section className="finanzas-admin-kpi-card">
+          <p className="text-secondary">Fondo de ganancias fundación</p>
+          <p className="finanzas-admin-kpi-monto" style={{ color: chartColors.dinero }}>
+            {formateadorMoneda.format(kpis.fondoGanancias)}
+          </p>
+        </section>
       </div>
 
       <section className="finanzas-admin-grafico-card">
@@ -232,6 +240,15 @@ export function FinanzasPage() {
                 dataKey="gastos"
                 name="Gastos"
                 fill={chartColors.gasto}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={28}
+                onClick={(_datos: unknown, indice: number) => setMes(datosGrafico[indice]?.mesNumero ?? null)}
+                cursor="pointer"
+              />
+              <Bar
+                dataKey="fondoGanancias"
+                name="Fondo de ganancias fundación"
+                fill={chartColors.dinero}
                 radius={[4, 4, 0, 0]}
                 maxBarSize={28}
                 onClick={(_datos: unknown, indice: number) => setMes(datosGrafico[indice]?.mesNumero ?? null)}

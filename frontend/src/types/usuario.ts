@@ -10,6 +10,7 @@ export type ModuloPermiso =
   | 'Operaciones'
   | 'Inventario'
   | 'Aseguradoras'
+  | 'Servicios'
   | 'Actividad'
   | 'Pacientes'
   | 'HistorialClinico'

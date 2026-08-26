@@ -7,4 +7,4 @@ namespace FUNBIDE.Application.DTOs.SegurosMedicos;
 /// diferencia de los demás importadores (Empleados, Pacientes, Inventario) acá el plan y
 /// la aseguradora no salen del archivo: hay que informarlos aparte, uno por importación.
 /// </summary>
-public sealed record ImportarTarifarioRequest(Guid SeguroMedicoId, PlanSenasa Plan, Stream Contenido);
+public sealed record ImportarTarifarioRequest(Guid SeguroMedicoId, PlanAseguradora Plan, Stream Contenido);

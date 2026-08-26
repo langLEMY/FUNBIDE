@@ -76,3 +76,6 @@ publish/
 # nunca va a git.
 /dist-portable/
 /dist-portable.zip
+
+# Datos reales de personal/pacientes usados para importar (Excel), nunca a git.
+/instalacion/datos-legados/

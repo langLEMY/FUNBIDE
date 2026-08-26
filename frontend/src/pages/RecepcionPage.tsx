@@ -5,7 +5,12 @@ import { agruparDoctoresPorEspecialidad } from '../lib/agruparDoctores'
 import type { CitaAgenda } from '../types/cita'
 import type { Paciente, PacientesPaginados } from '../types/paciente'
 import type { DoctorSimple } from '../types/doctor'
+import type { Servicio } from '../types/servicio'
+import type { EspecialidadMedica } from '../types/usuario'
+import { ESPECIALIDADES, ETIQUETA_ESPECIALIDAD } from '../types/personal'
 import './RecepcionPage.css'
+
+const SIN_ESPECIALIDAD = ''
 
 const formateadorHora = new Intl.DateTimeFormat('es-DO', { timeStyle: 'short' })
 
@@ -26,7 +31,6 @@ function claseBadgeEstado(estado: CitaAgenda['estado']): string {
 export function RecepcionPage() {
   const [salaDeEspera, setSalaDeEspera] = useState<CitaAgenda[]>([])
   const [doctores, setDoctores] = useState<DoctorSimple[]>([])
-  const gruposDoctores = useMemo(() => agruparDoctoresPorEspecialidad(doctores), [doctores])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [accionandoId, setAccionandoId] = useState<string | null>(null)
@@ -35,10 +39,37 @@ export function RecepcionPage() {
   const [busquedaDebounced, setBusquedaDebounced] = useState('')
   const [resultados, setResultados] = useState<Paciente[]>([])
   const [pacienteSeleccionado, setPacienteSeleccionado] = useState<Paciente | null>(null)
+  const [servicios, setServicios] = useState<Servicio[]>([])
+  const [especialidadLlegada, setEspecialidadLlegada] = useState<EspecialidadMedica | typeof SIN_ESPECIALIDAD>(SIN_ESPECIALIDAD)
+  const [servicioId, setServicioId] = useState('')
   const [doctorId, setDoctorId] = useState('')
   const [motivo, setMotivo] = useState('')
   const [registrando, setRegistrando] = useState(false)
   const [errorLlegada, setErrorLlegada] = useState<string | null>(null)
+
+  // Mismo patrón de selección encadenada que AgendaPage.tsx: elegir el área primero acota
+  // servicios y doctores — reutiliza el catálogo de precios privados (ServiciosPage) como
+  // lista de motivos comunes.
+  const gruposDoctoresFormulario = useMemo(
+    () =>
+      agruparDoctoresPorEspecialidad(
+        especialidadLlegada ? doctores.filter((d) => d.especialidad === especialidadLlegada) : doctores,
+      ),
+    [doctores, especialidadLlegada],
+  )
+  const serviciosFiltrados = useMemo(
+    () => (especialidadLlegada ? servicios.filter((s) => s.especialidad === especialidadLlegada) : servicios),
+    [servicios, especialidadLlegada],
+  )
+
+  const seleccionarServicioLlegada = (id: string) => {
+    setServicioId(id)
+    if (!id) return
+    const servicio = servicios.find((s) => s.id === id)
+    if (servicio) {
+      setMotivo(servicio.nombre)
+    }
+  }
 
   const cargarSalaDeEspera = () => {
     api
@@ -52,11 +83,16 @@ export function RecepcionPage() {
   useEffect(() => {
     let cancelado = false
 
-    Promise.all([api.get<CitaAgenda[]>('/api/citas/sala-espera'), api.get<DoctorSimple[]>('/api/personal/doctores')])
-      .then(([sala, listaDoctores]) => {
+    Promise.all([
+      api.get<CitaAgenda[]>('/api/citas/sala-espera'),
+      api.get<DoctorSimple[]>('/api/personal/doctores'),
+      api.get<Servicio[]>('/api/servicios'),
+    ])
+      .then(([sala, listaDoctores, listaServicios]) => {
         if (cancelado) return
         setSalaDeEspera(sala)
         setDoctores(listaDoctores)
+        setServicios(listaServicios)
       })
       .catch((err) => {
         if (!cancelado) {
@@ -139,6 +175,8 @@ export function RecepcionPage() {
         motivo: motivo.trim(),
       })
       setPacienteSeleccionado(null)
+      setEspecialidadLlegada(SIN_ESPECIALIDAD)
+      setServicioId('')
       setDoctorId('')
       setMotivo('')
       cargarSalaDeEspera()
@@ -194,9 +232,32 @@ export function RecepcionPage() {
         </div>
 
         <form className="recepcion-llegada-form" onSubmit={(event) => void handleLlegadaDirecta(event)}>
+          <select
+            value={especialidadLlegada}
+            onChange={(event) => {
+              setEspecialidadLlegada(event.target.value as EspecialidadMedica)
+              setServicioId('')
+              setDoctorId('')
+            }}
+          >
+            <option value={SIN_ESPECIALIDAD}>Área (todas)</option>
+            {ESPECIALIDADES.map((opcion) => (
+              <option key={opcion} value={opcion}>
+                {ETIQUETA_ESPECIALIDAD[opcion]}
+              </option>
+            ))}
+          </select>
+          <select value={servicioId} onChange={(event) => seleccionarServicioLlegada(event.target.value)}>
+            <option value="">Motivo — elegir de la lista (opcional)</option>
+            {serviciosFiltrados.map((servicio) => (
+              <option key={servicio.id} value={servicio.id}>
+                {servicio.nombre}
+              </option>
+            ))}
+          </select>
           <select value={doctorId} onChange={(event) => setDoctorId(event.target.value)}>
             <option value="">Selecciona un doctor…</option>
-            {gruposDoctores.map((grupo) => (
+            {gruposDoctoresFormulario.map((grupo) => (
               <optgroup key={grupo.etiqueta} label={grupo.etiqueta}>
                 {grupo.doctores.map((doctor) => (
                   <option key={doctor.id} value={doctor.id}>

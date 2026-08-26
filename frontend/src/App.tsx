@@ -24,6 +24,8 @@ const CobrosPage = lazy(() => import('./pages/CobrosPage').then((m) => ({ defaul
 const RecepcionPage = lazy(() => import('./pages/RecepcionPage').then((m) => ({ default: m.RecepcionPage })))
 const AgendaPage = lazy(() => import('./pages/AgendaPage').then((m) => ({ default: m.AgendaPage })))
 const AseguradorasPage = lazy(() => import('./pages/AseguradorasPage').then((m) => ({ default: m.AseguradorasPage })))
+const ServiciosPage = lazy(() => import('./pages/ServiciosPage').then((m) => ({ default: m.ServiciosPage })))
+const SalaEsperaPage = lazy(() => import('./pages/SalaEsperaPage').then((m) => ({ default: m.SalaEsperaPage })))
 const CitasPage = lazy(() => import('./pages/CitasPage').then((m) => ({ default: m.CitasPage })))
 const PacienteHistorialPage = lazy(() =>
   import('./pages/PacienteHistorialPage').then((m) => ({ default: m.PacienteHistorialPage })),
@@ -141,7 +143,7 @@ function App() {
         <Route
           path="/caja"
           element={
-            <ProtectedRoute rolesPermitidos="Fondos" modulo="Caja">
+            <ProtectedRoute rolesPermitidos={['Fondos', 'Admin']} modulo="Caja">
               <CajaPage />
             </ProtectedRoute>
           }
@@ -149,7 +151,7 @@ function App() {
         <Route
           path="/cobros"
           element={
-            <ProtectedRoute rolesPermitidos="Fondos" modulo="Cobros">
+            <ProtectedRoute rolesPermitidos={['Fondos', 'Admin']} modulo="Cobros">
               <CobrosPage />
             </ProtectedRoute>
           }
@@ -175,6 +177,22 @@ function App() {
           element={
             <ProtectedRoute rolesPermitidos={['Admin', 'Lemy']} modulo="Aseguradoras">
               <AseguradorasPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/servicios"
+          element={
+            <ProtectedRoute rolesPermitidos={['Admin', 'Lemy']} modulo="Servicios">
+              <ServiciosPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sala-espera"
+          element={
+            <ProtectedRoute rolesPermitidos={['Admin', 'Lemy']} modulo="Recepcion">
+              <SalaEsperaPage />
             </ProtectedRoute>
           }
         />

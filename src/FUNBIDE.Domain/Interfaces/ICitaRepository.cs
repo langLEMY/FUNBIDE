@@ -13,6 +13,18 @@ public interface ICitaRepository
     /// <summary>Ids distintos de pacientes que alguna vez tuvieron una cita con este doctor (cualquier estado) — para el Dashboard de Doctor, que no tiene un vínculo directo Paciente-Doctor en el dominio.</summary>
     Task<IReadOnlyList<Guid>> ObtenerPacienteIdsDistintosPorDoctorAsync(Guid doctorId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// (DoctorId, PacienteId) de cada cita completada, de todos los doctores — para
+    /// "Pacientes por doctor" del Dashboard de Admin. Proyección liviana en vez de
+    /// devolver <see cref="Cita"/> completa: es un full scan de todo lo completado
+    /// históricamente y no hace falta nada más que estos dos ids.
+    /// </summary>
+    Task<IReadOnlyList<(Guid DoctorId, Guid PacienteId)>> ObtenerDoctorYPacientePorCompletadasAsync(CancellationToken cancellationToken);
+
+    /// <summary>DoctorId por CitaId, en lote — para atribuir un Cobro (que sí tiene fecha) a un doctor sin hacer N consultas.</summary>
+    Task<IReadOnlyDictionary<Guid, Guid>> ObtenerDoctorIdsPorCitaIdsAsync(
+        IReadOnlyCollection<Guid> citaIds, CancellationToken cancellationToken);
+
     Task<bool> ExisteAlgunaParaPacienteAsync(Guid pacienteId, CancellationToken cancellationToken);
 
     /// <summary>true si el paciente ya tiene una cita Programada o EnEspera con ese doctor (evita duplicar una llegada walk-in).</summary>

@@ -21,8 +21,10 @@ public sealed class FunbideDbContext(DbContextOptions<FunbideDbContext> options)
     public DbSet<Cobro> Cobros => Set<Cobro>();
     public DbSet<SeguroMedico> SegurosMedicos => Set<SeguroMedico>();
     public DbSet<TarifarioProcedimiento> TarifarioProcedimientos => Set<TarifarioProcedimiento>();
+    public DbSet<Servicio> Servicios => Set<Servicio>();
     public DbSet<Donacion> Donaciones => Set<Donacion>();
     public DbSet<ConfiguracionSistema> ConfiguracionSistema => Set<ConfiguracionSistema>();
+    public DbSet<SesionActiva> SesionesActivas => Set<SesionActiva>();
     public DbSet<PermisoUsuario> PermisosUsuario => Set<PermisoUsuario>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

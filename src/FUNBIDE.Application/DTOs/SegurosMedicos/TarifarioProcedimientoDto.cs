@@ -7,4 +7,6 @@ public sealed record TarifarioProcedimientoDto(
     string Procedimiento,
     decimal MontoSeguro,
     decimal MontoPaciente,
-    decimal MontoTotal);
+    decimal MontoTotal,
+    decimal? MontoFondo,
+    string? Especialidad);

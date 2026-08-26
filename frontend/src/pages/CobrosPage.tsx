@@ -2,13 +2,19 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { api, ApiError } from '../lib/api'
 import type { TurnoCaja } from '../types/turnoCaja'
-import type { Paciente, PacientesPaginados } from '../types/paciente'
+import type { Paciente, PacientesPaginados, CrearPacienteRequest } from '../types/paciente'
 import type { SeguroMedico } from '../types/seguroMedico'
 import type { Cobro, MetodoPago, Pago } from '../types/cobro'
 import { METODOS_PAGO } from '../types/cobro'
 import type { CitaAgenda } from '../types/cita'
-import { PLANES_SENASA, type PlanSenasa, type TarifarioProcedimiento } from '../types/tarifarioProcedimiento'
+import { ETIQUETA_PLAN, PLANES_ASEGURADORA, type PlanAseguradora, type TarifarioProcedimiento } from '../types/tarifarioProcedimiento'
+import type { Servicio } from '../types/servicio'
+import type { EspecialidadMedica } from '../types/usuario'
+import { ESPECIALIDADES, ETIQUETA_ESPECIALIDAD } from '../types/personal'
 import './CobrosPage.css'
+
+const SIN_ESPECIALIDAD = ''
+const OTRO_SERVICIO = ''
 
 const formateadorMoneda = new Intl.NumberFormat('es-DO', {
   style: 'currency',
@@ -47,6 +53,14 @@ export function CobrosPage() {
   const [resultados, setResultados] = useState<Paciente[]>([])
   const [buscando, setBuscando] = useState(false)
 
+  const [mostrarNuevoPaciente, setMostrarNuevoPaciente] = useState(false)
+  const [nuevoNombre, setNuevoNombre] = useState('')
+  const [nuevoApellido, setNuevoApellido] = useState('')
+  const [nuevoCedula, setNuevoCedula] = useState('')
+  const [nuevoTelefono, setNuevoTelefono] = useState('')
+  const [creandoPaciente, setCreandoPaciente] = useState(false)
+  const [errorCrearPaciente, setErrorCrearPaciente] = useState<string | null>(null)
+
   const [pacienteSeleccionado, setPacienteSeleccionado] = useState<Paciente | null>(null)
   const [citaId, setCitaId] = useState<string | null>(null)
   const [deudaPaciente, setDeudaPaciente] = useState<number | null>(null)
@@ -63,9 +77,16 @@ export function CobrosPage() {
   const [registrando, setRegistrando] = useState(false)
   const [errorCobro, setErrorCobro] = useState<string | null>(null)
 
-  const [planSenasa, setPlanSenasa] = useState<PlanSenasa>('Contributivo')
+  const [planTarifario, setPlanTarifario] = useState<PlanAseguradora>('Estandar')
   const [tarifario, setTarifario] = useState<TarifarioProcedimiento[]>([])
   const [tarifarioProcedimientoId, setTarifarioProcedimientoId] = useState('')
+
+  // Selección encadenada para pago particular (sin seguro): especialidad → servicio, en
+  // vez de escribir el concepto y el monto a mano — ver ServiciosPage/catálogo de precios
+  // privados. "Otro" deja el concepto/monto editables como hasta ahora.
+  const [servicios, setServicios] = useState<Servicio[]>([])
+  const [especialidadServicio, setEspecialidadServicio] = useState<EspecialidadMedica | typeof SIN_ESPECIALIDAD>(SIN_ESPECIALIDAD)
+  const [servicioId, setServicioId] = useState('')
 
   const [ultimoCobro, setUltimoCobro] = useState<Cobro | null>(null)
   const [comprobante, setComprobante] = useState<TipoComprobante | null>(null)
@@ -82,12 +103,14 @@ export function CobrosPage() {
       api.get<TurnoCaja | null>('/api/caja/turnos/actual'),
       api.get<SeguroMedico[]>('/api/seguros-medicos'),
       api.get<CitaAgenda[]>('/api/citas/pendientes-de-cobro'),
+      api.get<Servicio[]>('/api/servicios'),
     ])
-      .then(([turnoActual, segurosActivos, pendientes]) => {
+      .then(([turnoActual, segurosActivos, pendientes, serviciosActivos]) => {
         if (cancelado) return
         setTurno(turnoActual)
         setSeguros(segurosActivos)
         setPendientesDeCobro(pendientes)
+        setServicios(serviciosActivos)
       })
       .catch((err) => {
         if (!cancelado) {
@@ -150,6 +173,33 @@ export function CobrosPage() {
       .catch(() => undefined)
   }
 
+  const handleCrearPaciente = async (event: FormEvent) => {
+    event.preventDefault()
+    setErrorCrearPaciente(null)
+    setCreandoPaciente(true)
+    try {
+      const request: CrearPacienteRequest = {
+        nombre: nuevoNombre.trim(),
+        apellido: nuevoApellido.trim(),
+        cedula: nuevoCedula.trim(),
+        telefono: nuevoTelefono.trim() || null,
+        edad: null,
+        condicion: null,
+      }
+      const paciente = await api.post<Paciente>('/api/pacientes', request)
+      setNuevoNombre('')
+      setNuevoApellido('')
+      setNuevoCedula('')
+      setNuevoTelefono('')
+      setMostrarNuevoPaciente(false)
+      seleccionarPaciente(paciente)
+    } catch (err) {
+      setErrorCrearPaciente(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo agregar al paciente.')
+    } finally {
+      setCreandoPaciente(false)
+    }
+  }
+
   const seleccionarPendiente = (cita: CitaAgenda) => {
     seleccionarPaciente(
       { id: cita.pacienteId, nombre: cita.pacienteNombre, apellido: '', cedula: '', telefono: null, tieneFotoCedula: false, edad: null, condicion: null, estado: 'Activo', ultimaVisita: null },
@@ -159,18 +209,24 @@ export function CobrosPage() {
   }
 
   const seguroSeleccionado = useMemo(() => seguros.find((s) => s.id === seguroMedicoId) ?? null, [seguros, seguroMedicoId])
-  const esSenasa = seguroSeleccionado?.nombre.toUpperCase().includes('SENASA') ?? false
+  // Cualquier aseguradora con tarifario cargado (Senasa, Renacer, Aps...) activa el
+  // selector de procedimiento — ya no depende de que el nombre contenga "SENASA".
+  const tieneTarifario = seguroSeleccionado?.tieneTarifario ?? false
 
   useEffect(() => {
     setTarifarioProcedimientoId('')
-    if (!esSenasa || !seguroMedicoId) {
+    setPlanTarifario('Estandar')
+  }, [seguroMedicoId])
+
+  useEffect(() => {
+    if (!tieneTarifario || !seguroMedicoId) {
       setTarifario([])
       return
     }
 
     let cancelado = false
     api
-      .get<TarifarioProcedimiento[]>(`/api/tarifario-procedimientos?seguroMedicoId=${seguroMedicoId}&plan=${planSenasa}`)
+      .get<TarifarioProcedimiento[]>(`/api/tarifario-procedimientos?seguroMedicoId=${seguroMedicoId}&plan=${planTarifario}`)
       .then((datos) => {
         if (!cancelado) setTarifario(datos)
       })
@@ -181,7 +237,7 @@ export function CobrosPage() {
     return () => {
       cancelado = true
     }
-  }, [esSenasa, seguroMedicoId, planSenasa])
+  }, [tieneTarifario, seguroMedicoId, planTarifario])
 
   const procedimientoSeleccionado = useMemo(
     () => tarifario.find((t) => t.id === tarifarioProcedimientoId) ?? null,
@@ -194,6 +250,24 @@ export function CobrosPage() {
     if (procedimiento) {
       setConcepto(procedimiento.procedimiento)
       setMontoTotal(String(procedimiento.montoTotal))
+    }
+  }
+
+  // Pago particular (sin seguro): mismo patrón de selección encadenada, pero el precio no
+  // es autoritativo del lado del servidor (a diferencia del tarifario de aseguradora), así
+  // que solo precarga concepto/monto — el cajero puede seguir ajustándolos a mano.
+  const serviciosFiltrados = useMemo(
+    () => (especialidadServicio ? servicios.filter((s) => s.especialidad === especialidadServicio) : servicios),
+    [servicios, especialidadServicio],
+  )
+
+  const seleccionarServicio = (id: string) => {
+    setServicioId(id)
+    if (!id) return
+    const servicio = servicios.find((s) => s.id === id)
+    if (servicio) {
+      setConcepto(servicio.nombre)
+      setMontoTotal(String(servicio.precio1))
     }
   }
 
@@ -257,6 +331,8 @@ export function CobrosPage() {
     setTarifarioProcedimientoId('')
     setDividirPago(false)
     setLineasPago([])
+    setEspecialidadServicio(SIN_ESPECIALIDAD)
+    setServicioId('')
   }
 
   const handleRegistrarCobro = async (event: FormEvent) => {
@@ -354,12 +430,24 @@ export function CobrosPage() {
 
           <section className="cobros-buscador-card no-imprimir">
             <h2>Buscar paciente</h2>
-            <input
-              type="search"
-              placeholder="Nombre o cédula…"
-              value={busqueda}
-              onChange={(event) => setBusqueda(event.target.value)}
-            />
+            <div className="cobros-buscador-fila">
+              <input
+                type="search"
+                placeholder="Nombre o cédula…"
+                value={busqueda}
+                onChange={(event) => setBusqueda(event.target.value)}
+              />
+              <button
+                type="button"
+                className="cobros-boton-nuevo-paciente"
+                onClick={() => {
+                  setMostrarNuevoPaciente((actual) => !actual)
+                  setErrorCrearPaciente(null)
+                }}
+              >
+                {mostrarNuevoPaciente ? 'Cancelar' : '+ Nuevo paciente'}
+              </button>
+            </div>
             {buscando && <p className="text-muted">Buscando…</p>}
             {resultados.length > 0 && (
               <ul className="cobros-resultados-lista">
@@ -371,6 +459,38 @@ export function CobrosPage() {
                   </li>
                 ))}
               </ul>
+            )}
+
+            {mostrarNuevoPaciente && (
+              <form className="cobros-nuevo-paciente-form" onSubmit={(event) => void handleCrearPaciente(event)}>
+                <input
+                  placeholder="Nombre"
+                  value={nuevoNombre}
+                  onChange={(event) => setNuevoNombre(event.target.value)}
+                  required
+                />
+                <input
+                  placeholder="Apellido"
+                  value={nuevoApellido}
+                  onChange={(event) => setNuevoApellido(event.target.value)}
+                  required
+                />
+                <input
+                  placeholder="Cédula"
+                  value={nuevoCedula}
+                  onChange={(event) => setNuevoCedula(event.target.value)}
+                  required
+                />
+                <input
+                  placeholder="Teléfono (opcional)"
+                  value={nuevoTelefono}
+                  onChange={(event) => setNuevoTelefono(event.target.value)}
+                />
+                <button type="submit" disabled={creandoPaciente}>
+                  {creandoPaciente ? 'Agregando…' : 'Agregar y cobrar'}
+                </button>
+                {errorCrearPaciente && <p className="cobros-error">{errorCrearPaciente}</p>}
+              </form>
             )}
           </section>
 
@@ -388,7 +508,13 @@ export function CobrosPage() {
               <form className="cobros-formulario" onSubmit={(event) => void handleRegistrarCobro(event)}>
                 <label className="cobros-label">
                   Seguro médico (opcional)
-                  <select value={seguroMedicoId} onChange={(event) => setSeguroMedicoId(event.target.value)}>
+                  <select
+                    value={seguroMedicoId}
+                    onChange={(event) => {
+                      setSeguroMedicoId(event.target.value)
+                      setServicioId('')
+                    }}
+                  >
                     <option value="">Sin seguro</option>
                     {seguros.map((seguro) => (
                       <option key={seguro.id} value={seguro.id}>
@@ -398,14 +524,14 @@ export function CobrosPage() {
                   </select>
                 </label>
 
-                {esSenasa && (
+                {tieneTarifario && (
                   <>
                     <label className="cobros-label">
-                      Plan de SENASA
-                      <select value={planSenasa} onChange={(event) => setPlanSenasa(event.target.value as PlanSenasa)}>
-                        {PLANES_SENASA.map((plan) => (
+                      Plan
+                      <select value={planTarifario} onChange={(event) => setPlanTarifario(event.target.value as PlanAseguradora)}>
+                        {PLANES_ASEGURADORA.map((plan) => (
                           <option key={plan} value={plan}>
-                            {plan}
+                            {ETIQUETA_PLAN[plan]}
                           </option>
                         ))}
                       </select>
@@ -420,6 +546,39 @@ export function CobrosPage() {
                         {tarifario.map((t) => (
                           <option key={t.id} value={t.id}>
                             {t.procedimiento} — {formateadorMoneda.format(t.montoTotal)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </>
+                )}
+
+                {!procedimientoSeleccionado && (
+                  <>
+                    <label className="cobros-label">
+                      Área (opcional)
+                      <select
+                        value={especialidadServicio}
+                        onChange={(event) => {
+                          setEspecialidadServicio(event.target.value as EspecialidadMedica)
+                          setServicioId('')
+                        }}
+                      >
+                        <option value={SIN_ESPECIALIDAD}>Todas las áreas</option>
+                        {ESPECIALIDADES.map((opcion) => (
+                          <option key={opcion} value={opcion}>
+                            {ETIQUETA_ESPECIALIDAD[opcion]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="cobros-label">
+                      Servicio (opcional — precarga concepto y monto)
+                      <select value={servicioId} onChange={(event) => seleccionarServicio(event.target.value)}>
+                        <option value={OTRO_SERVICIO}>Otro (escribir concepto a mano)</option>
+                        {serviciosFiltrados.map((servicio) => (
+                          <option key={servicio.id} value={servicio.id}>
+                            {servicio.nombre} — {formateadorMoneda.format(servicio.precio1)}
                           </option>
                         ))}
                       </select>
@@ -453,6 +612,14 @@ export function CobrosPage() {
                         {formateadorMoneda.format(montoCobertura)}
                       </span>
                       <span>Co-pago del paciente: {formateadorMoneda.format(montoACargoPaciente)}</span>
+                      {!!procedimientoSeleccionado?.montoFondo && (
+                        <>
+                          <span>Fondo interno de la fundación: {formateadorMoneda.format(procedimientoSeleccionado.montoFondo)}</span>
+                          <span>
+                            Reclamo total a la ARS: {formateadorMoneda.format(montoCobertura + procedimientoSeleccionado.montoFondo)}
+                          </span>
+                        </>
+                      )}
                     </div>
                     <input
                       placeholder="Código de autorización"
@@ -607,6 +774,14 @@ export function CobrosPage() {
                 ({ultimoCobro.porcentajeCobertura !== null ? `${ultimoCobro.porcentajeCobertura}%` : 'tarifario'})
               </p>
               <p>Cubierto por seguro: {formateadorMoneda.format(ultimoCobro.montoCobertura ?? 0)}</p>
+              {!!ultimoCobro.montoFondo && (
+                <>
+                  <p>Fondo interno de la fundación: {formateadorMoneda.format(ultimoCobro.montoFondo)}</p>
+                  <p>
+                    Reclamo total a la ARS: {formateadorMoneda.format((ultimoCobro.montoCobertura ?? 0) + ultimoCobro.montoFondo)}
+                  </p>
+                </>
+              )}
               <p>Código de autorización: {ultimoCobro.codigoAutorizacion}</p>
             </>
           )}

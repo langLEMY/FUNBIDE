@@ -8,9 +8,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace FUNBIDE.API.Controllers;
 
 /// <summary>
-/// Catálogo de aseguradoras (ARS): Caja solo lo consulta para el combo de Cobros; Admin y
-/// Lemy lo administran. Cada acción declara su propio <see cref="RequiereRolAttribute"/>
-/// en vez de uno a nivel de clase, igual que <c>PacientesController</c>.
+/// Catálogo de aseguradoras (ARS): Fondos y Admin lo consultan para el combo de Cobros;
+/// Admin y Lemy lo administran. Cada acción declara su propio
+/// <see cref="RequiereRolAttribute"/> en vez de uno a nivel de clase, igual que
+/// <c>PacientesController</c>.
 /// </summary>
 [ApiController]
 [Route("api/seguros-medicos")]

@@ -20,4 +20,5 @@ public sealed record CobroDto(
     decimal MontoPendiente,
     Guid UsuarioId,
     DateTimeOffset RegistradoEn,
-    Guid? TarifarioProcedimientoId = null);
+    Guid? TarifarioProcedimientoId = null,
+    decimal? MontoFondo = null);

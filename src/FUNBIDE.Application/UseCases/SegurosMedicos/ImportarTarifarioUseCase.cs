@@ -2,6 +2,7 @@ using FUNBIDE.Application.Common;
 using FUNBIDE.Application.Common.Interfaces;
 using FUNBIDE.Application.DTOs.SegurosMedicos;
 using FUNBIDE.Domain.Entities;
+using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.Interfaces;
 
 namespace FUNBIDE.Application.UseCases.SegurosMedicos;
@@ -54,6 +55,11 @@ public sealed class ImportarTarifarioUseCase(
             var montoSeguro = LeerMonto(fila.Buscar("Seguro", "Monto Seguro", "Cubre Seguro"));
             var montoPaciente = LeerMonto(fila.Buscar("Paciente", "Monto Paciente", "Copago"));
             var montoTotal = LeerMonto(fila.Buscar("Total", "Precio Total", "Monto Total"));
+            // Opcional (hoy solo Renacer lo usa): excedente que la aseguradora paga por
+            // encima de MontoSeguro y que queda como ingreso interno de la fundación en vez
+            // de reconocérsele al paciente — ver TarifarioProcedimiento.MontoFondo.
+            var montoFondo = LeerMonto(fila.Buscar("Fondo", "Monto Fondo", "Interno"));
+            var especialidad = LeerEspecialidad(fila.Buscar("Especialidad"));
 
             if (montoSeguro is null || montoPaciente is null)
             {
@@ -68,13 +74,18 @@ public sealed class ImportarTarifarioUseCase(
 
             if (porProcedimiento.TryGetValue(procedimiento, out var filaExistente))
             {
-                filaExistente.ActualizarMontos(montoSeguro.Value, montoPaciente.Value, totalFinal);
+                filaExistente.ActualizarMontos(montoSeguro.Value, montoPaciente.Value, totalFinal, montoFondo);
+                if (especialidad.HasValue)
+                {
+                    filaExistente.AsignarEspecialidad(especialidad);
+                }
                 actualizados++;
                 continue;
             }
 
             var nuevaFila = new TarifarioProcedimiento(
-                request.SeguroMedicoId, request.Plan, procedimiento, montoSeguro.Value, montoPaciente.Value, totalFinal);
+                request.SeguroMedicoId, request.Plan, procedimiento, montoSeguro.Value, montoPaciente.Value, totalFinal,
+                montoFondo, especialidad);
             await tarifarioRepository.AgregarAsync(nuevaFila, cancellationToken);
             porProcedimiento[procedimiento] = nuevaFila;
             creados++;
@@ -87,4 +98,9 @@ public sealed class ImportarTarifarioUseCase(
 
     private static decimal? LeerMonto(string? texto) =>
         texto is not null && decimal.TryParse(texto, out var monto) && monto >= 0 ? monto : null;
+
+    private static EspecialidadMedica? LeerEspecialidad(string? texto) =>
+        texto is not null && Enum.TryParse<EspecialidadMedica>(texto.Trim(), ignoreCase: true, out var especialidad)
+            ? especialidad
+            : null;
 }

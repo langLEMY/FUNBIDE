@@ -29,10 +29,19 @@ public sealed class ObtenerResumenAnualUseCase(
 
         var ingresosPorMes = new decimal[12];
         var gastosPorMes = new decimal[12];
+        var fondoGananciasPorMes = new decimal[12];
 
         foreach (var cobro in cobros)
         {
             ingresosPorMes[cobro.RegistradoEn.Month - 1] += cobro.MontoPagado;
+            if (cobro.MontoFondo is > 0)
+            {
+                // Solo para el desglose de "Fondo de Ganancias": el ingreso en sí ya lo trae
+                // el MovimientoFinanciero de fondo interno que RegistrarCobroUseCase crea
+                // aparte para este mismo cobro — sumarlo acá también lo duplicaría en
+                // ingresosPorMes.
+                fondoGananciasPorMes[cobro.RegistradoEn.Month - 1] += cobro.MontoFondo.Value;
+            }
         }
 
         foreach (var movimiento in movimientos)
@@ -49,7 +58,8 @@ public sealed class ObtenerResumenAnualUseCase(
 
         return Enumerable.Range(1, 12)
             .Select(mes => new ResumenMensualDto(
-                mes, ingresosPorMes[mes - 1], gastosPorMes[mes - 1], ingresosPorMes[mes - 1] - gastosPorMes[mes - 1]))
+                mes, ingresosPorMes[mes - 1], gastosPorMes[mes - 1], ingresosPorMes[mes - 1] - gastosPorMes[mes - 1],
+                fondoGananciasPorMes[mes - 1]))
             .ToList();
     }
 }

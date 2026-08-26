@@ -20,6 +20,8 @@ export interface Cobro {
   porcentajeCobertura: number | null
   montoCobertura: number | null
   tarifarioProcedimientoId: string | null
+  /** Excedente reconocido como ingreso interno de la fundación (hoy solo Renacer) — no forma parte de lo que paga el paciente. */
+  montoFondo: number | null
   codigoAutorizacion: string | null
   /** Desglose de cómo se pagó — 0, 1 o varias líneas (ej. una parte con tarjeta y otra en efectivo). */
   pagos: Pago[]

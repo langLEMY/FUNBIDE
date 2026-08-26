@@ -20,6 +20,7 @@ public sealed class CobroConfiguration : IEntityTypeConfiguration<Cobro>
         builder.Property(c => c.SeguroMedicoId);
         builder.Property(c => c.PorcentajeCobertura).HasColumnType("decimal(5,2)");
         builder.Property(c => c.MontoCobertura).HasColumnType("decimal(12,2)");
+        builder.Property(c => c.MontoFondo).HasColumnType("decimal(12,2)");
         builder.Property(c => c.TarifarioProcedimientoId);
         builder.Property(c => c.CodigoAutorizacion).HasMaxLength(100);
         builder.Property(c => c.MontoPagado).HasColumnType("decimal(12,2)").IsRequired();

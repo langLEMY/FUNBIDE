@@ -4,9 +4,9 @@ using FUNBIDE.Domain.Enums;
 namespace FUNBIDE.Domain.Entities;
 
 /// <summary>
-/// Comprobante inmutable de un movimiento de dinero (ingreso o egreso) registrado por
-/// FONDOS. Espejo del patrón de <see cref="MovimientoInventario"/>: append-only, sin
-/// edición ni borrado, para que el historial de caja sea auditable.
+/// Comprobante inmutable de un movimiento de dinero (ingreso o egreso) registrado en un
+/// turno de caja. Espejo del patrón de <see cref="MovimientoInventario"/>: append-only,
+/// sin edición ni borrado, para que el historial de caja sea auditable.
 /// </summary>
 public sealed class MovimientoFinanciero : AppendOnlyEntity
 {

@@ -44,8 +44,10 @@ public static class DependencyInjection
         services.AddScoped<ICobroRepository, CobroRepository>();
         services.AddScoped<ISeguroMedicoRepository, SeguroMedicoRepository>();
         services.AddScoped<ITarifarioProcedimientoRepository, TarifarioProcedimientoRepository>();
+        services.AddScoped<IServicioRepository, ServicioRepository>();
         services.AddScoped<IDonacionRepository, DonacionRepository>();
         services.AddScoped<IConfiguracionSistemaRepository, ConfiguracionSistemaRepository>();
+        services.AddScoped<ISesionActivaRepository, SesionActivaRepository>();
         services.AddScoped<IPermisoUsuarioRepository, PermisoUsuarioRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
 

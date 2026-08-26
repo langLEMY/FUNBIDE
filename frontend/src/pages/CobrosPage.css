@@ -87,6 +87,15 @@
   cursor: pointer;
 }
 
+.cobros-buscador-fila {
+  display: flex;
+  gap: 8px;
+}
+
+.cobros-buscador-fila input[type='search'] {
+  flex: 1;
+}
+
 .cobros-buscador-card input[type='search'] {
   width: 100%;
   background: var(--surface-2);
@@ -95,6 +104,53 @@
   color: var(--text-primary);
   padding: 9px 10px;
   font-size: 14px;
+}
+
+.cobros-boton-nuevo-paciente {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cobros-nuevo-paciente-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.cobros-nuevo-paciente-form input {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.cobros-nuevo-paciente-form button {
+  background: var(--series-dinero);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-control);
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cobros-nuevo-paciente-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .cobros-aviso-deuda {

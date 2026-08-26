@@ -10,9 +10,9 @@ namespace FUNBIDE.API.Controllers;
 /// <summary>
 /// Citas médicas. El flujo Pendiente→Programada→Completada (crear/programar/completar/
 /// pendientes-programadas-completadas) es del Doctor sobre sus propias citas. Las
-/// acciones de Agenda/Recepción (agendar, registrar-llegada, llegada-directa, cancelar,
-/// agenda, sala-espera, pendientes-de-cobro) son de Caja/Recepción y no están acotadas a
-/// un solo doctor. Cada acción declara su propio <see cref="RequiereRolAttribute"/> en
+/// acciones de Agenda/Recepción/Caja (agendar, registrar-llegada, llegada-directa,
+/// cancelar, agenda, sala-espera, pendientes-de-cobro) son de Fondos y no están acotadas
+/// a un solo doctor. Cada acción declara su propio <see cref="RequiereRolAttribute"/> en
 /// vez de uno a nivel de clase, igual que <c>PacientesController</c>.
 /// </summary>
 [ApiController]
@@ -122,13 +122,13 @@ public sealed class CitasController(
         Ok(await listarAgenda.EjecutarAsync(new ListarAgendaRequest(fecha, doctorId), cancellationToken));
 
     [HttpGet("sala-espera")]
-    [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin)]
+    [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin, RolUsuario.Lemy)]
     [RequierePermiso(ModuloPermiso.Recepcion, ModuloPermiso.Operaciones)]
     public async Task<ActionResult<IReadOnlyList<CitaAgendaDto>>> ObtenerSalaDeEsperaAsync(CancellationToken cancellationToken) =>
         Ok(await listarSalaDeEspera.EjecutarAsync(cancellationToken));
 
     [HttpGet("pendientes-de-cobro")]
-    [RequiereRol(RolUsuario.Fondos)]
+    [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin)]
     [RequierePermiso(ModuloPermiso.Cobros)]
     public async Task<ActionResult<IReadOnlyList<CitaAgendaDto>>> ObtenerPendientesDeCobroAsync(CancellationToken cancellationToken) =>
         Ok(await listarPendientesDeCobro.EjecutarAsync(cancellationToken));

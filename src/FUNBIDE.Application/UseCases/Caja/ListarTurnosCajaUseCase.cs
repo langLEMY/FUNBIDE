@@ -12,8 +12,8 @@ public interface IListarTurnosCajaUseCase : IUseCase<ListarTurnosCajaRequest, IR
 
 /// <summary>
 /// Historial de turnos de caja (apertura/cierre, montos, diferencia de arqueo) para la
-/// vista de supervisión de Admin — Admin no puede abrir/cerrar turnos (eso sigue siendo
-/// exclusivo de Fondos), solo ver qué pasó.
+/// vista de supervisión de Admin — Admin no puede abrir/cerrar turnos desde acá (eso es
+/// de Fondos, la cajera, y del propio Admin desde el panel de Caja), solo ver qué pasó.
 /// </summary>
 public sealed class ListarTurnosCajaUseCase(
     ITurnoCajaRepository turnoCajaRepository,

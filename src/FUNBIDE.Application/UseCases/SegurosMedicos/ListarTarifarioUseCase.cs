@@ -18,7 +18,8 @@ public sealed class ListarTarifarioUseCase(ITarifarioProcedimientoRepository tar
 
         return filas
             .Select(t => new TarifarioProcedimientoDto(
-                t.Id, t.SeguroMedicoId, t.Plan.ToString(), t.Procedimiento, t.MontoSeguro, t.MontoPaciente, t.MontoTotal))
+                t.Id, t.SeguroMedicoId, t.Plan.ToString(), t.Procedimiento, t.MontoSeguro, t.MontoPaciente, t.MontoTotal,
+                t.MontoFondo, t.Especialidad?.ToString()))
             .ToList();
     }
 }
