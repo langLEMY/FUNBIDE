@@ -19,6 +19,7 @@ public class RegistrarCobroUseCaseTests
     private readonly ITarifarioProcedimientoRepository _tarifarioRepository = Substitute.For<ITarifarioProcedimientoRepository>();
     private readonly IMovimientoFinancieroRepository _movimientoFinancieroRepository = Substitute.For<IMovimientoFinancieroRepository>();
     private readonly IPacienteRepository _pacienteRepository = Substitute.For<IPacienteRepository>();
+    private readonly IUsuarioRepository _usuarioRepository = Substitute.For<IUsuarioRepository>();
     private readonly IResumenDiarioRepository _resumenDiarioRepository = Substitute.For<IResumenDiarioRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
@@ -44,11 +45,13 @@ public class RegistrarCobroUseCaseTests
         _dateTimeProvider.ZonaHorariaClinica.Returns(TimeZoneInfo.Utc);
         _resumenDiarioRepository.ObtenerOCrearConBloqueoAsync(Arg.Any<DateOnly>(), Arg.Any<CancellationToken>())
             .Returns(new ResumenDiario(DateOnly.FromDateTime(DateTime.UtcNow)));
+        _usuarioRepository.ObtenerNombresPorIdsAsync(Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, string>());
     }
 
     private RegistrarCobroUseCase CrearCasoDeUso() => new(
         _cobroRepository, _turnoCajaRepository, _seguroMedicoRepository, _tarifarioRepository, _movimientoFinancieroRepository,
-        _pacienteRepository, _resumenDiarioRepository, _unitOfWork, _currentUser, _dateTimeProvider, _auditoriaLogService);
+        _pacienteRepository, _usuarioRepository, _resumenDiarioRepository, _unitOfWork, _currentUser, _dateTimeProvider, _auditoriaLogService);
 
     private static RegistrarCobroRequest CrearRequest(Guid pacienteId, Guid? seguroMedicoId = null, decimal montoPagado = 1000m) =>
         new(pacienteId, null, "Consulta general", 1000m, PagoEfectivo(montoPagado), seguroMedicoId, seguroMedicoId is null ? null : "AUTH-1");
@@ -303,6 +306,27 @@ public class RegistrarCobroUseCaseTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => CrearCasoDeUso().EjecutarAsync(request, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task EjecutarAsync_ConDoctor_DevuelveDoctorIdYNombreResueltoEnElDto()
+    {
+        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        var paciente = CrearPaciente();
+        _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
+
+        var doctorId = Guid.NewGuid();
+        _usuarioRepository.ObtenerNombresPorIdsAsync(
+                Arg.Is<IReadOnlyCollection<Guid>>(ids => ids.Contains(doctorId)), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, string> { [doctorId] = "Dr. Juan Gómez" });
+
+        var request = new RegistrarCobroRequest(
+            paciente.Id, null, "Consulta general", 1000m, PagoEfectivo(1000m), null, null, DoctorId: doctorId);
+
+        var resultado = await CrearCasoDeUso().EjecutarAsync(request, CancellationToken.None);
+
+        Assert.Equal(doctorId, resultado.DoctorId);
+        Assert.Equal("Dr. Juan Gómez", resultado.DoctorNombre);
     }
 
     [Fact]

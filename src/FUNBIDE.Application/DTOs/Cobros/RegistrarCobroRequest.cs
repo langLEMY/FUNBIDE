@@ -18,4 +18,6 @@ public sealed record RegistrarCobroRequest(
     /// (ver <c>TarifarioProcedimiento</c>) en el servidor — lo que mande el cliente en
     /// <see cref="MontoTotal"/> se ignora, igual que ya pasa con el % de cobertura.
     /// </summary>
-    Guid? TarifarioProcedimientoId = null);
+    Guid? TarifarioProcedimientoId = null,
+    /// <summary>Doctor con el que se atiende el paciente — SupabaseUserId, igual que <c>Cita.DoctorId</c>.</summary>
+    Guid? DoctorId = null);

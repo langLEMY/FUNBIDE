@@ -10,6 +10,8 @@ import type { CitaAgenda } from '../types/cita'
 import { ETIQUETA_PLAN, PLANES_ASEGURADORA, type PlanAseguradora, type TarifarioProcedimiento } from '../types/tarifarioProcedimiento'
 import type { Servicio } from '../types/servicio'
 import type { EspecialidadMedica } from '../types/usuario'
+import type { DoctorSimple } from '../types/doctor'
+import { agruparDoctoresPorEspecialidad } from '../lib/agruparDoctores'
 import { ESPECIALIDADES, ETIQUETA_ESPECIALIDAD } from '../types/personal'
 import './CobrosPage.css'
 
@@ -65,6 +67,9 @@ export function CobrosPage() {
   const [citaId, setCitaId] = useState<string | null>(null)
   const [deudaPaciente, setDeudaPaciente] = useState<number | null>(null)
 
+  const [doctores, setDoctores] = useState<DoctorSimple[]>([])
+  const [doctorId, setDoctorId] = useState('')
+
   const [concepto, setConcepto] = useState('')
   const [montoTotal, setMontoTotal] = useState('')
   const [metodoPago, setMetodoPago] = useState<MetodoPago>('Efectivo')
@@ -104,13 +109,15 @@ export function CobrosPage() {
       api.get<SeguroMedico[]>('/api/seguros-medicos'),
       api.get<CitaAgenda[]>('/api/citas/pendientes-de-cobro'),
       api.get<Servicio[]>('/api/servicios'),
+      api.get<DoctorSimple[]>('/api/personal/doctores'),
     ])
-      .then(([turnoActual, segurosActivos, pendientes, serviciosActivos]) => {
+      .then(([turnoActual, segurosActivos, pendientes, serviciosActivos, doctoresActivos]) => {
         if (cancelado) return
         setTurno(turnoActual)
         setSeguros(segurosActivos)
         setPendientesDeCobro(pendientes)
         setServicios(serviciosActivos)
+        setDoctores(doctoresActivos)
       })
       .catch((err) => {
         if (!cancelado) {
@@ -158,9 +165,10 @@ export function CobrosPage() {
     }
   }, [busquedaDebounced])
 
-  const seleccionarPaciente = (paciente: Paciente, citaIdPrefill: string | null = null) => {
+  const seleccionarPaciente = (paciente: Paciente, citaIdPrefill: string | null = null, doctorIdPrefill = '') => {
     setPacienteSeleccionado(paciente)
     setCitaId(citaIdPrefill)
+    setDoctorId(doctorIdPrefill)
     setBusqueda('')
     setResultados([])
     setDeudaPaciente(null)
@@ -204,9 +212,12 @@ export function CobrosPage() {
     seleccionarPaciente(
       { id: cita.pacienteId, nombre: cita.pacienteNombre, apellido: '', cedula: '', telefono: null, tieneFotoCedula: false, edad: null, condicion: null, estado: 'Activo', ultimaVisita: null },
       cita.id,
+      cita.doctorId,
     )
     setConcepto(`Consulta — ${cita.motivo}`)
   }
+
+  const gruposDoctores = useMemo(() => agruparDoctoresPorEspecialidad(doctores), [doctores])
 
   const seguroSeleccionado = useMemo(() => seguros.find((s) => s.id === seguroMedicoId) ?? null, [seguros, seguroMedicoId])
   // Cualquier aseguradora con tarifario cargado (Senasa, Renacer, Aps...) activa el
@@ -321,6 +332,7 @@ export function CobrosPage() {
       : []
 
   const limpiarFormulario = () => {
+    setDoctorId('')
     setConcepto('')
     setMontoTotal('')
     setMetodoPago('Efectivo')
@@ -341,6 +353,10 @@ export function CobrosPage() {
 
     if (!pacienteSeleccionado) {
       setErrorCobro('Selecciona un paciente.')
+      return
+    }
+    if (!doctorId) {
+      setErrorCobro('Selecciona con qué doctor se va a atender.')
       return
     }
     if (!concepto.trim()) {
@@ -371,6 +387,7 @@ export function CobrosPage() {
         seguroMedicoId: seguroMedicoId || null,
         codigoAutorizacion: seguroMedicoId ? codigoAutorizacion.trim() : null,
         tarifarioProcedimientoId: tarifarioProcedimientoId || null,
+        doctorId: doctorId || null,
       })
       setUltimoCobro(cobro)
       limpiarFormulario()
@@ -386,6 +403,13 @@ export function CobrosPage() {
   }
 
   const imprimir = (tipo: TipoComprobante) => {
+    setComprobante(tipo)
+    requestAnimationFrame(() => window.print())
+  }
+
+  /** Reimprime un cobro ya registrado (historial de "Movimientos del día"), no solo el recién creado. */
+  const reimprimirCobro = (cobro: Cobro, tipo: TipoComprobante = 'Recibo de ingreso') => {
+    setUltimoCobro(cobro)
     setComprobante(tipo)
     requestAnimationFrame(() => window.print())
   }
@@ -506,6 +530,22 @@ export function CobrosPage() {
               )}
 
               <form className="cobros-formulario" onSubmit={(event) => void handleRegistrarCobro(event)}>
+                <label className="cobros-label">
+                  Doctor que atiende
+                  <select value={doctorId} onChange={(event) => setDoctorId(event.target.value)} required>
+                    <option value="">— Selecciona un doctor —</option>
+                    {gruposDoctores.map((grupo) => (
+                      <optgroup key={grupo.etiqueta} label={grupo.etiqueta}>
+                        {grupo.doctores.map((doctor) => (
+                          <option key={doctor.id} value={doctor.id}>
+                            {doctor.nombreCompleto}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </label>
+
                 <label className="cobros-label">
                   Seguro médico (opcional)
                   <select
@@ -753,6 +793,9 @@ export function CobrosPage() {
                   <span className="text-muted">{formateadorFechaHora.format(new Date(cobro.registradoEn))}</span>
                   <span>{cobro.pacienteNombre}</span>
                   <span>{formateadorMoneda.format(cobro.montoPagado)}</span>
+                  <button type="button" className="cobros-boton-reimprimir" onClick={() => reimprimirCobro(cobro)} title="Imprimir comprobante">
+                    Imprimir
+                  </button>
                 </li>
               ))}
             </ul>
@@ -762,8 +805,12 @@ export function CobrosPage() {
 
       {ultimoCobro && comprobante && (
         <div className="cobros-comprobante">
-          <h1>{comprobante}</h1>
+          <header className="cobros-comprobante-membrete">
+            <span className="cobros-comprobante-clinica">FUNBIDE</span>
+            <h1>{comprobante}</h1>
+          </header>
           <p>Paciente: {ultimoCobro.pacienteNombre}</p>
+          {ultimoCobro.doctorNombre && <p>Doctor: {ultimoCobro.doctorNombre}</p>}
           <p>Concepto: {ultimoCobro.concepto}</p>
           <p>Fecha: {formateadorFechaHora.format(new Date(ultimoCobro.registradoEn))}</p>
           <p>Monto total: {formateadorMoneda.format(ultimoCobro.montoTotal)}</p>

@@ -117,6 +117,9 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
+                    b.Property<Guid?>("DoctorId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal?>("MontoCobertura")
                         .HasColumnType("decimal(12,2)");
 
@@ -153,6 +156,8 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CitaId");
+
+                    b.HasIndex("DoctorId");
 
                     b.HasIndex("PacienteId");
 

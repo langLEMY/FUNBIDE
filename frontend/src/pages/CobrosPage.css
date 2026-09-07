@@ -288,8 +288,45 @@
   border-bottom: 1px solid var(--border-hairline);
 }
 
+.cobros-boton-reimprimir {
+  align-self: flex-start;
+  margin-top: 4px;
+  background: transparent;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cobros-boton-reimprimir:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
 .cobros-comprobante {
   display: none;
+}
+
+.cobros-comprobante-membrete {
+  border-bottom: 2px solid #000;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+}
+
+.cobros-comprobante-clinica {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.cobros-comprobante-membrete h1 {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 @media print {

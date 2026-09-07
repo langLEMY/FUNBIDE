@@ -28,6 +28,13 @@ public sealed class Cobro : AppendOnlyEntity
     public string? CodigoAutorizacion { get; private set; }
 
     /// <summary>
+    /// Doctor con el que se atiende el paciente por este cobro — SupabaseUserId, igual
+    /// que <see cref="Cita.DoctorId"/> (ver <c>ListarDoctoresUseCase</c>). Opcional: un
+    /// cobro manual sin cita asociada puede o no traer doctor.
+    /// </summary>
+    public Guid? DoctorId { get; private set; }
+
+    /// <summary>
     /// Excedente que la aseguradora paga por encima de <see cref="MontoCobertura"/> y que
     /// no se le reconoce al paciente ni entra a la caja física — congelado acá desde
     /// <see cref="TarifarioProcedimiento.MontoFondo"/> al momento del cobro. Nunca
@@ -96,7 +103,8 @@ public sealed class Cobro : AppendOnlyEntity
         string? codigoAutorizacion = null,
         Guid? tarifarioProcedimientoId = null,
         decimal? montoCoberturaExacto = null,
-        decimal? montoFondoExacto = null)
+        decimal? montoFondoExacto = null,
+        Guid? doctorId = null)
     {
         if (string.IsNullOrWhiteSpace(concepto))
         {
@@ -156,6 +164,7 @@ public sealed class Cobro : AppendOnlyEntity
             : null;
         CodigoAutorizacion = seguroMedicoId.HasValue ? codigoAutorizacion!.Trim() : null;
         MontoFondo = seguroMedicoId.HasValue ? montoFondoExacto : null;
+        DoctorId = doctorId;
 
         var montoPagado = pagos.Sum(p => p.Monto);
         if (montoPagado < 0 || montoPagado > MontoACargoPaciente)
