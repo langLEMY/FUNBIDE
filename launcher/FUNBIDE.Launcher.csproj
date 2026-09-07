@@ -13,6 +13,12 @@
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+
+    <Version>1.0.0</Version>
+    <Product>FUNBIDE</Product>
+    <Company>FUNBIDE</Company>
+    <Description>Sistema de gestión clínica FUNBIDE</Description>
+    <Copyright>Copyright © FUNBIDE</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
