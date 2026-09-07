@@ -22,6 +22,27 @@ const formateadorMoneda = new Intl.NumberFormat('es-DO', {
   maximumFractionDigits: 2,
 })
 
+/**
+ * Calcula Total y Fondo a partir de lo que carga la persona a mano, para no repetir la
+ * cuenta que antes se hacía por WhatsApp con el cliente (ver AseguradorasPage.tsx del
+ * commit que agrega esto). Total es siempre Seguro + Paciente — no tiene sentido cargarlo
+ * aparte. Fondo es el excedente que la aseguradora paga por encima de lo reconocido como
+ * "Seguro": si no se carga el monto real que paga la aseguradora, o ese monto no supera lo
+ * reconocido, no hay fondo (queda null, igual que hoy cuando no se negocia ese excedente).
+ */
+function calcularTotalYFondo(montoSeguroTexto: string, montoPacienteTexto: string, montoRealAseguradoraTexto: string) {
+  const seguro = Number(montoSeguroTexto)
+  const paciente = Number(montoPacienteTexto)
+  const seguroValido = Number.isFinite(seguro) ? seguro : 0
+  const pacienteValido = Number.isFinite(paciente) ? paciente : 0
+  const total = seguroValido + pacienteValido
+
+  const real = montoRealAseguradoraTexto.trim() ? Number(montoRealAseguradoraTexto) : null
+  const fondo = real !== null && Number.isFinite(real) && real > seguroValido ? real - seguroValido : null
+
+  return { total, fondo }
+}
+
 export function AseguradorasPage() {
   const [seguros, setSeguros] = useState<SeguroMedico[]>([])
   const [cargando, setCargando] = useState(true)
@@ -50,19 +71,29 @@ export function AseguradorasPage() {
   const [editandoTarifarioId, setEditandoTarifarioId] = useState<string | null>(null)
   const [montoSeguroEdit, setMontoSeguroEdit] = useState('')
   const [montoPacienteEdit, setMontoPacienteEdit] = useState('')
-  const [montoTotalEdit, setMontoTotalEdit] = useState('')
-  const [montoFondoEdit, setMontoFondoEdit] = useState('')
+  const [montoRealAseguradoraEdit, setMontoRealAseguradoraEdit] = useState('')
   const [guardandoTarifario, setGuardandoTarifario] = useState(false)
   const [errorFilaTarifario, setErrorFilaTarifario] = useState<string | null>(null)
 
   const [procedimientoNuevo, setProcedimientoNuevo] = useState('')
   const [montoSeguroNuevo, setMontoSeguroNuevo] = useState('')
   const [montoPacienteNuevo, setMontoPacienteNuevo] = useState('')
-  const [montoTotalNuevo, setMontoTotalNuevo] = useState('')
-  const [montoFondoNuevo, setMontoFondoNuevo] = useState('')
+  const [montoRealAseguradoraNuevo, setMontoRealAseguradoraNuevo] = useState('')
   const [especialidadNueva, setEspecialidadNueva] = useState<EspecialidadMedica | typeof SIN_ESPECIALIDAD>(SIN_ESPECIALIDAD)
   const [creandoTarifario, setCreandoTarifario] = useState(false)
   const [errorCrearTarifario, setErrorCrearTarifario] = useState<string | null>(null)
+
+  // Preview en vivo del cálculo automático (Total = Seguro + Paciente; Fondo = lo que
+  // realmente paga la aseguradora por encima de lo reconocido como Seguro) — ver
+  // calcularTotalYFondo. Se recalcula en cada tecleo, no solo al guardar.
+  const calculoNuevo = useMemo(
+    () => calcularTotalYFondo(montoSeguroNuevo, montoPacienteNuevo, montoRealAseguradoraNuevo),
+    [montoSeguroNuevo, montoPacienteNuevo, montoRealAseguradoraNuevo],
+  )
+  const calculoEdit = useMemo(
+    () => calcularTotalYFondo(montoSeguroEdit, montoPacienteEdit, montoRealAseguradoraEdit),
+    [montoSeguroEdit, montoPacienteEdit, montoRealAseguradoraEdit],
+  )
 
   const cargar = () => {
     setCargando(true)
@@ -117,16 +148,16 @@ export function AseguradorasPage() {
     setEditandoTarifarioId(fila.id)
     setMontoSeguroEdit(String(fila.montoSeguro))
     setMontoPacienteEdit(String(fila.montoPaciente))
-    setMontoTotalEdit(String(fila.montoTotal))
-    setMontoFondoEdit(fila.montoFondo ? String(fila.montoFondo) : '')
+    // El "monto real que paga la aseguradora" no se guarda aparte en la base — se
+    // reconstruye a partir de Seguro + Fondo para que reabrir "Editar" sin tocar nada
+    // vuelva a calcular exactamente el mismo Fondo que ya tenía la fila.
+    setMontoRealAseguradoraEdit(fila.montoFondo ? String(fila.montoSeguro + fila.montoFondo) : '')
     setErrorFilaTarifario(null)
   }
 
   const guardarEdicionTarifario = async (fila: TarifarioProcedimiento) => {
     const montoSeguroNumero = Number(montoSeguroEdit)
     const montoPacienteNumero = Number(montoPacienteEdit)
-    const montoTotalNumero = Number(montoTotalEdit)
-    const montoFondoNumero = montoFondoEdit.trim() ? Number(montoFondoEdit) : null
 
     if (!Number.isFinite(montoSeguroNumero) || montoSeguroNumero < 0) {
       setErrorFilaTarifario('El monto que cubre el seguro no puede ser negativo.')
@@ -136,12 +167,12 @@ export function AseguradorasPage() {
       setErrorFilaTarifario('El monto a cargo del paciente no puede ser negativo.')
       return
     }
-    if (!Number.isFinite(montoTotalNumero) || montoTotalNumero <= 0) {
-      setErrorFilaTarifario('El monto total debe ser mayor que cero.')
+    if (montoRealAseguradoraEdit.trim() && !Number.isFinite(Number(montoRealAseguradoraEdit))) {
+      setErrorFilaTarifario('El monto real que paga la aseguradora debe ser un número.')
       return
     }
-    if (montoFondoNumero !== null && (!Number.isFinite(montoFondoNumero) || montoFondoNumero < 0)) {
-      setErrorFilaTarifario('La ganancia para el fondo interno no puede ser negativa.')
+    if (calculoEdit.total <= 0) {
+      setErrorFilaTarifario('El monto total (seguro + paciente) debe ser mayor que cero.')
       return
     }
 
@@ -152,8 +183,8 @@ export function AseguradorasPage() {
         tarifarioProcedimientoId: fila.id,
         montoSeguro: montoSeguroNumero,
         montoPaciente: montoPacienteNumero,
-        montoTotal: montoTotalNumero,
-        montoFondo: montoFondoNumero,
+        montoTotal: calculoEdit.total,
+        montoFondo: calculoEdit.fondo,
         especialidad: fila.especialidad,
       })
       setTarifario((actual) => actual.map((t) => (t.id === actualizada.id ? actualizada : t)))
@@ -171,8 +202,6 @@ export function AseguradorasPage() {
 
     const montoSeguroNumero = Number(montoSeguroNuevo)
     const montoPacienteNumero = Number(montoPacienteNuevo)
-    const montoTotalNumero = Number(montoTotalNuevo)
-    const montoFondoNumero = montoFondoNuevo.trim() ? Number(montoFondoNuevo) : null
 
     if (!procedimientoNuevo.trim()) {
       setErrorCrearTarifario('El nombre del procedimiento es obligatorio.')
@@ -186,12 +215,12 @@ export function AseguradorasPage() {
       setErrorCrearTarifario('El monto a cargo del paciente no puede ser negativo.')
       return
     }
-    if (!Number.isFinite(montoTotalNumero) || montoTotalNumero <= 0) {
-      setErrorCrearTarifario('El monto total debe ser mayor que cero.')
+    if (montoRealAseguradoraNuevo.trim() && !Number.isFinite(Number(montoRealAseguradoraNuevo))) {
+      setErrorCrearTarifario('El monto real que paga la aseguradora debe ser un número.')
       return
     }
-    if (montoFondoNumero !== null && (!Number.isFinite(montoFondoNumero) || montoFondoNumero < 0)) {
-      setErrorCrearTarifario('La ganancia para el fondo interno no puede ser negativa.')
+    if (calculoNuevo.total <= 0) {
+      setErrorCrearTarifario('El monto total (seguro + paciente) debe ser mayor que cero.')
       return
     }
 
@@ -203,16 +232,15 @@ export function AseguradorasPage() {
         procedimiento: procedimientoNuevo.trim(),
         montoSeguro: montoSeguroNumero,
         montoPaciente: montoPacienteNumero,
-        montoTotal: montoTotalNumero,
-        montoFondo: montoFondoNumero,
+        montoTotal: calculoNuevo.total,
+        montoFondo: calculoNuevo.fondo,
         especialidad: especialidadNueva || null,
       })
       setTarifario((actual) => [...actual, creado].sort((a, b) => a.procedimiento.localeCompare(b.procedimiento)))
       setProcedimientoNuevo('')
       setMontoSeguroNuevo('')
       setMontoPacienteNuevo('')
-      setMontoTotalNuevo('')
-      setMontoFondoNuevo('')
+      setMontoRealAseguradoraNuevo('')
       setEspecialidadNueva(SIN_ESPECIALIDAD)
     } catch (err) {
       setErrorCrearTarifario(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo agregar el procedimiento.')
@@ -400,11 +428,12 @@ export function AseguradorasPage() {
       <section className="aseguradoras-tabla-card">
         <h2>Tarifario por procedimiento</h2>
         <p className="text-secondary aseguradoras-tarifario-subtitulo">
-          Montos fijos negociados por procedimiento (Senasa con sus 3 planes; Renacer y Aps con un único plan).
+          Montos fijos negociados por procedimiento (Senasa con sus planes; Renacer y Aps con un único plan).
           Al cobrar con esta aseguradora, el procedimiento elegido define el monto exacto — no un porcentaje.
           La columna "Ganancia (fondo interno)" es el excedente que paga la aseguradora por encima de lo reconocido
           al paciente: no se le cobra a nadie, entra directo como ingreso interno de la fundación en cada cobro.
-          Editá cualquier fila para ajustarla sin tener que rehacer el import de Excel.
+          Al agregar o editar un procedimiento a mano, cargá el monto real que paga la aseguradora y el Total y el
+          Fondo se calculan solos — no hace falta hacer la resta. El import de Excel sigue igual que siempre.
         </p>
 
         <div className="aseguradoras-tarifario-filtros">
@@ -478,19 +507,19 @@ export function AseguradorasPage() {
                 type="number"
                 min={0}
                 step="0.01"
-                placeholder="Total"
-                value={montoTotalNuevo}
-                onChange={(event) => setMontoTotalNuevo(event.target.value)}
-                required
+                placeholder="Lo que realmente paga la aseguradora (opcional)"
+                value={montoRealAseguradoraNuevo}
+                onChange={(event) => setMontoRealAseguradoraNuevo(event.target.value)}
               />
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                placeholder="Ganancia / fondo interno (opcional)"
-                value={montoFondoNuevo}
-                onChange={(event) => setMontoFondoNuevo(event.target.value)}
-              />
+              <div className="aseguradoras-calculo-preview">
+                <span>
+                  Total: <strong>{formateadorMoneda.format(calculoNuevo.total)}</strong>
+                </span>
+                <span>
+                  Fondo:{' '}
+                  <strong>{calculoNuevo.fondo !== null ? formateadorMoneda.format(calculoNuevo.fondo) : 'Sin ganancia'}</strong>
+                </span>
+              </div>
               <select
                 value={especialidadNueva}
                 onChange={(event) => setEspecialidadNueva(event.target.value as EspecialidadMedica)}
@@ -575,24 +604,19 @@ export function AseguradorasPage() {
                         onChange={(event) => setMontoPacienteEdit(event.target.value)}
                       />
                     </td>
+                    <td className="aseguradoras-calculado">{formateadorMoneda.format(calculoEdit.total)}</td>
                     <td>
                       <input
                         type="number"
                         min={0}
                         step="0.01"
-                        value={montoTotalEdit}
-                        onChange={(event) => setMontoTotalEdit(event.target.value)}
+                        placeholder="Lo que realmente paga la aseguradora"
+                        value={montoRealAseguradoraEdit}
+                        onChange={(event) => setMontoRealAseguradoraEdit(event.target.value)}
                       />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        placeholder="Sin ganancia"
-                        value={montoFondoEdit}
-                        onChange={(event) => setMontoFondoEdit(event.target.value)}
-                      />
+                      <span className="aseguradoras-calculado-chip">
+                        Fondo: {calculoEdit.fondo !== null ? formateadorMoneda.format(calculoEdit.fondo) : 'Sin ganancia'}
+                      </span>
                     </td>
                     <td className="aseguradoras-acciones">
                       <button type="button" onClick={() => void guardarEdicionTarifario(fila)} disabled={guardandoTarifario}>

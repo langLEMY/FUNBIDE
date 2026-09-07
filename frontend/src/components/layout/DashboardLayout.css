@@ -13,11 +13,17 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* El scroll ahora vive acá, no en .dashboard-layout-content, para que el
+     Topbar pueda quedar "sticky" con el contenido pasando debajo — sin eso
+     el vidrio translúcido del Topbar no tendría nada que mostrar detrás. */
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .dashboard-layout-content {
   flex: 1;
-  overflow-y: auto;
   padding: 28px;
-  animation: funbide-aparecer var(--duracion-lenta) var(--ease-entrada);
+  /* Cada navegación remonta este contenedor (no hay layout persistente de
+     router): esta animación es, en la práctica, la transición entre pantallas. */
+  animation: funbide-aparecer var(--duracion-abrir) var(--ease-entrada);
 }

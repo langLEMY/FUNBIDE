@@ -1,14 +1,23 @@
 .topbar {
-  position: relative;
-  z-index: 1;
+  /* Sticky, no solo "arriba": el contenido de la página pasa por debajo
+     mientras se hace scroll, así el vidrio translúcido tiene algo real que
+     mostrar detrás en vez de flotar sobre un plano vacío. */
+  position: sticky;
+  top: 0;
+  z-index: 5;
   height: 64px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 28px;
-  background: var(--chrome-bg);
-  border-bottom: 1px solid var(--border-hairline);
+  background: var(--glass-chrome-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  /* El borde inferior es más marcado que un hairline plano: es lo único que
+     separa "contenido pasando debajo" de "contenido detrás del vidrio", así
+     que necesita leerse incluso sobre fondos claros o con poco contraste. */
+  border-bottom: 1px solid var(--glass-border);
   box-shadow: var(--shadow-chrome);
 }
 

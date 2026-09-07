@@ -178,3 +178,31 @@
   background: var(--surface-2);
   color: var(--text-primary);
 }
+
+.aseguradoras-calculo-preview {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex: 1 1 220px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.aseguradoras-calculo-preview strong {
+  color: var(--text-primary);
+}
+
+.aseguradoras-calculado {
+  color: var(--text-secondary);
+}
+
+.aseguradoras-calculado-chip {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}

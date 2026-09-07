@@ -1,8 +1,16 @@
 :root {
-  --page-plane: #100f0d;
-  --surface-1: #1c1a16;
-  --surface-2: #221f1a;
-  --surface-hover: #29261f;
+  /* AMOLED de verdad: el plano de la página es negro puro (no un gris muy
+     oscuro) — en una pantalla OLED esos píxeles se apagan del todo, y de
+     paso es el fondo más "premium" posible para dejar que los acentos
+     (ámbar, teal) y los materiales de vidrio respiren. Las superficies
+     elevadas (tarjetas, chrome) se separan del negro por color, no por
+     sombra — una sombra difusa es literalmente invisible sobre #000, así
+     que la jerarquía acá corre por borde + luz interior, ver --shadow-*
+     más abajo. */
+  --page-plane: #000000;
+  --surface-1: #0d0d0c;
+  --surface-2: #131211;
+  --surface-hover: #1c1a17;
 
   --text-primary: #f0efeb;
   --text-secondary: rgba(243, 242, 238, 0.7);
@@ -10,11 +18,43 @@
 
   --gridline: rgba(243, 242, 238, 0.08);
   --baseline: rgba(243, 242, 238, 0.16);
-  --border-hairline: rgba(255, 255, 255, 0.065);
-  --chrome-bg: #1c1a16;
+  /* Un poco más marcado que antes (0.065 → 0.09): sobre negro puro hay cero
+     luz ambiente rebotando, así que el borde necesita algo más de peso para
+     seguir leyéndose como borde y no desaparecer. */
+  --border-hairline: rgba(255, 255, 255, 0.09);
+  --chrome-bg: #0a0a09;
 
-  --shadow-card: 0 16px 40px -14px rgba(0, 0, 0, 0.5), 0 2px 10px -4px rgba(0, 0, 0, 0.35);
-  --shadow-chrome: 0 24px 60px -24px rgba(0, 0, 0, 0.6);
+  /* Materiales translúcidos: el chrome estructural (sidebar/topbar) y los
+     flotantes (menús, modales) dejan de ser paneles opacos y pasan a leerse
+     como vidrio real sobre lo que hay debajo — blur + saturación, no solo
+     transparencia plana (eso se ve "sucio", no "vidrio"). El chrome es más
+     opaco porque separa regiones y a veces hay texto denso detrás; los
+     flotantes son un poco más livianos porque casi siempre están sobre el
+     page-plane. Nunca se apilan uno sobre otro (perderían legibilidad). */
+  --glass-chrome-bg: rgba(13, 13, 12, 0.78);
+  /* El sidebar es la región estructural más grande y separa toda la app del
+     fondo: un poco más opaco que el topbar (que es angosto y flota sobre
+     contenido que ya reconocemos). */
+  --glass-sidebar-bg: rgba(10, 10, 9, 0.88);
+  --glass-float-bg: rgba(19, 18, 17, 0.86);
+  --glass-blur: 22px;
+  --glass-saturate: 180%;
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-top: rgba(255, 255, 255, 0.16);
+  /* Scrim de los modales: además de oscurecer, empuja el fondo desenfocado
+     hacia atrás — "dim to focus" (ver EditarPermisosModal/EditarPersonalModal). */
+  --glass-scrim-blur: 10px;
+
+  /* Sobre negro puro un box-shadow difuso normal es invisible (no existe un
+     negro "más negro" que el fondo para que se note la sombra) — así que acá
+     la elevación corre por un anillo de 1px + luz interior arriba, no por
+     sombra difusa. El halo final es sutil pero es lo que hace que una
+     tarjeta se sienta "levantada" sobre AMOLED en vez de plana. */
+  --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 12px 32px -12px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+  --shadow-chrome: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 24px 60px -20px rgba(0, 0, 0, 0.85);
+  --shadow-float: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 28px 70px -18px rgba(0, 0, 0, 0.85),
+    0 4px 16px -6px rgba(0, 0, 0, 0.6);
 
   /* Dorado metálico → ámbar cálido: se siente más cercano/amigable (una fundación
      de salud, no un banco privado) sin perder la asociación con "dinero". */
@@ -24,6 +64,12 @@
   --series-pacientes-fill: rgba(47, 191, 143, 0.12);
 
   --danger: #dd7d70;
+
+  /* Sobre negro puro, un lavado radial apenas perceptible desde arriba le da
+     profundidad al plano de fondo sin comprometer el negro AMOLED en la
+     mayor parte de la pantalla (sigue siendo casi todo #000 real). Nunca en
+     modo claro — ahí no hace falta y se ve fuera de lugar. */
+  --page-wash: radial-gradient(120% 60% at 50% -10%, rgba(47, 191, 143, 0.05), transparent 60%);
 
   /* Radios más generosos = formas más suaves = se lee más amigable que la
      misma tarjeta con esquinas casi rectas. */
@@ -35,9 +81,32 @@
      como respuesta inmediata de la interfaz, no como una animación decorativa. */
   --ease-suave: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-entrada: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Un poco de anticipación (overshoot leve) para superficies que "se
+     materializan" — menús y modales que aparecen con blur+scale, no solo
+     opacity. Un gesto con momentum (flick, drag) ameritaría más rebote;
+     esto solo se abre por click, así que el overshoot es sutil. */
+  --ease-spring: cubic-bezier(0.34, 1.35, 0.4, 1);
   --duracion-rapida: 140ms;
   --duracion-base: 220ms;
   --duracion-lenta: 320ms;
+  --duracion-materializar: 260ms;
+  /* Apertura del programa y cambio de pantalla completa (login → panel, panel →
+     panel): un poco más lenta que --duracion-lenta a propósito, para que se sienta
+     como una transición de "escena" y no como la aparición de un elemento más. */
+  --duracion-abrir: 400ms;
+
+  /* Tipografía: tracking (letter-spacing) y leading (line-height) dependen
+     del tamaño — nunca un solo valor para todo. Texto grande quiere tracking
+     negativo (las letras se leen separadas al crecer) y leading apretado;
+     texto chico quiere tracking levemente positivo para legibilidad y más
+     aire entre líneas. */
+  --tracking-display: -0.02em;
+  --tracking-heading: -0.01em;
+  --tracking-body: 0;
+  --tracking-caption: 0.01em;
+  --leading-display: 1.1;
+  --leading-heading: 1.25;
+  --leading-body: 1.5;
 
   font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   color-scheme: dark;
@@ -58,8 +127,16 @@
   --border-hairline: rgba(0, 0, 0, 0.06);
   --chrome-bg: #ffffff;
 
-  --shadow-card: 0 16px 36px -16px rgba(32, 34, 31, 0.18), 0 2px 8px -4px rgba(32, 34, 31, 0.1);
+  --glass-chrome-bg: rgba(255, 255, 255, 0.72);
+  --glass-sidebar-bg: rgba(255, 255, 255, 0.84);
+  --glass-float-bg: rgba(255, 255, 255, 0.86);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-border-top: rgba(255, 255, 255, 0.8);
+
+  --shadow-card: 0 16px 36px -16px rgba(32, 34, 31, 0.18), 0 2px 8px -4px rgba(32, 34, 31, 0.1),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
   --shadow-chrome: 0 20px 50px -24px rgba(32, 34, 31, 0.24);
+  --shadow-float: 0 24px 60px -20px rgba(32, 34, 31, 0.22), 0 4px 14px -6px rgba(32, 34, 31, 0.14);
 
   --series-dinero: #c17830;
   --series-dinero-fill: rgba(193, 120, 48, 0.1);
@@ -67,6 +144,8 @@
   --series-pacientes-fill: rgba(47, 191, 143, 0.12);
 
   --danger: #c4574b;
+
+  --page-wash: none;
 
   color-scheme: light;
 }
@@ -78,11 +157,27 @@
   :root {
     --border-hairline: rgba(255, 255, 255, 0.32);
     --gridline: rgba(243, 242, 238, 0.24);
+    --page-wash: none;
   }
 
   :root[data-theme='claro'] {
     --border-hairline: rgba(0, 0, 0, 0.35);
     --gridline: rgba(32, 34, 31, 0.24);
+  }
+}
+
+/* Quien pidió menos transparencia en el sistema operativo no debería ver
+   vidrio: el chrome (sidebar/topbar) y los flotantes (menús, modales) caen
+   a un material sólido normal y el blur se apaga. Como todo lo demás usa
+   estas mismas variables, no hace falta tocar cada componente. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-chrome-bg: var(--chrome-bg);
+    --glass-sidebar-bg: var(--chrome-bg);
+    --glass-float-bg: var(--surface-2);
+    --glass-blur: 0px;
+    --glass-saturate: 100%;
+    --glass-scrim-blur: 0px;
   }
 }
 
@@ -98,9 +193,80 @@ body,
 
 body {
   margin: 0;
-  background: var(--page-plane);
+  background-color: var(--page-plane);
+  background-image: var(--page-wash);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Jerarquía tipográfica base: cada nivel trae su propio tracking/leading en
+   vez de heredar el interlineado del texto de párrafo. Selectores por
+   elemento (no por clase), así que cualquier título de cualquier página
+   hereda esto automáticamente; una clase más específica en una página
+   puntual sigue ganando la cascada sin problema. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+h1 {
+  font-size: clamp(1.375rem, 1.1rem + 0.9vw, 1.75rem);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+}
+
+h2 {
+  font-size: 1.25rem;
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+}
+
+h3,
+h4 {
+  font-size: 1.0625rem;
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+}
+
+p {
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+}
+
+/* Scrollbar a tono con el tema en vez del riel gris genérico del navegador
+   (WebKit/Chromium vía ::-webkit-scrollbar, Firefox vía scrollbar-color).
+   Neutro y discreto — no usa un color de acento para no competir con las
+   series de los gráficos. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-primary) 18%, transparent) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--text-primary) 18%, transparent);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--text-primary) 30%, transparent);
+  background-clip: padding-box;
 }
 
 /* Evita saltos de color abruptos al alternar tema claro/oscuro en CUALQUIER
@@ -178,7 +344,12 @@ a:not([aria-disabled='true']):active {
 
 .equipo-tarjeta:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  /* Mismo motivo que --shadow-card: un shadow difuso oscuro no se nota sobre
+     negro AMOLED. El anillo claro + un halo del acento son lo que realmente
+     comunica "esto se levantó". */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 12px 28px -10px rgba(0, 0, 0, 0.7),
+    0 0 24px -8px color-mix(in srgb, var(--series-pacientes) 25%, transparent);
 }
 
 .equipo-tarjeta:active {
@@ -217,6 +388,18 @@ table tbody tr:nth-child(n + 7),
   animation-delay: 150ms;
 }
 
+/* Hover de fila global: toda tabla de la app (Pacientes, Personal, Cobros,
+   Caja...) gana esto automáticamente sin tocar cada página. Una página
+   puntual que ya define su propio hover más específico sigue ganando la
+   cascada, así que esto es un piso, no un reemplazo. */
+table tbody tr {
+  transition: background-color var(--duracion-rapida) var(--ease-suave);
+}
+
+table tbody tr:hover {
+  background-color: var(--surface-hover);
+}
+
 @keyframes funbide-aparecer {
   from {
     opacity: 0;
@@ -245,6 +428,25 @@ table tbody tr:nth-child(n + 7),
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* Para superficies de vidrio (menús, modales): además de aparecer, el
+   material "se condensa" — entra con menos blur del que tiene en reposo y
+   lo gana en los primeros frames, así se lee como una superficie física
+   formándose en vez de un rectángulo que hace fade-in. */
+@keyframes funbide-materializar {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+    backdrop-filter: blur(0px) saturate(100%);
+    -webkit-backdrop-filter: blur(0px) saturate(100%);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   }
 }
 

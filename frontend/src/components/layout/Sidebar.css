@@ -3,13 +3,19 @@
   z-index: 1;
   width: 252px;
   flex-shrink: 0;
-  background: var(--chrome-bg);
-  border-right: 1px solid var(--border-hairline);
+  background: var(--glass-sidebar-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-right: 1px solid var(--glass-border);
   box-shadow: var(--shadow-chrome);
   padding: 20px 16px;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  /* El sidebar no tiene su propio scroll (solo .sidebar-nav lo tiene), así
+     que no necesita ser "sticky" — pero sí queda fijo visualmente porque
+     .dashboard-layout-main (a su lado) es quien scrollea, no la página
+     entera; ver DashboardLayout.css. */
 }
 
 .sidebar-marca {
@@ -116,9 +122,18 @@
   background: color-mix(in srgb, var(--series-pacientes) 12%, transparent);
   color: var(--series-pacientes);
   font-weight: 700;
+  /* Un halo suave del acento en vez de (o además de) la barrita lateral: un
+     glow se nota y se siente premium sobre AMOLED, donde un shadow oscuro
+     normal directamente no se ve. */
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--series-pacientes) 22%, transparent),
+    0 0 20px -6px color-mix(in srgb, var(--series-pacientes) 55%, transparent);
 }
 
-.sidebar-nav-item.activo::before {
+/* El indicador de item activo siempre está en el DOM (no solo cuando hay
+   .activo) para poder animar su aparición — un pseudo-elemento que recién
+   se crea al agregar la clase no puede transicionar desde ningún estado
+   previo, así que aparecía de golpe en vez de crecer. */
+.sidebar-nav-item::before {
   content: '';
   position: absolute;
   left: 0;
@@ -127,6 +142,14 @@
   width: 3px;
   border-radius: 999px;
   background: var(--series-pacientes);
+  opacity: 0;
+  transform: scaleY(0.4);
+  transition: opacity var(--duracion-base) var(--ease-suave), transform var(--duracion-base) var(--ease-spring);
+}
+
+.sidebar-nav-item.activo::before {
+  opacity: 1;
+  transform: scaleY(1);
 }
 
 .sidebar-nav-item.activo .sidebar-nav-icono {
