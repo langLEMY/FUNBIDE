@@ -26,7 +26,16 @@ INSERT INTO funbide.__ef_migrations_history ("MigrationId", "ProductVersion")
 --    Sin privilegios de esquema (no puede crear/alterar/borrar tablas), solo
 --    leer y escribir filas dentro de funbide.*  — igual que ya documentan los
 --    comentarios de scripts/instalar-escritorio.ps1 y src/FUNBIDE.API/Program.cs.
-CREATE ROLE funbide_app WITH LOGIN PASSWORD 'CHANGE_ME_PASSWORD_GENERADA';
+-- Si el rol ya existía (de un intento anterior), esto resetea su contraseña en vez
+-- de fallar con "role already exists".
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'funbide_app') THEN
+    ALTER ROLE funbide_app WITH LOGIN PASSWORD 'CHANGE_ME_PASSWORD_GENERADA';
+  ELSE
+    CREATE ROLE funbide_app WITH LOGIN PASSWORD 'CHANGE_ME_PASSWORD_GENERADA';
+  END IF;
+END $$;
 
 GRANT USAGE ON SCHEMA funbide TO funbide_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA funbide TO funbide_app;

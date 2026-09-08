@@ -12,6 +12,7 @@ import type { Servicio } from '../types/servicio'
 import type { EspecialidadMedica } from '../types/usuario'
 import type { DoctorSimple } from '../types/doctor'
 import { agruparDoctoresPorEspecialidad } from '../lib/agruparDoctores'
+import { imprimirVentana } from '../lib/imprimir'
 import { ESPECIALIDADES, ETIQUETA_ESPECIALIDAD } from '../types/personal'
 import './CobrosPage.css'
 
@@ -404,14 +405,14 @@ export function CobrosPage() {
 
   const imprimir = (tipo: TipoComprobante) => {
     setComprobante(tipo)
-    requestAnimationFrame(() => window.print())
+    requestAnimationFrame(imprimirVentana)
   }
 
   /** Reimprime un cobro ya registrado (historial de "Movimientos del día"), no solo el recién creado. */
   const reimprimirCobro = (cobro: Cobro, tipo: TipoComprobante = 'Recibo de ingreso') => {
     setUltimoCobro(cobro)
     setComprobante(tipo)
-    requestAnimationFrame(() => window.print())
+    requestAnimationFrame(imprimirVentana)
   }
 
   if (cargando) {
@@ -758,26 +759,17 @@ export function CobrosPage() {
                 <button type="submit" disabled={registrando || !turno}>
                   {registrando ? 'Procesando…' : 'Procesar cobro'}
                 </button>
+                <button
+                  type="button"
+                  className="cobros-boton-imprimir-factura"
+                  disabled={!ultimoCobro}
+                  title={ultimoCobro ? 'Imprimir la factura del último cobro procesado' : 'Procesa un cobro primero para poder imprimir su factura'}
+                  onClick={() => imprimir('Factura de consumo')}
+                >
+                  Imprimir factura
+                </button>
               </form>
               {errorCobro && <p className="cobros-error">{errorCobro}</p>}
-            </section>
-          )}
-
-          {ultimoCobro && (
-            <section className="cobros-impresion-card no-imprimir">
-              <h2>Cobro registrado</h2>
-              <p className="text-secondary">Elige el comprobante a imprimir:</p>
-              <div className="cobros-impresion-botones">
-                <button type="button" onClick={() => imprimir('Factura de consumo')}>
-                  Factura de consumo
-                </button>
-                <button type="button" onClick={() => imprimir('Crédito fiscal')}>
-                  Crédito fiscal
-                </button>
-                <button type="button" onClick={() => imprimir('Recibo de ingreso')}>
-                  Recibo de ingreso
-                </button>
-              </div>
             </section>
           )}
         </div>
@@ -806,43 +798,68 @@ export function CobrosPage() {
       {ultimoCobro && comprobante && (
         <div className="cobros-comprobante">
           <header className="cobros-comprobante-membrete">
-            <span className="cobros-comprobante-clinica">FUNBIDE</span>
-            <h1>{comprobante}</h1>
+            <span className="cobros-comprobante-clinica">FUNDACIÓN BIENESTAR Y DESARROLLO</span>
+            <span className="cobros-comprobante-direccion">
+              Calle Guaroa No. 4, Esq. Simón Orozco, Invivienda
+              <br />
+              Santo Domingo Este, Hainamosa, Distrito Nacional
+            </span>
           </header>
-          <p>Paciente: {ultimoCobro.pacienteNombre}</p>
-          {ultimoCobro.doctorNombre && <p>Doctor: {ultimoCobro.doctorNombre}</p>}
-          <p>Concepto: {ultimoCobro.concepto}</p>
-          <p>Fecha: {formateadorFechaHora.format(new Date(ultimoCobro.registradoEn))}</p>
-          <p>Monto total: {formateadorMoneda.format(ultimoCobro.montoTotal)}</p>
-          {ultimoCobro.seguroMedicoNombre && (
-            <>
-              <p>
-                Seguro: {ultimoCobro.seguroMedicoNombre}{' '}
-                ({ultimoCobro.porcentajeCobertura !== null ? `${ultimoCobro.porcentajeCobertura}%` : 'tarifario'})
-              </p>
-              <p>Cubierto por seguro: {formateadorMoneda.format(ultimoCobro.montoCobertura ?? 0)}</p>
-              {!!ultimoCobro.montoFondo && (
-                <>
-                  <p>Fondo interno de la fundación: {formateadorMoneda.format(ultimoCobro.montoFondo)}</p>
-                  <p>
-                    Reclamo total a la ARS: {formateadorMoneda.format((ultimoCobro.montoCobertura ?? 0) + ultimoCobro.montoFondo)}
-                  </p>
-                </>
-              )}
-              <p>Código de autorización: {ultimoCobro.codigoAutorizacion}</p>
-            </>
-          )}
-          {ultimoCobro.pagos.length === 0 ? (
-            <p>Pago: nada pagado todavía (a deuda)</p>
-          ) : ultimoCobro.pagos.length === 1 ? (
-            <p>Método de pago: {ultimoCobro.pagos[0].metodo}</p>
-          ) : (
-            <p>
-              Métodos de pago: {ultimoCobro.pagos.map((p) => `${p.metodo} ${formateadorMoneda.format(p.monto)}`).join(' + ')}
-            </p>
-          )}
-          <p>Monto pagado: {formateadorMoneda.format(ultimoCobro.montoPagado)}</p>
-          {ultimoCobro.montoPendiente > 0 && <p>Saldo pendiente: {formateadorMoneda.format(ultimoCobro.montoPendiente)}</p>}
+
+          <div className="cobros-comprobante-divisor" />
+          <h1 className="cobros-comprobante-tipo">{comprobante}</h1>
+          <p className="cobros-comprobante-fecha">{formateadorFechaHora.format(new Date(ultimoCobro.registradoEn))}</p>
+          <div className="cobros-comprobante-divisor" />
+
+          <dl className="cobros-comprobante-datos">
+            <dt>Paciente</dt>
+            <dd>{ultimoCobro.pacienteNombre}</dd>
+            {ultimoCobro.doctorNombre && (
+              <>
+                <dt>Doctor</dt>
+                <dd>{ultimoCobro.doctorNombre}</dd>
+              </>
+            )}
+            <dt>Servicio</dt>
+            <dd>{ultimoCobro.concepto}</dd>
+          </dl>
+
+          <div className="cobros-comprobante-divisor" />
+
+          <dl className="cobros-comprobante-datos">
+            <dt>Monto total</dt>
+            <dd>{formateadorMoneda.format(ultimoCobro.montoTotal)}</dd>
+            {ultimoCobro.seguroMedicoNombre && (
+              <>
+                <dt>Seguro</dt>
+                <dd>
+                  {ultimoCobro.seguroMedicoNombre}{' '}
+                  ({ultimoCobro.porcentajeCobertura !== null ? `${ultimoCobro.porcentajeCobertura}%` : 'tarifario'})
+                </dd>
+                <dt>Cubierto por seguro</dt>
+                <dd>{formateadorMoneda.format(ultimoCobro.montoCobertura ?? 0)}</dd>
+                <dt>Código autorización</dt>
+                <dd>{ultimoCobro.codigoAutorizacion}</dd>
+              </>
+            )}
+            <dt>{ultimoCobro.pagos.length > 1 ? 'Métodos de pago' : 'Método de pago'}</dt>
+            <dd>
+              {ultimoCobro.pagos.length === 0
+                ? 'Sin pagar (a deuda)'
+                : ultimoCobro.pagos.map((p) => `${p.metodo} ${formateadorMoneda.format(p.monto)}`).join(' + ')}
+            </dd>
+            <dt>Monto pagado</dt>
+            <dd>{formateadorMoneda.format(ultimoCobro.montoPagado)}</dd>
+            {ultimoCobro.montoPendiente > 0 && (
+              <>
+                <dt>Saldo pendiente</dt>
+                <dd>{formateadorMoneda.format(ultimoCobro.montoPendiente)}</dd>
+              </>
+            )}
+          </dl>
+
+          <div className="cobros-comprobante-divisor" />
+          <p className="cobros-comprobante-gracias">¡Gracias por confiar en nosotros!</p>
         </div>
       )}
     </DashboardLayout>

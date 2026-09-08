@@ -38,7 +38,6 @@
 .cobros-pendientes-card,
 .cobros-buscador-card,
 .cobros-formulario-card,
-.cobros-impresion-card,
 .cobros-historial-card {
   background: var(--surface-1);
   border: 1px solid var(--border-hairline);
@@ -49,7 +48,6 @@
 .cobros-pendientes-card h2,
 .cobros-buscador-card h2,
 .cobros-formulario-card h2,
-.cobros-impresion-card h2,
 .cobros-historial-card h2 {
   margin: 0 0 14px;
   font-size: 15px;
@@ -263,20 +261,14 @@
   cursor: default;
 }
 
-.cobros-impresion-botones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.cobros-boton-imprimir-factura {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--border-hairline) !important;
+  color: var(--text-primary) !important;
 }
 
-.cobros-impresion-botones button {
-  background: var(--surface-2);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-control);
-  color: var(--text-primary);
-  padding: 9px 14px;
-  font-size: 13px;
-  cursor: pointer;
+.cobros-boton-imprimir-factura:hover:not(:disabled) {
+  border-color: var(--series-dinero) !important;
 }
 
 .cobros-historial-lista li {
@@ -305,37 +297,85 @@
   border-color: var(--text-secondary);
 }
 
+/* Recibo pensado para impresora térmica de 80mm (ver launcher/FormPrincipal.cs,
+   ImprimirDirectoAsync — imprime directo a la predeterminada de Windows sin
+   diálogo). Si la impresora real de la fundación es de 58mm, ajustar el ancho
+   de @page y de .cobros-comprobante más abajo. */
 .cobros-comprobante {
   display: none;
 }
 
 .cobros-comprobante-membrete {
-  border-bottom: 2px solid #000;
-  margin-bottom: 16px;
-  padding-bottom: 10px;
+  text-align: center;
+  padding-bottom: 8px;
 }
 
 .cobros-comprobante-clinica {
   display: block;
-  font-size: 20px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.cobros-comprobante-membrete h1 {
-  margin: 4px 0 0;
-  font-size: 15px;
-  font-weight: 600;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
+.cobros-comprobante-direccion {
+  display: block;
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #333;
+}
+
+.cobros-comprobante-divisor {
+  border-top: 1px dashed #000;
+  margin: 8px 0;
+}
+
+.cobros-comprobante-tipo {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.cobros-comprobante-fecha {
+  margin: 2px 0 0;
+  font-size: 10px;
+  text-align: center;
+}
+
+.cobros-comprobante-datos {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.cobros-comprobante-datos dt {
+  font-weight: 700;
+}
+
+.cobros-comprobante-datos dd {
+  margin: 0 0 4px;
+}
+
+.cobros-comprobante-gracias {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
 @media print {
-  .cobros-comprobante {
-    display: block;
-    padding: 24px;
+  @page {
+    size: 80mm auto;
+    margin: 2mm;
   }
 
-  .cobros-comprobante p {
-    margin: 6px 0;
+  .cobros-comprobante {
+    display: block;
+    width: 100%;
+    color: #000;
+    font-family: 'Courier New', ui-monospace, monospace;
   }
 }
