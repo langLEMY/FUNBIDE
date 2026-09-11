@@ -30,6 +30,14 @@ public sealed class Usuario : Entity
     public EspecialidadMedica? Especialidad { get; private set; }
 
     /// <summary>
+    /// Número de exequátur (colegiatura médica) del doctor — obligatorio en la práctica
+    /// para que una receta impresa sea válida ante una farmacia en RD, pero no se fuerza
+    /// acá porque un doctor recién creado puede no tenerlo cargado todavía. Solo aplica
+    /// a <see cref="RolUsuario.Doctor"/>, igual que <see cref="Especialidad"/>.
+    /// </summary>
+    public string? Exequatur { get; private set; }
+
+    /// <summary>
     /// true cuando a este usuario se le borró el acceso de Supabase Auth de forma
     /// irreversible (<c>EliminarUsuarioPermanentementeUseCase</c>), a diferencia de
     /// <see cref="Desactivar"/> (reversible con <see cref="Reactivar"/>). La fila local
@@ -83,6 +91,7 @@ public sealed class Usuario : Entity
         if (nuevoRol != RolUsuario.Doctor)
         {
             Especialidad = null;
+            Exequatur = null;
         }
     }
 
@@ -95,6 +104,17 @@ public sealed class Usuario : Entity
         }
 
         Especialidad = especialidad;
+    }
+
+    /// <summary>Solo un usuario con rol Doctor puede tener un exequátur asignado.</summary>
+    public void AsignarExequatur(string? exequatur)
+    {
+        if (!string.IsNullOrWhiteSpace(exequatur) && Rol != RolUsuario.Doctor)
+        {
+            throw new ArgumentException("Solo un usuario con rol Doctor puede tener un número de exequátur.", nameof(exequatur));
+        }
+
+        Exequatur = string.IsNullOrWhiteSpace(exequatur) ? null : exequatur.Trim();
     }
 
     /// <summary>

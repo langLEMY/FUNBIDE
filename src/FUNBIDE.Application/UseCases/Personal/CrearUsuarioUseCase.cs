@@ -70,6 +70,6 @@ public sealed class CrearUsuarioUseCase(
 
         return new UsuarioDto(
             usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.NombreUsuario, usuario.Rol,
-            usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
+            usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad, Exequatur: usuario.Exequatur);
     }
 }

@@ -69,6 +69,6 @@ public sealed class EditarUsuarioUseCase(
 
         return new UsuarioDto(
             usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.NombreUsuario, usuario.Rol,
-            usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad);
+            usuario.Activo, usuario.FotoPerfilUrl, usuario.Especialidad, Exequatur: usuario.Exequatur);
     }
 }

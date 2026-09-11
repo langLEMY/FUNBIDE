@@ -4,4 +4,5 @@ export interface DoctorSimple {
   id: string
   nombreCompleto: string
   especialidad: EspecialidadMedica | null
+  exequatur: string | null
 }

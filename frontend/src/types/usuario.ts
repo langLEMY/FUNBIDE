@@ -44,6 +44,8 @@ export interface Usuario {
   activo: boolean
   fotoPerfilUrl: string | null
   especialidad: EspecialidadMedica | null
+  /** Número de exequátur (colegiatura médica) — solo tiene sentido si rol === 'Doctor'. Se imprime en cada receta/orden médica. */
+  exequatur: string | null
   /** Módulos togglables efectivos (default del rol + overrides). Solo viene poblado en /api/mi-perfil; en el resto (p. ej. /api/personal) es null. */
   permisos: ModuloPermiso[] | null
 }

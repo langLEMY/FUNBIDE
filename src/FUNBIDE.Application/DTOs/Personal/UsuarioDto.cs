@@ -12,4 +12,5 @@ public sealed record UsuarioDto(
     bool Activo,
     string? FotoPerfilUrl,
     EspecialidadMedica? Especialidad,
-    IReadOnlyList<ModuloPermiso>? Permisos = null);
+    IReadOnlyList<ModuloPermiso>? Permisos = null,
+    string? Exequatur = null);

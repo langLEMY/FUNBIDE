@@ -2993,6 +2993,10 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
+                    b.Property<string>("Exequatur")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("FotoPerfilUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");

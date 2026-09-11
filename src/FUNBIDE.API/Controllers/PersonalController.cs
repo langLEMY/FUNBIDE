@@ -28,6 +28,7 @@ public sealed class PersonalController(
     IEditarUsuarioUseCase editarUsuario,
     ICambiarRolUsuarioUseCase cambiarRol,
     ICambiarEspecialidadUsuarioUseCase cambiarEspecialidad,
+    ICambiarExequaturUsuarioUseCase cambiarExequatur,
     ICambiarContrasenaUsuarioUseCase cambiarContrasena,
     IActualizarFotoPerfilUseCase actualizarFoto,
     IEliminarUsuarioUseCase eliminarUsuario,
@@ -39,9 +40,14 @@ public sealed class PersonalController(
     public async Task<ActionResult<IReadOnlyList<UsuarioDto>>> ListarAsync(CancellationToken cancellationToken) =>
         Ok(await listarPersonal.EjecutarAsync(cancellationToken));
 
-    /// <summary>Solo id + nombre, para los selectores de doctor de Agenda/Recepción de Caja.</summary>
+    /// <summary>
+    /// Solo id + nombre, para los selectores de doctor de Agenda/Recepción de Caja — y
+    /// también lo usa el propio Doctor en Historial Clínico para resolver su nombre,
+    /// especialidad y exequátur al imprimir una receta u orden médica (no puede llamar
+    /// a <see cref="ListarAsync"/>, que expone todo el personal, no solo doctores).
+    /// </summary>
     [HttpGet("doctores")]
-    [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin, RolUsuario.Lemy)]
+    [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin, RolUsuario.Lemy, RolUsuario.Doctor)]
     public async Task<ActionResult<IReadOnlyList<DoctorSimpleDto>>> ListarDoctoresAsync(CancellationToken cancellationToken) =>
         Ok(await listarDoctores.EjecutarAsync(cancellationToken));
 
@@ -70,6 +76,12 @@ public sealed class PersonalController(
     public async Task<ActionResult<UsuarioDto>> CambiarEspecialidadAsync(
         CambiarEspecialidadRequest request, CancellationToken cancellationToken) =>
         Ok(await cambiarEspecialidad.EjecutarAsync(request, cancellationToken));
+
+    [HttpPatch("exequatur")]
+    [RequiereRol(RolUsuario.Lemy, RolUsuario.Admin)]
+    public async Task<ActionResult<UsuarioDto>> CambiarExequaturAsync(
+        CambiarExequaturRequest request, CancellationToken cancellationToken) =>
+        Ok(await cambiarExequatur.EjecutarAsync(request, cancellationToken));
 
     [HttpPatch("contrasena")]
     [RequiereRol(RolUsuario.Lemy, RolUsuario.Admin)]

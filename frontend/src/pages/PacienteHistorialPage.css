@@ -174,11 +174,51 @@
 .historial-receta-fila {
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: flex-start;
 }
 
-.historial-receta-fila input {
+.historial-receta-campos {
   flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.historial-receta-campos input,
+.historial-receta-campos select,
+.historial-receta-campos textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.historial-documento-campos {
+  flex-basis: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.historial-documento-campos input,
+.historial-documento-campos select,
+.historial-documento-campos textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.historial-documento-campos textarea {
+  grid-column: 1 / -1;
+  min-height: 60px;
+  resize: vertical;
 }
 
 .historial-receta-quitar {
@@ -270,6 +310,12 @@
 
 .historial-comprobante-datos dd {
   margin: 0;
+}
+
+/* display:contents para que dt/dd salgan como hijos directos del grid del <dl>
+   (2 columnas), aunque estén envueltos en este <div> por cada campo estructurado. */
+.historial-comprobante-campo-doc {
+  display: contents;
 }
 
 .historial-comprobante-cuerpo {
