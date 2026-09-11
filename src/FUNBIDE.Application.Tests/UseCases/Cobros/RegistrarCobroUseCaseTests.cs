@@ -270,7 +270,7 @@ public class RegistrarCobroUseCaseTests
     {
         _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
-        _pacienteRepository.ObtenerPorIdAqync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
+        _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
 
         var seguro = new SeguroMedico("SENASA", 50m);
         _seguroMedicoRepository.ObtenerPorIdAsync(seguro.Id, Arg.Any<CancellationToken>()).Returns(seguro);

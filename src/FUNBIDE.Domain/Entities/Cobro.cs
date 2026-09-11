@@ -144,7 +144,7 @@ public sealed class Cobro : AppendOnlyEntity
                     "El código de autorización es obligatorio cuando el cobro usa seguro médico.", nameof(codigoAutorizacion));
             }
 
-            if (montoDondoExacto is < 0)
+            if (montoFondoExacto is < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(montoFondoExacto), "El monto del fondo interno no puede ser negativo.");
             }

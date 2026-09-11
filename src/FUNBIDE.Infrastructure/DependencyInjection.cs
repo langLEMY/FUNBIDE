@@ -123,7 +123,7 @@ public static class DependencyInjection
         {
             services
                 .AddOptions<BackupOptions>()
-                .Bind(configuration.GetSection(BackupOptions.SeccimnConfiguracion))
+                .Bind(configuration.GetSection(BackupOptions.SeccionConfiguracion))
                 .ValidateOnStart();
             services.AddSingleton<AesBackupEncryptor>();
             services.AddSingleton<IBackupEjecutorService, BackupEjecutorService>();
