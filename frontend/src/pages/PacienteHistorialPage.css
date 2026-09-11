@@ -110,3 +110,206 @@
   font-size: 12px;
   margin-bottom: 6px !important;
 }
+
+.historial-entrada-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.historial-entrada-tipo {
+  display: inline-block;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.historial-boton-imprimir {
+  background: none;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.historial-boton-imprimir:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.historial-receta-item {
+  margin: 2px 0 0 16px;
+  font-size: 13px;
+}
+
+.historial-tipo-selector {
+  flex-basis: 100%;
+}
+
+.historial-tipo-selector select {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+}
+
+.historial-receta-items {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.historial-receta-fila {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.historial-receta-fila input {
+  flex: 1 1 auto;
+}
+
+.historial-receta-quitar {
+  background: none;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--danger);
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.historial-receta-agregar {
+  align-self: flex-start;
+  background: none;
+  border: 1px dashed var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  padding: 7px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.historial-receta-agregar:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+/* Documento formal (receta/licencia/referimiento/etc.) en tamaño carta, pensado para
+   imprimirse o guardarse en PDF — el paciente se lo lleva. Oculto fuera de impresión;
+   ver @media print más abajo, mismo patrón que .cobros-comprobante en CobrosPage. */
+.historial-comprobante {
+  display: none;
+}
+
+.historial-comprobante-membrete {
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #000;
+  margin-bottom: 16px;
+}
+
+.historial-comprobante-clinica {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.historial-comprobante-direccion {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #333;
+}
+
+.historial-comprobante-tipo {
+  margin: 16px 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.historial-comprobante-fecha {
+  margin: 0 0 16px;
+  font-size: 12px;
+  text-align: center;
+  color: #333;
+}
+
+.historial-comprobante-datos {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 8px;
+}
+
+.historial-comprobante-datos dt {
+  font-weight: 700;
+}
+
+.historial-comprobante-datos dd {
+  margin: 0;
+}
+
+.historial-comprobante-cuerpo {
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  min-height: 120px;
+}
+
+.historial-comprobante-items {
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.historial-comprobante-items li {
+  margin-bottom: 8px;
+}
+
+.historial-comprobante-firma {
+  margin-top: 64px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.historial-comprobante-firma-linea {
+  border-top: 1px solid #000;
+  width: 260px;
+  margin: 0 auto 6px;
+}
+
+@media print {
+  @page {
+    size: auto;
+    margin: 18mm;
+  }
+
+  .historial-comprobante {
+    display: block;
+    color: #000;
+  }
+}

@@ -1,3 +1,5 @@
+using FUNBIDE.Domain.Enums;
+
 namespace FUNBIDE.Application.DTOs.HistorialClinico;
 
 public sealed record EntradaHistorialDto(
@@ -5,5 +7,6 @@ public sealed record EntradaHistorialDto(
     Guid PacienteId,
     Guid DoctorId,
     Guid? CitaId,
+    TipoEntradaHistorial Tipo,
     string Contenido,
     DateTimeOffset RegistradoEn);

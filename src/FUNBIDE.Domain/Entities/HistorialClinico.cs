@@ -1,4 +1,5 @@
 using FUNBIDE.Domain.Common;
+using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.ValueObjects;
 
 namespace FUNBIDE.Domain.Entities;
@@ -12,15 +13,22 @@ public sealed class EntradaHistorialClinico : AppendOnlyEntity
     public Guid PacienteId { get; private set; }
     public Guid DoctorId { get; private set; }
     public Guid? CitaId { get; private set; }
+    public TipoEntradaHistorial Tipo { get; private set; }
     public DocumentoJson Contenido { get; private set; } = null!;
 
     private EntradaHistorialClinico() { }
 
-    public EntradaHistorialClinico(Guid pacienteId, Guid doctorId, DocumentoJson contenido, Guid? citaId = null)
+    public EntradaHistorialClinico(
+        Guid pacienteId,
+        Guid doctorId,
+        DocumentoJson contenido,
+        Guid? citaId = null,
+        TipoEntradaHistorial tipo = TipoEntradaHistorial.NotaClinica)
     {
         PacienteId = pacienteId;
         DoctorId = doctorId;
         CitaId = citaId;
+        Tipo = tipo;
         Contenido = contenido;
     }
 }

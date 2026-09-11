@@ -284,6 +284,14 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("RegistradoEn")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasDefaultValue("NotaClinica")
+                        .HasColumnName("tipo");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Contenido");

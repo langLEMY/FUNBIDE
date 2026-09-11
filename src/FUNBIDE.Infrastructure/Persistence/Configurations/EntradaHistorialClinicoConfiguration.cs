@@ -1,4 +1,5 @@
 using FUNBIDE.Domain.Entities;
+using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -16,6 +17,15 @@ public sealed class EntradaHistorialClinicoConfiguration : IEntityTypeConfigurat
         builder.Property(e => e.DoctorId).IsRequired();
         builder.Property(e => e.CitaId);
         builder.Property(e => e.RegistradoEn).IsRequired();
+
+        // Default explícito para que las filas existentes (todas notas libres antes de
+        // que existiera este campo) queden clasificadas como NotaClinica sin migración de datos.
+        builder.Property(e => e.Tipo)
+            .HasConversion<string>()
+            .HasColumnName("tipo")
+            .HasMaxLength(40)
+            .HasDefaultValue(TipoEntradaHistorial.NotaClinica)
+            .IsRequired();
 
         builder.Property(e => e.Contenido)
             .HasConversion(vo => vo.Valor, valor => DocumentoJson.Crear(valor))

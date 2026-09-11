@@ -19,7 +19,7 @@ public sealed class ObtenerHistorialPorPacienteUseCase(
         return entradas
             .OrderByDescending(e => e.RegistradoEn)
             .Select(e => new EntradaHistorialDto(
-                e.Id, e.PacienteId, e.DoctorId, e.CitaId, e.Contenido.Valor, e.RegistradoEn))
+                e.Id, e.PacienteId, e.DoctorId, e.CitaId, e.Tipo, e.Contenido.Valor, e.RegistradoEn))
             .ToList();
     }
 }

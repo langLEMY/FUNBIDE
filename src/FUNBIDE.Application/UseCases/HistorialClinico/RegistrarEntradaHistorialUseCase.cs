@@ -40,12 +40,12 @@ public sealed class RegistrarEntradaHistorialUseCase(
 
         var contenido = DocumentoJson.Crear(request.Contenido.GetRawText());
         var entrada = new EntradaHistorialClinico(
-            request.PacienteId, currentUser.UsuarioId, contenido, request.CitaId);
+            request.PacienteId, currentUser.UsuarioId, contenido, request.CitaId, request.Tipo);
 
         await historialRepository.RegistrarAsync(entrada, cancellationToken);
 
         return new EntradaHistorialDto(
-            entrada.Id, entrada.PacienteId, entrada.DoctorId, entrada.CitaId,
+            entrada.Id, entrada.PacienteId, entrada.DoctorId, entrada.CitaId, entrada.Tipo,
             entrada.Contenido.Valor, entrada.RegistradoEn);
     }
 }

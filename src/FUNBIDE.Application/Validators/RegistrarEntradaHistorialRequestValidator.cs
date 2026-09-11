@@ -8,6 +8,7 @@ public sealed class RegistrarEntradaHistorialRequestValidator : AbstractValidato
     public RegistrarEntradaHistorialRequestValidator()
     {
         RuleFor(x => x.PacienteId).NotEmpty();
+        RuleFor(x => x.Tipo).IsInEnum();
         RuleFor(x => x.Contenido)
             .Must(c => c.ValueKind == System.Text.Json.JsonValueKind.Object)
             .WithMessage("El contenido del historial clínico debe ser un objeto JSON.");
