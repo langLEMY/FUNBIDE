@@ -21,4 +21,6 @@ public sealed record CobroDto(
     Guid UsuarioId,
     DateTimeOffset RegistradoEn,
     Guid? TarifarioProcedimientoId = null,
-    decimal? MontoFondo = null);
+    decimal? MontoFondo = null,
+    Guid? DoctorId = null,
+    string? DoctorNombre = null);

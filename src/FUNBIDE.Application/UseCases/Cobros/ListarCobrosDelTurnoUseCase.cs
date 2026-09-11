@@ -13,6 +13,7 @@ public sealed class ListarCobrosDelTurnoUseCase(
     ICobroRepository cobroRepository,
     ITurnoCajaRepository turnoCajaRepository,
     IPacienteRepository pacienteRepository,
+    IUsuarioRepository usuarioRepository,
     ISeguroMedicoRepository seguroMedicoRepository) : IListarCobrosDelTurnoUseCase
 {
     public async Task<IReadOnlyList<CobroDto>> EjecutarAsync(CancellationToken cancellationToken)
@@ -33,6 +34,8 @@ public sealed class ListarCobrosDelTurnoUseCase(
             cobros.Select(c => c.PacienteId).Distinct().ToList(), cancellationToken);
         var nombresSeguros = (await seguroMedicoRepository.ObtenerTodosAsync(incluirInactivos: true, cancellationToken))
             .ToDictionary(s => s.Id, s => s.Nombre);
+        var nombresDoctores = await usuarioRepository.ObtenerNombresPorIdsAsync(
+            cobros.Where(c => c.DoctorId.HasValue).Select(c => c.DoctorId!.Value).Distinct().ToList(), cancellationToken);
 
         return cobros
             .Select(c => new CobroDto(
@@ -54,7 +57,10 @@ public sealed class ListarCobrosDelTurnoUseCase(
                 c.MontoPendiente,
                 c.UsuarioId,
                 c.RegistradoEn,
-                c.TarifarioProcedimientoId))
+                c.TarifarioProcedimientoId,
+                c.MontoFondo,
+                c.DoctorId,
+                c.DoctorId.HasValue ? nombresDoctores.GetValueOrDefault(c.DoctorId.Value) : null))
             .ToList();
     }
 }

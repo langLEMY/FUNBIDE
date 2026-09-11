@@ -1,0 +1,83 @@
+-- ============================================================================
+-- FUNBIDE — crear el rol restringido "funbide_app" + cerrar el hueco de RLS
+-- Proyecto Supabase real de la fundación.
+-- Correr esto UNA SOLA VEZ, en: Supabase Dashboard > SQL Editor (como admin del
+-- proyecto). Reemplaza CHANGE_ME_PASSWORD_GENERADA por una contraseña fuerte
+-- generada aparte (ej. con el mismo generador que ya usan los scripts:
+-- $b = New-Object byte[] 32; (New-Object Security.Cryptography.RNGCryptoServiceProvider).GetBytes($b);
+-- [Convert]::ToBase64String($b) -replace '[+/=]', ''  ) — esa contraseña es la
+-- que después se le pasa a scripts/generar-instalador.ps1 -DbPassword "...".
+-- ============================================================================
+
+-- 0) Migración pendiente de esta tarea (campo "doctor" en Cobros — ver
+--    src/FUNBIDE.Infrastructure/Persistence/Migrations/20260907220425_AgregarDoctorACobros.cs).
+--    Nadie más aplica migraciones a esta base automáticamente (no hay CI/CD de
+--    despliegue configurado — ver README "CI"), así que hay que correrla a mano
+--    aquí antes de repartir el instalador, o el backend fallará al leer/escribir
+--    cobros.DoctorId. La tabla cobros está vacía hoy, así que este ALTER es
+--    instantáneo y sin riesgo de bloqueo/datos existentes.
+ALTER TABLE funbide.cobros ADD COLUMN "DoctorId" uuid NULL;
+CREATE INDEX "IX_cobros_DoctorId" ON funbide.cobros ("DoctorId");
+INSERT INTO funbide.__ef_migrations_history ("MigrationId", "ProductVersion")
+  VALUES ('20260907220425_AgregarDoctorACobros', '9.0.4')
+  ON CONFLICT DO NOTHING;
+
+-- 1) Rol restringido para las instalaciones de escritorio (instalador funbide.exe).
+--    Sin privilegios de esquema (no puede crear/alterar/borrar tablas), solo
+--    leer y escribir filas dentro de funbide.*  — igual que ya documentan los
+--    comentarios de scripts/instalar-escritorio.ps1 y src/FUNBIDE.API/Program.cs.
+-- Si el rol ya existía (de un intento anterior), esto resetea su contraseña en vez
+-- de fallar con "role already exists".
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'funbide_app') THEN
+    ALTER ROLE funbide_app WITH LOGIN PASSWORD 'CHANGE_ME_PASSWORD_GENERADA';
+  ELSE
+    CREATE ROLE funbide_app WITH LOGIN PASSWORD 'CHANGE_ME_PASSWORD_GENERADA';
+  END IF;
+END $$;
+
+GRANT USAGE ON SCHEMA funbide TO funbide_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA funbide TO funbide_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA funbide TO funbide_app;
+
+-- Para que las tablas nuevas que EF Core migre a futuro también le queden
+-- accesibles a funbide_app sin tener que repetir este GRANT cada vez.
+ALTER DEFAULT PRIVILEGES IN SCHEMA funbide GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO funbide_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA funbide GRANT USAGE, SELECT ON SEQUENCES TO funbide_app;
+
+-- 2) Las tablas de funbide.* que ya tienen RLS activo comparten una sola
+--    política "authenticated_access" (acceso total al rol `authenticated`).
+--    funbide_app es un rol distinto (conexión directa del backend, nunca pasa
+--    por PostgREST/JWT), así que necesita sumarse a esas mismas políticas o
+--    quedará bloqueado por RLS en cuanto se conecte.
+DO $$
+DECLARE t text;
+BEGIN
+  FOR t IN
+    SELECT tablename FROM pg_policies
+    WHERE schemaname = 'funbide' AND policyname = 'authenticated_access'
+  LOOP
+    EXECUTE format('ALTER POLICY authenticated_access ON funbide.%I TO authenticated, funbide_app', t);
+  END LOOP;
+END $$;
+
+-- 3) Si alguna tabla del esquema funbide todavía no tiene RLS activo (verificar
+--    con: SELECT tablename FROM pg_tables WHERE schemaname = 'funbide' AND NOT
+--    rowsecurity;), activarlo y sumarle la misma política antes de repartir el
+--    instalador — de lo contrario esa tabla queda expuesta sin protección a
+--    cualquiera con la anon key pública del frontend. Ejemplo:
+--
+--    ALTER TABLE funbide.NOMBRE_TABLA ENABLE ROW LEVEL SECURITY;
+--    CREATE POLICY authenticated_access ON funbide.NOMBRE_TABLA
+--      FOR ALL TO authenticated, funbide_app USING (true) WITH CHECK (true);
+--
+-- ============================================================================
+-- NOTA sobre el patrón "authenticated_access ALL": le da acceso total de
+-- lectura/escritura a CUALQUIER usuario de Supabase Auth ya logueado, sin
+-- distinguir roles de la app (Admin/Doctor/Fondos/etc — eso solo lo controla
+-- el backend .NET, no Postgres). Esto es seguro en la práctica SOLO SI el
+-- schema "funbide" no está expuesto en Supabase Dashboard > Settings > API >
+-- "Exposed schemas" — si no está expuesto, PostgREST ni siquiera puede ver
+-- estas tablas, sin importar la política. Verificar eso ahí.
+-- ============================================================================

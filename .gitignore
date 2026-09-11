@@ -79,3 +79,11 @@ publish/
 
 # Datos reales de personal/pacientes usados para importar (Excel), nunca a git.
 /instalacion/datos-legados/
+
+# Salida compilada de Inno Setup (scripts/generar-instalador.ps1 + instalacion/FUNBIDE.iss)
+# — el .exe final, se regenera corriendo el script, nunca se commitea.
+/instalacion/Output/
+
+# SQL con la contraseña real ya rellenada del rol funbide_app — solo la plantilla
+# (funbide_app_setup.sql.example, con CHANGE_ME) va a git.
+/instalacion/funbide_app_setup.sql

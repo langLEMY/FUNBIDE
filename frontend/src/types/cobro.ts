@@ -30,6 +30,9 @@ export interface Cobro {
   montoPendiente: number
   usuarioId: string
   registradoEn: string
+  /** Doctor con el que se atiende el paciente — puede ser null en un cobro manual sin doctor asignado. */
+  doctorId: string | null
+  doctorNombre: string | null
 }
 
 export interface RegistrarCobroRequest {
@@ -41,6 +44,7 @@ export interface RegistrarCobroRequest {
   seguroMedicoId: string | null
   codigoAutorizacion: string | null
   tarifarioProcedimientoId?: string | null
+  doctorId?: string | null
 }
 
 export interface DeudaPaciente {

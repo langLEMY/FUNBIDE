@@ -23,5 +23,7 @@
 .dashboard-layout-content {
   flex: 1;
   padding: 28px;
-  animation: funbide-aparecer var(--duracion-lenta) var(--ease-entrada);
+  /* Cada navegación remonta este contenedor (no hay layout persistente de
+     router): esta animación es, en la práctica, la transición entre pantallas. */
+  animation: funbide-aparecer var(--duracion-abrir) var(--ease-entrada);
 }

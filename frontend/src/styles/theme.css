@@ -90,6 +90,10 @@
   --duracion-base: 220ms;
   --duracion-lenta: 320ms;
   --duracion-materializar: 260ms;
+  /* Apertura del programa y cambio de pantalla completa (login → panel, panel →
+     panel): un poco más lenta que --duracion-lenta a propósito, para que se sienta
+     como una transición de "escena" y no como la aparición de un elemento más. */
+  --duracion-abrir: 400ms;
 
   /* Tipografía: tracking (letter-spacing) y leading (line-height) dependen
      del tamaño — nunca un solo valor para todo. Texto grande quiere tracking
@@ -529,7 +533,6 @@ table tbody tr:hover {
 .cobros-pendientes-card,
 .cobros-buscador-card,
 .cobros-formulario-card,
-.cobros-impresion-card,
 .cobros-historial-card,
 .recepcion-llegada-card,
 .recepcion-tabla-card,
@@ -594,7 +597,6 @@ table tbody tr:hover {
   .cobros-pendientes-card,
   .cobros-buscador-card,
   .cobros-formulario-card,
-  .cobros-impresion-card,
   .cobros-historial-card,
   .recepcion-llegada-card,
   .recepcion-tabla-card,

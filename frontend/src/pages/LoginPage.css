@@ -43,7 +43,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: funbide-aparecer var(--duracion-lenta) var(--ease-entrada);
+  /* Primera pantalla que se ve al abrir el programa: usa --duracion-abrir
+     (400ms) en vez de --duracion-lenta para que se sienta como la apertura
+     de una "escena" completa, no como la aparición de un elemento más. */
+  animation: funbide-aparecer var(--duracion-abrir) var(--ease-entrada);
 }
 
 .login-ventana-barra {

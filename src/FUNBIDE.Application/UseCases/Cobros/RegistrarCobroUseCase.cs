@@ -34,6 +34,7 @@ public sealed class RegistrarCobroUseCase(
     ITarifarioProcedimientoRepository tarifarioRepository,
     IMovimientoFinancieroRepository movimientoFinancieroRepository,
     IPacienteRepository pacienteRepository,
+    IUsuarioRepository usuarioRepository,
     IResumenDiarioRepository resumenDiarioRepository,
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
@@ -111,7 +112,8 @@ public sealed class RegistrarCobroUseCase(
                 request.CodigoAutorizacion,
                 tarifario?.Id,
                 tarifario?.MontoSeguro,
-                tarifario?.MontoFondo);
+                tarifario?.MontoFondo,
+                request.DoctorId);
 
             await cobroRepository.AgregarAsync(cobro, ct);
             await cobroRepository.GuardarCambiosAsync(ct);
@@ -148,6 +150,13 @@ public sealed class RegistrarCobroUseCase(
 
             await resumenDiarioRepository.GuardarCambiosAsync(ct);
 
+            string? doctorNombre = null;
+            if (cobro.DoctorId.HasValue)
+            {
+                var nombresDoctores = await usuarioRepository.ObtenerNombresPorIdsAsync([cobro.DoctorId.Value], ct);
+                doctorNombre = nombresDoctores.GetValueOrDefault(cobro.DoctorId.Value);
+            }
+
             await auditoriaLogService.RegistrarEventoAsync(
                 accion: "cobros.registrar",
                 recurso: $"cobros/{cobro.Id}",
@@ -161,7 +170,8 @@ public sealed class RegistrarCobroUseCase(
                 cobro.MontoTotal, cobro.SeguroMedicoId, seguro?.Nombre, cobro.PorcentajeCobertura, cobro.MontoCobertura,
                 cobro.CodigoAutorizacion, cobro.Pagos.Select(p => new PagoDto(p.Metodo, p.Monto)).ToList(),
                 cobro.MontoACargoPaciente, cobro.MontoPagado, cobro.MontoPendiente,
-                cobro.UsuarioId, cobro.RegistradoEn, cobro.TarifarioProcedimientoId, cobro.MontoFondo);
+                cobro.UsuarioId, cobro.RegistradoEn, cobro.TarifarioProcedimientoId, cobro.MontoFondo,
+                cobro.DoctorId, doctorNombre);
         }, cancellationToken);
     }
 }
