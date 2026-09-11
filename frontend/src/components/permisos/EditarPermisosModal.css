@@ -2,6 +2,10 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
+  /* "Dim to focus": el fondo no solo se oscurece, se desenfoca — empuja la
+     atención hacia el modal en vez de solo taparlo. */
+  backdrop-filter: blur(var(--glass-scrim-blur));
+  -webkit-backdrop-filter: blur(var(--glass-scrim-blur));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,10 +16,13 @@
 
 .editar-permisos-modal {
   position: relative;
-  background: var(--surface-2);
-  border: 1px solid var(--border-hairline);
+  background: var(--glass-float-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-top);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-chrome);
+  box-shadow: var(--shadow-float);
   padding: 24px;
   width: 480px;
   max-width: 100%;
@@ -23,7 +30,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  animation: funbide-aparecer var(--duracion-base) var(--ease-entrada);
+  animation: funbide-materializar var(--duracion-materializar) var(--ease-spring);
 }
 
 .editar-permisos-modal h2 {
@@ -105,7 +112,7 @@
   height: 19px;
   border-radius: 50%;
   background: var(--text-primary);
-  transition: transform var(--duracion-base) var(--ease-suave);
+  transition: transform var(--duracion-base) var(--ease-spring);
 }
 
 .editar-permisos-interruptor.activo .editar-permisos-interruptor-perilla {

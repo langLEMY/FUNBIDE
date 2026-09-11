@@ -186,7 +186,7 @@ export function MiPerfilPage() {
 
   const cambiandoCorreo = perfil !== null && correoEditar.trim().toLowerCase() !== perfil.correo.toLowerCase()
 
-  const handleGuardarPerfil = async (event: FormEvent) => {
+  const handleGuardarPerfil = async (evelt: FormEvent) => {
     event.preventDefault()
     setErrorPerfil(null)
     setExitoPerfil(false)

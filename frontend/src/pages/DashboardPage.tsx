@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { StatCard } from '../components/dashboard/StatCard'
@@ -6,6 +6,7 @@ import { MonthlyMetricChart } from '../components/dashboard/MonthlyMetricChart'
 import { Sparkline } from '../components/dashboard/Sparkline'
 import { api, ApiError } from '../lib/api'
 import type { AlertasAdmin, PacientesPorDoctor, ResumenDiario, SesionesActivas } from '../types/dashboard'
+import type { CitaAgenda } from '../types/cita'
 import type { EspecialidadMedica, Usuario } from '../types/usuario'
 import { ETIQUETA_ESPECIALIDAD } from '../types/personal'
 import { coloresParaTema, colorMetodoPago, colorRolParaTema } from '../styles/colors'
@@ -25,8 +26,26 @@ const formateadorMoneda = new Intl.NumberFormat('es-DO', {
 
 const formateadorEntero = new Intl.NumberFormat('es-DO')
 
+const formateadorFechaLarga = new Intl.DateTimeFormat('es-DO', { dateStyle: 'long' })
+
 function capitalizar(texto: string) {
   return texto.charAt(0).toUpperCase() + texto.slice(1)
+}
+
+function fechaISOaTextoLargo(fechaIso: string): string {
+  // Se parte a mano (no `new Date(fechaIso)`) para no depender de la zona horaria del
+  // navegador: un input type="date" da "2026-08-29" y queremos ese mismo día, no el
+  // día anterior si el usuario está en una zona con offset negativo.
+  const [anio, mes, dia] = fechaIso.split('-').map(Number)
+  return formateadorFechaLarga.format(new Date(anio, mes - 1, dia))
+}
+
+interface FilaPacientesPorDoctor {
+  doctorId: string
+  nombreCompleto: string
+  especialidad: string | null
+  citasCompletadas: number
+  pacientesDistintos: number
 }
 
 export function DashboardPage() {
@@ -40,6 +59,15 @@ export function DashboardPage() {
   const [sesionesActivas, setSesionesActivas] = useState<SesionesActivas | null>(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Filtro de "Pacientes atendidos por doctor": vacío = histórico acumulado (comportamiento
+  // original). Con fecha, se reconsulta la agenda de ese día en vez de pedirle al backend un
+  // endpoint nuevo — /api/citas/agenda ya soporta ?fecha= y ya es accesible para Admin.
+  const [filtroFechaDoctor, setFiltroFechaDoctor] = useState('')
+  const [citasDelDia, setCitasDelDia] = useState<CitaAgenda[]>([])
+  const [cargandoCitasDelDia, setCargandoCitasDelDia] = useState(false)
+  const [errorCitasDelDia, setErrorCitasDelDia] = useState<string | null>(null)
+  const [mostrarDoctoresSinActividad, setMostrarDoctoresSinActividad] = useState(false)
 
   useEffect(() => {
     let cancelado = false
@@ -80,6 +108,65 @@ export function DashboardPage() {
       cancelado = true
     }
   }, [])
+
+  useEffect(() => {
+    if (!filtroFechaDoctor) {
+      setCitasDelDia([])
+      setErrorCitasDelDia(null)
+      return
+    }
+    let cancelado = false
+    setCargandoCitasDelDia(true)
+    setErrorCitasDelDia(null)
+    api
+      .get<CitaAgenda[]>(`/api/citas/agenda?fecha=${filtroFechaDoctor}`)
+      .then((datos) => {
+        if (!cancelado) setCitasDelDia(datos)
+      })
+      .catch((err) => {
+        if (!cancelado) {
+          setErrorCitasDelDia(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar la agenda de ese día.')
+        }
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoCitasDelDia(false)
+      })
+    return () => {
+      cancelado = true
+    }
+  }, [filtroFechaDoctor])
+
+  // Con fecha seleccionada, se arma la fila por doctor a mano a partir de las citas de ese
+  // día (agrupando por doctorId); sin fecha, se usa tal cual el histórico que ya trae el
+  // backend en pacientesPorDoctor.
+  const filasPorDoctor: FilaPacientesPorDoctor[] = useMemo(() => {
+    if (!filtroFechaDoctor) return pacientesPorDoctor
+
+    const porDoctor = new Map<string, { nombre: string; citas: number; pacientes: Set<string> }>()
+    citasDelDia
+      .filter((cita) => cita.estado === 'Completada')
+      .forEach((cita) => {
+        const actual = porDoctor.get(cita.doctorId) ?? { nombre: cita.doctorNombre, citas: 0, pacientes: new Set<string>() }
+        actual.citas += 1
+        actual.pacientes.add(cita.pacienteId)
+        porDoctor.set(cita.doctorId, actual)
+      })
+
+    return Array.from(porDoctor.entries())
+      .map(([doctorId, datos]) => ({
+        doctorId,
+        nombreCompleto: datos.nombre,
+        especialidad: personal.find((u) => u.id === doctorId)?.especialidad ?? null,
+        citasCompletadas: datos.citas,
+        pacientesDistintos: datos.pacientes.size,
+      }))
+      .sort((a, b) => b.pacientesDistintos - a.pacientesDistintos || a.nombreCompleto.localeCompare(b.nombreCompleto))
+  }, [filtroFechaDoctor, citasDelDia, pacientesPorDoctor, personal])
+
+  const doctoresConActividad = filasPorDoctor.filter((d) => d.citasCompletadas > 0)
+  const doctoresSinActividadCount = filasPorDoctor.length - doctoresConActividad.length
+  const filasDoctorVisibles = mostrarDoctoresSinActividad ? filasPorDoctor : doctoresConActividad
+  const cargandoTablaDoctor = filtroFechaDoctor ? cargandoCitasDelDia : cargando
 
   const nombreMes = capitalizar(new Date().toLocaleDateString('es-DO', { month: 'long', year: 'numeric' }))
 
@@ -235,14 +322,49 @@ export function DashboardPage() {
       </section>
 
       <section className="dashboard-pacientes-doctor-card">
-        <h2>Pacientes atendidos por doctor</h2>
-        <p className="text-secondary dashboard-pacientes-doctor-subtitulo">
-          Histórico acumulado de citas completadas por cada doctor activo.
-        </p>
-        {cargando ? (
+        <div className="dashboard-pacientes-doctor-encabezado">
+          <div>
+            <h2>Pacientes atendidos por doctor</h2>
+            <p className="text-secondary dashboard-pacientes-doctor-subtitulo">
+              {filtroFechaDoctor
+                ? `Citas completadas el ${fechaISOaTextoLargo(filtroFechaDoctor)}.`
+                : 'Histórico acumulado de citas completadas por cada doctor activo.'}
+            </p>
+          </div>
+          <div className="dashboard-pacientes-doctor-filtros">
+            <input
+              type="date"
+              value={filtroFechaDoctor}
+              max={new Date().toISOString().slice(0, 10)}
+              onChange={(event) => {
+                setFiltroFechaDoctor(event.target.value)
+                setMostrarDoctoresSinActividad(false)
+              }}
+              aria-label="Filtrar por fecha específica"
+            />
+            {filtroFechaDoctor && (
+              <button
+                type="button"
+                className="dashboard-pacientes-doctor-limpiar"
+                onClick={() => {
+                  setFiltroFechaDoctor('')
+                  setMostrarDoctoresSinActividad(false)
+                }}
+              >
+                Ver histórico
+              </button>
+            )}
+          </div>
+        </div>
+
+        {errorCitasDelDia && <p className="dashboard-error">{errorCitasDelDia}</p>}
+
+        {cargandoTablaDoctor ? (
           <p className="text-secondary cargando-pulso">Cargando…</p>
-        ) : pacientesPorDoctor.length === 0 ? (
-          <p className="text-secondary">No hay doctores activos registrados.</p>
+        ) : filasDoctorVisibles.length === 0 ? (
+          <p className="text-secondary">
+            {filtroFechaDoctor ? 'Ningún doctor completó citas ese día.' : 'No hay doctores activos registrados.'}
+          </p>
         ) : (
           <table className="dashboard-pacientes-doctor-tabla">
             <thead>
@@ -254,7 +376,7 @@ export function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {pacientesPorDoctor.map((doctor) => (
+              {filasDoctorVisibles.map((doctor) => (
                 <tr key={doctor.doctorId}>
                   <td>{doctor.nombreCompleto}</td>
                   <td className="text-muted">
@@ -266,6 +388,18 @@ export function DashboardPage() {
               ))}
             </tbody>
           </table>
+        )}
+
+        {!cargandoTablaDoctor && doctoresSinActividadCount > 0 && (
+          <button
+            type="button"
+            className="dashboard-pacientes-doctor-toggle"
+            onClick={() => setMostrarDoctoresSinActividad((valor) => !valor)}
+          >
+            {mostrarDoctoresSinActividad
+              ? 'Ocultar doctores sin actividad'
+              : `Mostrar ${doctoresSinActividadCount} doctor${doctoresSinActividadCount === 1 ? '' : 'es'} sin actividad`}
+          </button>
         )}
       </section>
 

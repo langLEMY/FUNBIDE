@@ -44,14 +44,20 @@
   right: 0;
   top: calc(100% + 10px);
   width: 220px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-hairline);
+  /* Vidrio flotante, no una tarjeta opaca más: se ancla al avatar que lo
+     abrió (transform-origin) y "se materializa" con blur+scale en vez de
+     solo un fade — ver @keyframes funbide-materializar en theme.css. */
+  background: var(--glass-float-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-top);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-chrome);
+  box-shadow: var(--shadow-float);
   overflow: hidden;
   z-index: 30;
   transform-origin: top right;
-  animation: funbide-desplegar var(--duracion-base) var(--ease-entrada);
+  animation: funbide-materializar var(--duracion-materializar) var(--ease-spring);
 }
 
 .profile-menu-header {

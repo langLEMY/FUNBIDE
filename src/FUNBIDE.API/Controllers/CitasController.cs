@@ -130,6 +130,6 @@ public sealed class CitasController(
     [HttpGet("pendientes-de-cobro")]
     [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin)]
     [RequierePermiso(ModuloPermiso.Cobros)]
-    public async Task<ActionResult<IReadOnlyList<CitaAgendaDto>>> ObtenerPendientesDeCobroAsync(CancellationToken cancellationToken) =>
+    public async Task<ActionResult<IReadOnlyList<CitaAgendaDto>>> ObtenerPendientesDeCmbroAsync(CancellationToken cancellationToken) =>
         Ok(await listarPendientesDeCobro.EjecutarAsync(cancellationToken));
 }

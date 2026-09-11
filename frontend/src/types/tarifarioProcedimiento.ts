@@ -1,10 +1,9 @@
-export type PlanAseguradora = 'Subsidiado' | 'Contributivo' | 'Pensionado' | 'PlanEspecial' | 'Larimar' | 'Estandar'
+export type PlanAseguradora = 'Subsidiado' | 'Contributivo' | 'Pensionado' | 'Larimar' | 'Estandar'
 
 export const PLANES_ASEGURADORA: PlanAseguradora[] = [
   'Subsidiado',
   'Contributivo',
   'Pensionado',
-  'PlanEspecial',
   'Larimar',
   'Estandar',
 ]
@@ -14,7 +13,6 @@ export const ETIQUETA_PLAN: Record<PlanAseguradora, string> = {
   Subsidiado: 'Subsidiado',
   Contributivo: 'Contributivo',
   Pensionado: 'Pensionado',
-  PlanEspecial: 'Plan Especial',
   Larimar: 'Larimar',
   Estandar: 'Estándar',
 }

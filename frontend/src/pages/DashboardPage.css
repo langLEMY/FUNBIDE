@@ -108,8 +108,59 @@
 }
 
 .dashboard-pacientes-doctor-subtitulo {
-  margin: 0 0 16px;
+  margin: 0;
   font-size: 13px;
+}
+
+.dashboard-pacientes-doctor-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dashboard-pacientes-doctor-filtros {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-pacientes-doctor-filtros input[type='date'] {
+  background: var(--surface-2);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.dashboard-pacientes-doctor-limpiar {
+  background: transparent;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dashboard-pacientes-doctor-toggle {
+  display: block;
+  margin: 14px auto 0;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+}
+
+.dashboard-pacientes-doctor-toggle:hover {
+  color: var(--text-primary);
 }
 
 .dashboard-pacientes-doctor-tabla {

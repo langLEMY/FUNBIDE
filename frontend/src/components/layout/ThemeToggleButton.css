@@ -8,9 +8,13 @@
   left: 50%;
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.5) rotate(-90deg);
+  /* La opacidad no rebota (no tiene "de dónde" rebotar), pero el
+     giro/escala sí: es una acción que el usuario acaba de confirmar con un
+     click, así que un pequeño overshoot se siente como respuesta, no como
+     ruido. */
   transition:
     opacity var(--duracion-base) var(--ease-suave),
-    transform var(--duracion-base) var(--ease-suave);
+    transform var(--duracion-base) var(--ease-spring);
 }
 
 .tema-toggle-icono.visible {
