@@ -12,9 +12,14 @@ public sealed class SeguroMedicoConfiguration : IEntityTypeConfiguration<SeguroM
         builder.HasKey(s => s.Id);
 
         builder.Property(s => s.Nombre).HasMaxLength(150).IsRequired();
-        builder.Property(s => s.PorcentajeCobertura).HasColumnType("decimal(5,2)").IsRequired();
+        // Nullable: el cálculo automático por % de cobertura quedó desactivado (ver
+        // RegistrarCobroRequestValidator), así que ya no se pide al crear una aseguradora
+        // nueva — se conserva solo para las que ya lo tenían cargado.
+        builder.Property(s => s.PorcentajeCobertura).HasColumnType("decimal(5,2)");
         builder.Property(s => s.Activo).IsRequired();
 
+        // Un CHECK constraint con NULL evalúa a UNKNOWN (no lo viola) en Postgres, así que
+        // sigue protegiendo el rango de las filas que sí tienen un valor cargado.
         builder.ToTable(t => t.HasCheckConstraint(
             "ck_seguro_medico_porcentaje_cobertura_rango", "\"PorcentajeCobertura\" > 0 AND \"PorcentajeCobertura\" <= 100"));
 

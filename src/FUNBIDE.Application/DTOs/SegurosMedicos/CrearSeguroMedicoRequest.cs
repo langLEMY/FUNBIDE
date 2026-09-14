@@ -1,3 +1,3 @@
 namespace FUNBIDE.Application.DTOs.SegurosMedicos;
 
-public sealed record CrearSeguroMedicoRequest(string Nombre, decimal PorcentajeCobertura);
+public sealed record CrearSeguroMedicoRequest(string Nombre, decimal? PorcentajeCobertura = null);

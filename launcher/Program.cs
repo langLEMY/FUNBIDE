@@ -16,6 +16,8 @@ internal static class Program
     [STAThread]
     private static void Main()
     {
+        MatarWebView2HuerfanosAsync().GetAwaiter().GetResult();
+
         var url = $"http://127.0.0.1:{Puerto}";
 
         var exePath = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
@@ -116,6 +118,65 @@ internal static class Program
             // Mejor esfuerzo: si no se puede leer/borrar (permisos, archivo en uso), no
             // bloquea el arranque — se vuelve a intentar mostrar la próxima vez.
         }
+    }
+
+    /// <summary>
+    /// Si FUNBIDE se cerró de forma abrupta (Kill de este mismo launcher, o un crash),
+    /// el/los proceso(s) hijo msedgewebview2.exe del perfil de FUNBIDE a veces quedan
+    /// vivos como huérfanos. El próximo arranque reutiliza ese mismo proceso de browser
+    /// (comparten perfil por carpetaDatos) — y si ese proceso quedó en un estado roto de
+    /// renderizado, la ventana nueva hereda la pantalla negra para siempre, aunque el
+    /// código del launcher esté perfecto. Encontrado reproduciendo el bug en vivo: matar
+    /// estos huérfanos antes de arrancar es lo único que garantiza un browser process
+    /// limpio en cada apertura. Solo se tocan procesos cuya línea de comandos referencia
+    /// la carpeta de perfil de FUNBIDE — nunca msedgewebview2.exe de Edge/Teams/otras apps.
+    /// </summary>
+    private static async Task MatarWebView2HuerfanosAsync()
+    {
+        // Ojo: no comparar contra la ruta completa de LocalApplicationData. Windows puede
+        // reportar la línea de comandos de otro proceso en formato de nombre corto 8.3
+        // (p. ej. "RAYFER~1" en vez de "RAYFER FABIAN"), así que un match por ruta completa
+        // falla en silencio y no mata nada. "FUNBIDE" y "WebView2" tienen 8 caracteres o
+        // menos, así que ese tramo final nunca se acorta — es la parte estable para matchear.
+        var marcaCarpetaDatos = Path.Combine("FUNBIDE", "WebView2");
+
+        try
+        {
+            using var buscador = new System.Management.ManagementObjectSearcher(
+                "SELECT ProcessId, CommandLine FROM Win32_Process WHERE Name = 'msedgewebview2.exe'");
+            using var resultados = buscador.Get();
+
+            foreach (var objeto in resultados)
+            {
+                using var proceso = objeto;
+                var lineaComandos = proceso["CommandLine"] as string;
+                if (string.IsNullOrEmpty(lineaComandos) ||
+                    !lineaComandos.Contains(marcaCarpetaDatos, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var pid = (uint)proceso["ProcessId"];
+                try
+                {
+                    Process.GetProcessById((int)pid).Kill(entireProcessTree: true);
+                }
+                catch
+                {
+                    // Mejor esfuerzo: si ya terminó entre el WMI query y acá, seguir.
+                }
+            }
+        }
+        catch
+        {
+            // WMI puede fallar en instalaciones raras (servicio deshabilitado, etc.) — no
+            // vale la pena bloquear el arranque de FUNBIDE por esto, solo perdemos la
+            // limpieza preventiva de huérfanos de esta vez.
+        }
+
+        // Da tiempo a que Windows libere el handle del proceso/perfil antes de que
+        // CoreWebView2Environment.CreateAsync intente crear uno nuevo sobre esa carpeta.
+        await Task.Delay(300);
     }
 
     private static bool PuertoEnUso(int puerto)

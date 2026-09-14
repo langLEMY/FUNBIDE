@@ -642,7 +642,7 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
-                    b.Property<decimal>("PorcentajeCobertura")
+                    b.Property<decimal?>("PorcentajeCobertura")
                         .HasColumnType("decimal(5,2)");
 
                     b.HasKey("Id");

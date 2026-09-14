@@ -8,6 +8,7 @@ public sealed class CrearSeguroMedicoRequestValidator : AbstractValidator<CrearS
     public CrearSeguroMedicoRequestValidator()
     {
         RuleFor(x => x.Nombre).NotEmpty().MaximumLength(150);
-        RuleFor(x => x.PorcentajeCobertura).GreaterThan(0).LessThanOrEqualTo(100);
+        RuleFor(x => x.PorcentajeCobertura!.Value).GreaterThan(0).LessThanOrEqualTo(100)
+            .When(x => x.PorcentajeCobertura.HasValue);
     }
 }

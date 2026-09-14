@@ -49,13 +49,11 @@ export function AseguradorasPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [nombre, setNombre] = useState('')
-  const [porcentaje, setPorcentaje] = useState('')
   const [creando, setCreando] = useState(false)
   const [errorCrear, setErrorCrear] = useState<string | null>(null)
 
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [nombreEdit, setNombreEdit] = useState('')
-  const [porcentajeEdit, setPorcentajeEdit] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [errorFila, setErrorFila] = useState<string | null>(null)
   const [procesandoId, setProcesandoId] = useState<string | null>(null)
@@ -257,13 +255,8 @@ export function AseguradorasPage() {
     event.preventDefault()
     setErrorCrear(null)
 
-    const porcentajeNumero = Number(porcentaje)
     if (!nombre.trim()) {
       setErrorCrear('El nombre es obligatorio.')
-      return
-    }
-    if (!porcentaje.trim() || !Number.isFinite(porcentajeNumero) || porcentajeNumero <= 0 || porcentajeNumero > 100) {
-      setErrorCrear('Ingresa un porcentaje de cobertura entre 1 y 100.')
       return
     }
 
@@ -271,11 +264,9 @@ export function AseguradorasPage() {
     try {
       const nueva = await api.post<SeguroMedico>('/api/seguros-medicos', {
         nombre: nombre.trim(),
-        porcentajeCobertura: porcentajeNumero,
       })
       setSeguros((actual) => [...actual, nueva].sort((a, b) => a.nombre.localeCompare(b.nombre)))
       setNombre('')
-      setPorcentaje('')
     } catch (err) {
       setErrorCrear(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo crear la aseguradora.')
     } finally {
@@ -286,14 +277,12 @@ export function AseguradorasPage() {
   const iniciarEdicion = (seguro: SeguroMedico) => {
     setEditandoId(seguro.id)
     setNombreEdit(seguro.nombre)
-    setPorcentajeEdit(String(seguro.porcentajeCobertura))
     setErrorFila(null)
   }
 
   const guardarEdicion = async (seguroMedicoId: string) => {
-    const porcentajeNumero = Number(porcentajeEdit)
-    if (!nombreEdit.trim() || !Number.isFinite(porcentajeNumero) || porcentajeNumero <= 0 || porcentajeNumero > 100) {
-      setErrorFila('Ingresa un nombre y un porcentaje entre 1 y 100.')
+    if (!nombreEdit.trim()) {
+      setErrorFila('Ingresa un nombre.')
       return
     }
 
@@ -303,7 +292,6 @@ export function AseguradorasPage() {
       const actualizado = await api.patch<SeguroMedico>('/api/seguros-medicos', {
         seguroMedicoId,
         nombre: nombreEdit.trim(),
-        porcentajeCobertura: porcentajeNumero,
       })
       setSeguros((actual) => actual.map((s) => (s.id === actualizado.id ? actualizado : s)))
       setEditandoId(null)
@@ -334,16 +322,6 @@ export function AseguradorasPage() {
         <h2>Agregar aseguradora (ARS)</h2>
         <form className="aseguradoras-crear-form" onSubmit={(event) => void handleCrear(event)}>
           <input placeholder="Nombre" value={nombre} onChange={(event) => setNombre(event.target.value)} required />
-          <input
-            type="number"
-            min={1}
-            max={100}
-            step="0.01"
-            placeholder="% de cobertura"
-            value={porcentaje}
-            onChange={(event) => setPorcentaje(event.target.value)}
-            required
-          />
           <button type="submit" disabled={creando}>
             {creando ? 'Agregando…' : 'Agregar'}
           </button>
@@ -364,7 +342,6 @@ export function AseguradorasPage() {
             <thead>
               <tr>
                 <th>Nombre</th>
-                <th>% Cobertura</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -375,16 +352,6 @@ export function AseguradorasPage() {
                   <tr key={seguro.id}>
                     <td>
                       <input value={nombreEdit} onChange={(event) => setNombreEdit(event.target.value)} />
-                    </td>
-                    <td>
-                      <input
-                        type="number"
-                        min={1}
-                        max={100}
-                        step="0.01"
-                        value={porcentajeEdit}
-                        onChange={(event) => setPorcentajeEdit(event.target.value)}
-                      />
                     </td>
                     <td className="text-muted">{seguro.activo ? 'Activo' : 'Inactivo'}</td>
                     <td className="aseguradoras-acciones">
@@ -399,7 +366,6 @@ export function AseguradorasPage() {
                 ) : (
                   <tr key={seguro.id} className={seguro.activo ? '' : 'aseguradoras-fila-inactiva'}>
                     <td>{seguro.nombre}</td>
-                    <td>{seguro.porcentajeCobertura}%</td>
                     <td>
                       <span className={`aseguradoras-estado ${seguro.activo ? 'activo' : 'inactivo'}`}>
                         {seguro.activo ? 'Activo' : 'Inactivo'}
