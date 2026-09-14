@@ -10,7 +10,7 @@
 ; Requiere Inno Setup 6 (https://jrsoftware.org/isinfo.php).
 
 #define MyAppName "FUNBIDE"
-#define MyAppVersion "2.0.0"
+#define MyAppVersion "1.4.0"
 #define MyAppPublisher "FUNBIDE"
 #define MyAppExeName "FUNBIDE.exe"
 #define SourceDir "..\dist-offline"
@@ -25,7 +25,7 @@ AppPublisher={#MyAppPublisher}
 DefaultDirName={localappdata}\Programs\FUNBIDE
 DefaultGroupName=FUNBIDE
 DisableProgramGroupPage=yes
-OutputBaseFilename=FUNBIDE-2.0-Setup-x64
+OutputBaseFilename=FUNBIDE-1.4-Setup-x64
 OutputDir=Output
 SetupIconFile=..\launcher\funbide.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
