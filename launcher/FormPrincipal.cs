@@ -26,7 +26,13 @@ public sealed class FormPrincipal : Form
         Height = 850;
         MinimumSize = new Size(1024, 700);
         StartPosition = FormStartPosition.CenterScreen;
-        WindowState = FormWindowState.Maximized;
+        // Maximizar recién en Shown (no acá): si la ventana ya nace Maximized, WebView2
+        // a veces crea su controller con los bounds de un frame intermedio y queda
+        // pintando negro sólido para siempre — encontrado reproduciendo el bug real,
+        // confirmado que la SPA en sí carga bien (misma URL abierta en un navegador
+        // normal funciona perfecto). Nacer en tamaño normal y maximizar después le da
+        // al control un resize real del que agarrarse.
+        Shown += (_, _) => WindowState = FormWindowState.Maximized;
 
         // El .ico no se copia como archivo suelto al publicar (PublishSingleFile);
         // se extrae del recurso ya embebido en el propio .exe vía <ApplicationIcon>.
@@ -50,7 +56,14 @@ public sealed class FormPrincipal : Form
             var carpetaDatos = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "FUNBIDE", "WebView2");
-            var entorno = await CoreWebView2Environment.CreateAsync(userDataFolder: carpetaDatos);
+            // --disable-gpu: sin esto, en máquinas/VMs con aceleración de GPU floja o sin
+            // drivers correctos (muy común en escritorios remotos/VMs), el WebView2 renderiza
+            // una pantalla negra sólida en vez de caer a renderizado por software — la SPA
+            // carga bien (confirmado abriéndola en un navegador normal contra el mismo backend
+            // local), el problema es solo la composición gráfica del control WebView2 en sí.
+            var opciones = new CoreWebView2EnvironmentOptions { AdditionalBrowserArguments = "--disable-gpu" };
+            var entorno = await CoreWebView2Environment.CreateAsync(
+                browserExecutableFolder: null, userDataFolder: carpetaDatos, options: opciones);
             await _webView.EnsureCoreWebView2Async(entorno);
 
             _webView.CoreWebView2.Settings.AreDevToolsEnabled = false;
@@ -82,6 +95,19 @@ public sealed class FormPrincipal : Form
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error);
             Close();
+        }
+        catch (Exception ex)
+        {
+            // Antes esta rama no existía: un fallo acá (p. ej. no se pudo crear el entorno
+            // de WebView2) quedaba completamente silencioso para quien lo usa — la ventana
+            // se abría vacía/negra sin ninguna pista de qué pasó. AppDomain.UnhandledException
+            // (ver Program.cs) no lo agarra porque esto es un async void ya dentro de su
+            // propio try.
+            MessageBox.Show(
+                "FUNBIDE no pudo iniciar la vista:\n\n" + ex,
+                "FUNBIDE — error",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
         }
     }
 
