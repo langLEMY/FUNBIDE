@@ -111,8 +111,12 @@ public class RegistrarCobroUseCaseTests
     }
 
     [Fact]
-    public async Task EjecutarAsync_ConSeguroActivo_UsaElPorcentajeDelCatalogoNoDelCliente()
+    public async Task EjecutarAsync_ConSeguroActivoSinTarifario_LanzaArgumentOutOfRangeException()
     {
+        // El cálculo automático por % de cobertura está desactivado (ver
+        // RegistrarCobroRequestValidator, que en producción rechaza esto antes de
+        // llegar acá): sin TarifarioProcedimientoId, Cobro ya no tiene de dónde sacar
+        // un monto de cobertura válido, ni siquiera con un seguro activo.
         _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
@@ -123,14 +127,10 @@ public class RegistrarCobroUseCaseTests
         var request = new RegistrarCobroRequest(
             paciente.Id, null, "Consulta", 1000m, PagoEfectivo(600m), seguro.Id, "AUTH-1");
 
-        var resultado = await CrearCasoDeUso().EjecutarAsync(request, CancellationToken.None);
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => CrearCasoDeUso().EjecutarAsync(request, CancellationToken.None));
 
-        // El 40% viene del catálogo (seguro.PorcentajeCobertura), la request no trae
-        // ningún campo de porcentaje que el cliente pueda mandar.
-        Assert.Equal(40m, resultado.PorcentajeCobertura);
-        Assert.Equal(400m, resultado.MontoCobertura);
-        Assert.Equal(600m, resultado.MontoACargoPaciente);
-        Assert.Equal(0m, resultado.MontoPendiente);
+        await _cobroRepository.DidNotReceive().AgregarAsync(Arg.Any<Domain.Entities.Cobro>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

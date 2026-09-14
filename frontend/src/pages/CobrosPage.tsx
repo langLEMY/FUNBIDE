@@ -26,21 +26,6 @@ const formateadorMoneda = new Intl.NumberFormat('es-DO', {
 })
 const formateadorFechaHora = new Intl.DateTimeFormat('es-DO', { dateStyle: 'short', timeStyle: 'short' })
 
-/** Redondeo half-to-even a 2 decimales, igual que Math.Round(decimal, 2) de C#. */
-function redondearBancario(valor: number): number {
-  const escalado = valor * 100
-  const piso = Math.floor(escalado)
-  const resto = escalado - piso
-  const epsilon = 1e-9
-  let redondeado: number
-  if (Math.abs(resto - 0.5) < epsilon) {
-    redondeado = piso % 2 === 0 ? piso : piso + 1
-  } else {
-    redondeado = Math.round(escalado)
-  }
-  return redondeado / 100
-}
-
 type TipoComprobante = 'Factura de consumo' | 'Crédito fiscal' | 'Recibo de ingreso'
 
 export function CobrosPage() {
@@ -284,16 +269,10 @@ export function CobrosPage() {
   }
 
   const montoTotalNumero = Number(montoTotal) || 0
-  // Redondeo bancario (half-to-even), igual que Math.Round de C# en Cobro.cs: con
-  // Math.round de JS (half-up) esta vista previa podía diferir en 1 centavo del monto
-  // que realmente guarda y devuelve el backend en un empate exacto de medio centavo.
-  // Si hay un procedimiento del tarifario elegido, sus montos son fijos — no se derivan
-  // de ningún porcentaje (ver TarifarioProcedimiento / RegistrarCobroUseCase).
-  const montoCobertura = procedimientoSeleccionado
-    ? procedimientoSeleccionado.montoSeguro
-    : seguroSeleccionado
-      ? redondearBancario(montoTotalNumero * (seguroSeleccionado.porcentajeCobertura / 100))
-      : 0
+  // El cálculo automático por % de cobertura está desactivado (ver
+  // RegistrarCobroRequestValidator): con seguro, el monto que cubre la aseguradora
+  // sale siempre del procedimiento elegido en el tarifario — nunca de un porcentaje.
+  const montoCobertura = procedimientoSeleccionado ? procedimientoSeleccionado.montoSeguro : 0
   const montoACargoPaciente = montoTotalNumero - montoCobertura
   const montoPagadoFinal = pagoParcial ? Number(montoPagadoParcial) || 0 : montoACargoPaciente
 
@@ -370,6 +349,10 @@ export function CobrosPage() {
     }
     if (seguroMedicoId && !codigoAutorizacion.trim()) {
       setErrorCobro('El código de autorización es obligatorio cuando el cobro usa seguro médico.')
+      return
+    }
+    if (seguroMedicoId && !tarifarioProcedimientoId) {
+      setErrorCobro('Selecciona un procedimiento del tarifario — el cálculo automático por % de cobertura está desactivado.')
       return
     }
     if (dividirPago && totalLineasPago > montoACargoPaciente + 0.001) {
@@ -559,11 +542,18 @@ export function CobrosPage() {
                     <option value="">Sin seguro</option>
                     {seguros.map((seguro) => (
                       <option key={seguro.id} value={seguro.id}>
-                        {seguro.nombre} ({seguro.porcentajeCobertura}%)
+                        {seguro.nombre}
                       </option>
                     ))}
                   </select>
                 </label>
+
+                {seguroSeleccionado && !tieneTarifario && (
+                  <p className="cobros-error">
+                    {seguroSeleccionado.nombre} no tiene tarifario cargado — agregalo en Aseguradoras antes de poder
+                    cobrar con esta aseguradora (el cálculo automático por % de cobertura está desactivado).
+                  </p>
+                )}
 
                 {tieneTarifario && (
                   <>
@@ -582,8 +572,9 @@ export function CobrosPage() {
                       <select
                         value={tarifarioProcedimientoId}
                         onChange={(event) => seleccionarProcedimiento(event.target.value)}
+                        required
                       >
-                        <option value="">— Manual (sin tarifario) —</option>
+                        <option value="">— Selecciona un procedimiento —</option>
                         {tarifario.map((t) => (
                           <option key={t.id} value={t.id}>
                             {t.procedimiento} — {formateadorMoneda.format(t.montoTotal)}
@@ -594,7 +585,7 @@ export function CobrosPage() {
                   </>
                 )}
 
-                {!procedimientoSeleccionado && (
+                {!seguroSeleccionado && (
                   <>
                     <label className="cobros-label">
                       Área (opcional)
@@ -631,7 +622,7 @@ export function CobrosPage() {
                   placeholder="Concepto"
                   value={concepto}
                   onChange={(event) => setConcepto(event.target.value)}
-                  readOnly={!!procedimientoSeleccionado}
+                  readOnly={!!procedimientoSeleccionado || !!seguroSeleccionado}
                   required
                 />
                 <input
@@ -641,7 +632,7 @@ export function CobrosPage() {
                   placeholder="Monto"
                   value={montoTotal}
                   onChange={(event) => setMontoTotal(event.target.value)}
-                  readOnly={!!procedimientoSeleccionado}
+                  readOnly={!!procedimientoSeleccionado || !!seguroSeleccionado}
                   required
                 />
 
@@ -649,8 +640,7 @@ export function CobrosPage() {
                   <>
                     <div className="cobros-cobertura-info">
                       <span>
-                        Cobertura {procedimientoSeleccionado ? '(tarifario)' : `(${seguroSeleccionado.porcentajeCobertura}%)`}:{' '}
-                        {formateadorMoneda.format(montoCobertura)}
+                        Cobertura (tarifario): {formateadorMoneda.format(montoCobertura)}
                       </span>
                       <span>Co-pago del paciente: {formateadorMoneda.format(montoACargoPaciente)}</span>
                       {!!procedimientoSeleccionado?.montoFondo && (

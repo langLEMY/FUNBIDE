@@ -23,9 +23,15 @@ public sealed class RegistrarCobroRequestValidator : AbstractValidator<Registrar
             .WithMessage("No puede haber dos pagos con el mismo método — súmalos en una sola línea.")
             .When(x => x.Pagos is not null);
 
+        // El cálculo automático por % de cobertura quedó desactivado: todo cobro con
+        // seguro médico tiene que traer un procedimiento del tarifario, que es lo único
+        // que fija el monto que cubre la aseguradora (ver RegistrarCobroUseCase).
         When(x => x.SeguroMedicoId.HasValue, () =>
         {
             RuleFor(x => x.CodigoAutorizacion).NotEmpty().MaximumLength(100);
+            RuleFor(x => x.TarifarioProcedimientoId)
+                .NotEmpty()
+                .WithMessage("Selecciona un procedimiento del tarifario — el cálculo automático por % de cobertura está desactivado.");
         });
     }
 }

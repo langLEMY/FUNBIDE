@@ -99,6 +99,10 @@ public sealed class RegistrarCobroUseCase(
             var montoTotalReal = tarifario?.MontoTotal ?? request.MontoTotal;
             var pagos = (request.Pagos ?? []).Select(p => new PagoRecibido(p.Metodo, p.Monto)).ToList();
 
+            // PorcentajeCobertura ya no se usa para calcular ningún monto: RegistrarCobroRequestValidator
+            // exige TarifarioProcedimientoId siempre que hay seguro, así que `tarifario` nunca es null acá
+            // abajo. Queda `null` explícito (no seguro?.PorcentajeCobertura) para que un cobro nuevo jamás
+            // se calcule por %, aunque algún llamador viejo lograra saltarse la validación.
             var cobro = new Cobro(
                 request.PacienteId,
                 request.CitaId,
@@ -108,7 +112,7 @@ public sealed class RegistrarCobroUseCase(
                 montoTotalReal,
                 pagos,
                 seguro?.Id,
-                tarifario is null ? seguro?.PorcentajeCobertura : null,
+                null,
                 request.CodigoAutorizacion,
                 tarifario?.Id,
                 tarifario?.MontoSeguro,
