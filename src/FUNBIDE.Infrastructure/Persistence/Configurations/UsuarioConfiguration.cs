@@ -34,5 +34,7 @@ public sealed class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
         builder.Property(u => u.Especialidad)
             .HasConversion<string>()
             .HasMaxLength(40);
+
+        builder.Property(u => u.Exequatur).HasMaxLength(50);
     }
 }

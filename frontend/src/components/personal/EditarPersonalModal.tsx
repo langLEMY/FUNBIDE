@@ -23,6 +23,7 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
   // campo (nombre, correo, contrasena) mandaba especialidad !== null y pisaba
   // silenciosamente la especialidad real del doctor con el valor por defecto.
   const [especialidad, setEspecialidad] = useState<EspecialidadMedica | null>(usuario.especialidad)
+  const [exequatur, setExequatur] = useState(usuario.exequatur ?? '')
   const [nuevaContrasena, setNuevaContrasena] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -54,6 +55,13 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
 
       if (rol === 'Doctor' && especialidad !== null && especialidad !== actual.especialidad) {
         actual = await api.patch<Usuario>('/api/personal/especialidad', { usuarioId: usuario.id, especialidad })
+      }
+
+      if (rol === 'Doctor' && exequatur.trim() !== (actual.exequatur ?? '')) {
+        actual = await api.patch<Usuario>('/api/personal/exequatur', {
+          usuarioId: usuario.id,
+          exequatur: exequatur.trim() || null,
+        })
       }
 
       if (nuevaContrasena.trim().length > 0) {
@@ -130,6 +138,14 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
                 </option>
               ))}
             </select>
+
+            <label htmlFor="ep-exequatur">Exequátur (colegiatura médica)</label>
+            <input
+              id="ep-exequatur"
+              placeholder="Ej. 12345-67"
+              value={exequatur}
+              onChange={(event) => setExequatur(event.target.value)}
+            />
           </>
         )}
 

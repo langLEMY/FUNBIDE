@@ -101,6 +101,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEditarUsuarioUseCase, EditarUsuarioUseCase>();
         services.AddScoped<ICambiarRolUsuarioUseCase, CambiarRolUsuarioUseCase>();
         services.AddScoped<ICambiarEspecialidadUsuarioUseCase, CambiarEspecialidadUsuarioUseCase>();
+        services.AddScoped<ICambiarExequaturUsuarioUseCase, CambiarExequaturUsuarioUseCase>();
         services.AddScoped<ICambiarContrasenaUsuarioUseCase, CambiarContrasenaUsuarioUseCase>();
         services.AddScoped<IActualizarFotoPerfilUseCase, ActualizarFotoPerfilUseCase>();
         services.AddScoped<IEliminarUsuarioUseCase, EliminarUsuarioUseCase>();

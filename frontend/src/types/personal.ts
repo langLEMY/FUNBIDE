@@ -26,6 +26,11 @@ export interface CambiarEspecialidadRequest {
   especialidad: EspecialidadMedica
 }
 
+export interface CambiarExequaturRequest {
+  usuarioId: string
+  exequatur: string | null
+}
+
 export const ESPECIALIDADES: EspecialidadMedica[] = [
   'Sonografia',
   'Odontologia',

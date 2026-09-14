@@ -5,18 +5,21 @@ import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import { imprimirVentana } from '../lib/imprimir'
 import type { Paciente } from '../types/paciente'
-import type { Usuario } from '../types/usuario'
+import type { DoctorSimple } from '../types/doctor'
 import { ETIQUETA_ESPECIALIDAD } from '../types/personal'
 import {
+  CAMPOS_DOCUMENTO_POR_TIPO,
+  CAMPOS_ITEM_POR_TIPO,
   ETIQUETA_TIPO_ENTRADA,
-  PLACEHOLDER_CUERPO_DOCUMENTO,
   TIPOS_DOCUMENTO,
   TIPOS_RECETA,
+  campoPrincipalReceta,
   esContenidoDocumento,
   esContenidoReceta,
   parsearContenidoDocumento,
   parsearContenidoNotaClinica,
   parsearContenidoReceta,
+  type CampoEstructurado,
   type EntradaHistorial,
   type ItemReceta,
   type TipoEntradaHistorial,
@@ -26,7 +29,44 @@ import './PacienteHistorialPage.css'
 const formateadorFechaHora = new Intl.DateTimeFormat('es-DO', { dateStyle: 'medium', timeStyle: 'short' })
 const formateadorFecha = new Intl.DateTimeFormat('es-DO', { dateStyle: 'long' })
 
-const ITEM_RECETA_VACIO: ItemReceta = { descripcion: '', indicaciones: '' }
+function itemVacio(tipo: TipoEntradaHistorial): ItemReceta {
+  const campos = CAMPOS_ITEM_POR_TIPO[tipo] ?? []
+  return Object.fromEntries(campos.map((c) => [c.clave, '']))
+}
+
+function campoInput(
+  campo: CampoEstructurado,
+  valor: string,
+  onChange: (valor: string) => void,
+  idPrefijo: string,
+) {
+  const id = `${idPrefijo}-${campo.clave}`
+  if (campo.tipo === 'area') {
+    return <textarea key={campo.clave} id={id} placeholder={campo.etiqueta} value={valor} onChange={(e) => onChange(e.target.value)} />
+  }
+  if (campo.tipo === 'select') {
+    return (
+      <select key={campo.clave} id={id} value={valor} onChange={(e) => onChange(e.target.value)}>
+        <option value="">{campo.etiqueta}…</option>
+        {(campo.opciones ?? []).map((opcion) => (
+          <option key={opcion} value={opcion}>
+            {opcion}
+          </option>
+        ))}
+      </select>
+    )
+  }
+  return (
+    <input
+      key={campo.clave}
+      id={id}
+      type={campo.tipo === 'fecha' ? 'date' : campo.tipo === 'numero' ? 'number' : 'text'}
+      placeholder={campo.placeholder ?? campo.etiqueta}
+      value={valor}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  )
+}
 
 export function PacienteHistorialPage() {
   const { id } = useParams<{ id: string }>()
@@ -38,7 +78,7 @@ export function PacienteHistorialPage() {
 
   const [paciente, setPaciente] = useState<Paciente | null>(null)
   const [entradas, setEntradas] = useState<EntradaHistorial[]>([])
-  const [personal, setPersonal] = useState<Usuario[]>([])
+  const [doctores, setDoctores] = useState<DoctorSimple[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -46,9 +86,9 @@ export function PacienteHistorialPage() {
   const [diagnostico, setDiagnostico] = useState('')
   const [tratamiento, setTratamiento] = useState('')
   const [notas, setNotas] = useState('')
-  const [itemsReceta, setItemsReceta] = useState<ItemReceta[]>([{ ...ITEM_RECETA_VACIO }])
+  const [itemsReceta, setItemsReceta] = useState<ItemReceta[]>([itemVacio('NotaClinica')])
   const [notasGenerales, setNotasGenerales] = useState('')
-  const [cuerpoDocumento, setCuerpoDocumento] = useState('')
+  const [camposDocumento, setCamposDocumento] = useState<Record<string, string>>({})
   const [registrando, setRegistrando] = useState(false)
   const [errorRegistrar, setErrorRegistrar] = useState<string | null>(null)
 
@@ -57,16 +97,19 @@ export function PacienteHistorialPage() {
   useEffect(() => {
     let cancelado = false
 
+    // /api/personal/doctores (no /api/personal): el Doctor no tiene permiso para ver el
+    // listado completo de personal, solo el de doctores — necesario para resolver su
+    // propio nombre/especialidad/exequátur al imprimir (ver PersonalController).
     Promise.all([
       api.get<Paciente>(`/api/pacientes/${id}`),
       api.get<EntradaHistorial[]>(`/api/historial-clinico/paciente/${id}`),
-      api.get<Usuario[]>('/api/personal'),
+      api.get<DoctorSimple[]>('/api/personal/doctores'),
     ])
-      .then(([pacienteEncontrado, datosEntradas, datosPersonal]) => {
+      .then(([pacienteEncontrado, datosEntradas, datosDoctores]) => {
         if (cancelado) return
         setPaciente(pacienteEncontrado)
         setEntradas(datosEntradas)
-        setPersonal(datosPersonal)
+        setDoctores(datosDoctores)
       })
       .catch((err) => {
         if (cancelado) return
@@ -85,15 +128,23 @@ export function PacienteHistorialPage() {
     }
   }, [id])
 
-  const doctorDe = (doctorId: string) => personal.find((u) => u.id === doctorId) ?? null
+  // doctorId de una entrada es el SupabaseUserId (currentUser.UsuarioId al registrarla),
+  // igual que DoctorSimple.id — ver ListarDoctoresUseCase.
+  const doctorDe = (doctorId: string) => doctores.find((d) => d.id === doctorId) ?? null
+
+  const cambiarTipo = (nuevoTipo: TipoEntradaHistorial) => {
+    setTipo(nuevoTipo)
+    setItemsReceta([itemVacio(nuevoTipo)])
+    setCamposDocumento({})
+  }
 
   const limpiarFormulario = () => {
     setDiagnostico('')
     setTratamiento('')
     setNotas('')
-    setItemsReceta([{ ...ITEM_RECETA_VACIO }])
+    setItemsReceta([itemVacio(tipo)])
     setNotasGenerales('')
-    setCuerpoDocumento('')
+    setCamposDocumento({})
   }
 
   const handleRegistrar = async (event: FormEvent) => {
@@ -103,20 +154,26 @@ export function PacienteHistorialPage() {
     let contenido: object
 
     if (esContenidoReceta(tipo)) {
+      const clavePrincipal = campoPrincipalReceta(tipo)
       const items = itemsReceta
-        .map((item) => ({ descripcion: item.descripcion.trim(), indicaciones: item.indicaciones.trim() }))
-        .filter((item) => item.descripcion)
+        .map((item) => Object.fromEntries(Object.entries(item).map(([k, v]) => [k, v.trim()])))
+        .filter((item) => item[clavePrincipal])
       if (items.length === 0) {
-        setErrorRegistrar('Agrega al menos un ítem con descripción antes de guardar.')
+        setErrorRegistrar('Completa al menos un ítem antes de guardar.')
         return
       }
       contenido = { items, notasGenerales: notasGenerales.trim() || null }
     } else if (esContenidoDocumento(tipo)) {
-      if (!cuerpoDocumento.trim()) {
-        setErrorRegistrar('Completa el contenido del documento antes de guardar.')
+      const campos = Object.fromEntries(
+        Object.entries(camposDocumento)
+          .map(([k, v]) => [k, v.trim()])
+          .filter(([, v]) => v),
+      )
+      if (Object.keys(campos).length === 0) {
+        setErrorRegistrar('Completa al menos un campo antes de guardar.')
         return
       }
-      contenido = { cuerpo: cuerpoDocumento.trim() }
+      contenido = { campos }
     } else {
       if (!diagnostico.trim() && !tratamiento.trim() && !notas.trim()) {
         setErrorRegistrar('Completa al menos un campo antes de guardar.')
@@ -146,8 +203,8 @@ export function PacienteHistorialPage() {
     }
   }
 
-  const actualizarItemReceta = (indice: number, campo: keyof ItemReceta, valor: string) => {
-    setItemsReceta((actual) => actual.map((item, i) => (i === indice ? { ...item, [campo]: valor } : item)))
+  const actualizarItemReceta = (indice: number, clave: string, valor: string) => {
+    setItemsReceta((actual) => actual.map((item, i) => (i === indice ? { ...item, [clave]: valor } : item)))
   }
 
   const imprimir = (entrada: EntradaHistorial) => {
@@ -158,16 +215,19 @@ export function PacienteHistorialPage() {
   const doctorImprimir = useMemo(
     () => (entradaAImprimir ? doctorDe(entradaAImprimir.doctorId) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [entradaAImprimir, personal],
+    [entradaAImprimir, doctores],
   )
   const contenidoRecetaImprimir =
-    entradaAImprimir && esContenidoReceta(entradaAImprimir.tipo)
-      ? parsearContenidoReceta(entradaAImprimir.contenido)
-      : null
+    entradaAImprimir && esContenidoReceta(entradaAImprimir.tipo) ? parsearContenidoReceta(entradaAImprimir.contenido) : null
   const contenidoDocumentoImprimir =
     entradaAImprimir && esContenidoDocumento(entradaAImprimir.tipo)
       ? parsearContenidoDocumento(entradaAImprimir.contenido)
       : null
+  const camposDocumentoImprimir = entradaAImprimir ? CAMPOS_DOCUMENTO_POR_TIPO[entradaAImprimir.tipo] ?? [] : []
+  const camposItemImprimir = entradaAImprimir ? CAMPOS_ITEM_POR_TIPO[entradaAImprimir.tipo] ?? [] : []
+
+  const camposItemActual = CAMPOS_ITEM_POR_TIPO[tipo] ?? []
+  const camposDocumentoActual = CAMPOS_DOCUMENTO_POR_TIPO[tipo] ?? []
 
   return (
     <DashboardLayout titulo="Historial clínico">
@@ -196,7 +256,7 @@ export function PacienteHistorialPage() {
               <form className="historial-crear-form" onSubmit={(event) => void handleRegistrar(event)}>
                 <label className="historial-tipo-selector">
                   Tipo de entrada
-                  <select value={tipo} onChange={(event) => setTipo(event.target.value as TipoEntradaHistorial)}>
+                  <select value={tipo} onChange={(event) => cambiarTipo(event.target.value as TipoEntradaHistorial)}>
                     <option value="NotaClinica">{ETIQUETA_TIPO_ENTRADA.NotaClinica}</option>
                     <optgroup label="Receta electrónica">
                       {TIPOS_RECETA.map((opcion) => (
@@ -235,16 +295,11 @@ export function PacienteHistorialPage() {
                   <div className="historial-receta-items">
                     {itemsReceta.map((item, indice) => (
                       <div key={indice} className="historial-receta-fila">
-                        <input
-                          placeholder="Descripción (medicamento, examen, vacuna…)"
-                          value={item.descripcion}
-                          onChange={(event) => actualizarItemReceta(indice, 'descripcion', event.target.value)}
-                        />
-                        <input
-                          placeholder="Indicaciones (dosis, frecuencia…)"
-                          value={item.indicaciones}
-                          onChange={(event) => actualizarItemReceta(indice, 'indicaciones', event.target.value)}
-                        />
+                        <div className="historial-receta-campos">
+                          {camposItemActual.map((campo) =>
+                            campoInput(campo, item[campo.clave] ?? '', (valor) => actualizarItemReceta(indice, campo.clave, valor), `item-${indice}`),
+                          )}
+                        </div>
                         {itemsReceta.length > 1 && (
                           <button
                             type="button"
@@ -260,7 +315,7 @@ export function PacienteHistorialPage() {
                     <button
                       type="button"
                       className="historial-receta-agregar"
-                      onClick={() => setItemsReceta((actual) => [...actual, { ...ITEM_RECETA_VACIO }])}
+                      onClick={() => setItemsReceta((actual) => [...actual, itemVacio(tipo)])}
                     >
                       + Agregar ítem
                     </button>
@@ -273,11 +328,16 @@ export function PacienteHistorialPage() {
                 )}
 
                 {esContenidoDocumento(tipo) && (
-                  <textarea
-                    placeholder={PLACEHOLDER_CUERPO_DOCUMENTO[tipo] ?? 'Contenido del documento…'}
-                    value={cuerpoDocumento}
-                    onChange={(event) => setCuerpoDocumento(event.target.value)}
-                  />
+                  <div className="historial-documento-campos">
+                    {camposDocumentoActual.map((campo) =>
+                      campoInput(
+                        campo,
+                        camposDocumento[campo.clave] ?? '',
+                        (valor) => setCamposDocumento((actual) => ({ ...actual, [campo.clave]: valor })),
+                        'doc',
+                      ),
+                    )}
+                  </div>
                 )}
 
                 <button type="submit" disabled={registrando}>
@@ -299,6 +359,8 @@ export function PacienteHistorialPage() {
                   const contenidoDocumento = esContenidoDocumento(entrada.tipo)
                     ? parsearContenidoDocumento(entrada.contenido)
                     : null
+                  const camposItem = CAMPOS_ITEM_POR_TIPO[entrada.tipo] ?? []
+                  const camposDoc = CAMPOS_DOCUMENTO_POR_TIPO[entrada.tipo] ?? []
 
                   return (
                     <li key={entrada.id} className="historial-entrada">
@@ -333,18 +395,30 @@ export function PacienteHistorialPage() {
                       )}
 
                       {contenidoReceta &&
-                        contenidoReceta.items.map((item, indice) => (
-                          <p key={indice} className="historial-receta-item">
-                            • {item.descripcion}
-                            {item.indicaciones ? ` — ${item.indicaciones}` : ''}
-                          </p>
-                        ))}
+                        contenidoReceta.items.map((item, indice) => {
+                          const clavePrincipal = campoPrincipalReceta(entrada.tipo)
+                          const resto = camposItem.filter((c) => c.clave !== clavePrincipal && item[c.clave])
+                          return (
+                            <p key={indice} className="historial-receta-item">
+                              • {item[clavePrincipal]}
+                              {resto.length > 0 && ` — ${resto.map((c) => `${c.etiqueta.toLowerCase()}: ${item[c.clave]}`).join(', ')}`}
+                            </p>
+                          )
+                        })}
                       {contenidoReceta?.notasGenerales && (
                         <p>
                           <strong>Notas:</strong> {contenidoReceta.notasGenerales}
                         </p>
                       )}
 
+                      {contenidoDocumento &&
+                        camposDoc
+                          .filter((c) => contenidoDocumento.campos[c.clave])
+                          .map((c) => (
+                            <p key={c.clave}>
+                              <strong>{c.etiqueta}:</strong> {contenidoDocumento.campos[c.clave]}
+                            </p>
+                          ))}
                       {contenidoDocumento?.cuerpo && <p>{contenidoDocumento.cuerpo}</p>}
                     </li>
                   )
@@ -379,24 +453,41 @@ export function PacienteHistorialPage() {
             <dd>
               {doctorImprimir?.nombreCompleto ?? 'No disponible'}
               {doctorImprimir?.especialidad ? ` — ${ETIQUETA_ESPECIALIDAD[doctorImprimir.especialidad]}` : ''}
+              {doctorImprimir?.exequatur ? ` — Exequátur ${doctorImprimir.exequatur}` : ''}
             </dd>
           </dl>
 
           {contenidoRecetaImprimir && (
             <ol className="historial-comprobante-items">
-              {contenidoRecetaImprimir.items.map((item, indice) => (
-                <li key={indice}>
-                  <strong>{item.descripcion}</strong>
-                  {item.indicaciones ? ` — ${item.indicaciones}` : ''}
-                </li>
-              ))}
+              {contenidoRecetaImprimir.items.map((item, indice) => {
+                const clavePrincipal = campoPrincipalReceta(entradaAImprimir.tipo)
+                const resto = camposItemImprimir.filter((c) => c.clave !== clavePrincipal && item[c.clave])
+                return (
+                  <li key={indice}>
+                    <strong>{item[clavePrincipal]}</strong>
+                    {resto.length > 0 && ` — ${resto.map((c) => `${c.etiqueta.toLowerCase()}: ${item[c.clave]}`).join(', ')}`}
+                  </li>
+                )
+              })}
             </ol>
           )}
           {contenidoRecetaImprimir?.notasGenerales && (
             <p className="historial-comprobante-cuerpo">{contenidoRecetaImprimir.notasGenerales}</p>
           )}
 
-          {contenidoDocumentoImprimir && <p className="historial-comprobante-cuerpo">{contenidoDocumentoImprimir.cuerpo}</p>}
+          {contenidoDocumentoImprimir && (
+            <dl className="historial-comprobante-datos">
+              {camposDocumentoImprimir
+                .filter((c) => contenidoDocumentoImprimir.campos[c.clave])
+                .map((c) => (
+                  <div key={c.clave} className="historial-comprobante-campo-doc">
+                    <dt>{c.etiqueta}</dt>
+                    <dd>{contenidoDocumentoImprimir.campos[c.clave]}</dd>
+                  </div>
+                ))}
+            </dl>
+          )}
+          {contenidoDocumentoImprimir?.cuerpo && <p className="historial-comprobante-cuerpo">{contenidoDocumentoImprimir.cuerpo}</p>}
 
           <div className="historial-comprobante-firma">
             <div className="historial-comprobante-firma-linea" />

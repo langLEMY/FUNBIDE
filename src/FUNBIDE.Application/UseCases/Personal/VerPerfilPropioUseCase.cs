@@ -31,6 +31,6 @@ public sealed class VerPerfilPropioUseCase(
 
         return new UsuarioDto(
             usuario.Id, usuario.NombreCompleto, usuario.Correo, usuario.NombreUsuario, usuario.Rol, usuario.Activo,
-            usuario.FotoPerfilUrl, usuario.Especialidad, permisos.ToList());
+            usuario.FotoPerfilUrl, usuario.Especialidad, permisos.ToList(), usuario.Exequatur);
     }
 }
