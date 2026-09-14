@@ -788,6 +788,7 @@ export function CobrosPage() {
       {ultimoCobro && comprobante && (
         <div className="cobros-comprobante">
           <header className="cobros-comprobante-membrete">
+            <img className="cobros-comprobante-logo" src="/logo-funbide.png" alt="" />
             <span className="cobros-comprobante-clinica">FUNDACIÓN BIENESTAR Y DESARROLLO</span>
             <span className="cobros-comprobante-direccion">
               Calle Guaroa No. 4, Esq. Simón Orozco, Invivienda
@@ -830,6 +831,12 @@ export function CobrosPage() {
                 <dd>{formateadorMoneda.format(ultimoCobro.montoCobertura ?? 0)}</dd>
                 <dt>Código autorización</dt>
                 <dd>{ultimoCobro.codigoAutorizacion}</dd>
+                {!!ultimoCobro.montoFondo && (
+                  <>
+                    <dt>Fondo interno de la fundación</dt>
+                    <dd>{formateadorMoneda.format(ultimoCobro.montoFondo)}</dd>
+                  </>
+                )}
               </>
             )}
             <dt>{ultimoCobro.pagos.length > 1 ? 'Métodos de pago' : 'Método de pago'}</dt>

@@ -310,6 +310,13 @@
   padding-bottom: 8px;
 }
 
+.cobros-comprobante-logo {
+  display: block;
+  margin: 0 auto 6px;
+  height: 40px;
+  width: auto;
+}
+
 .cobros-comprobante-clinica {
   display: block;
   font-size: 14px;
