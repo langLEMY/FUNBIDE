@@ -119,14 +119,36 @@ else
     app.UseHsts();
 }
 
+// index.html nunca se debe cachear: los archivos en /assets ya llevan un hash de
+// contenido en el nombre (AseguradorasPage-<hash>.js), así que un build nuevo con
+// contenido distinto genera un nombre distinto — cachearlos "para siempre" es seguro y
+// deseado. Pero index.html SIEMPRE se llama igual, y es el único lugar donde viven esos
+// nombres hasheados; si el navegador (WebView2, con un perfil persistente entre
+// arranques — ver launcher/FormPrincipal.cs) lo cachea, cada nueva versión del instalador
+// queda invisible para siempre aunque los archivos en disco ya estén actualizados. Visto
+// en producción: un cambio de UI no llegaba a verse tras reinstalar, aun con los archivos
+// nuevos correctamente presentes en wwwroot.
+var opcionesArchivosEstaticos = new StaticFileOptions
+{
+    OnPrepareResponse = contexto =>
+    {
+        if (contexto.File.Name.Equals("index.html", StringComparison.OrdinalIgnoreCase))
+        {
+            contexto.Context.Response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
+            contexto.Context.Response.Headers.Pragma = "no-cache";
+            contexto.Context.Response.Headers.Expires = "0";
+        }
+    },
+};
+
 app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(opcionesArchivosEstaticos);
 
 app.UseHttpsRedirection();
 app.UseFunbidePipeline();
 
 app.MapControllers();
 app.MapGet("/health", () => Results.Ok(new { estado = "ok" })).AllowAnonymous();
-app.MapFallbackToFile("index.html").AllowAnonymous();
+app.MapFallbackToFile("index.html", opcionesArchivosEstaticos).AllowAnonymous();
 
 app.Run();
