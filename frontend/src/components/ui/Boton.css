@@ -1,0 +1,77 @@
+.ui-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border-hairline);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ui-boton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.ui-boton-spinner {
+  animation: ui-boton-girar 0.8s linear infinite;
+}
+
+@keyframes ui-boton-girar {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ui-boton-primario {
+  background: var(--series-pacientes);
+  border-color: var(--series-pacientes);
+  color: var(--text-primary);
+}
+
+.ui-boton-primario:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.ui-boton-secundario {
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.ui-boton-secundario:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.ui-boton-destructivo {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--text-primary);
+}
+
+.ui-boton-destructivo:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.ui-boton-texto {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+  padding: 8px 10px;
+}
+
+.ui-boton-texto:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-boton-spinner {
+    animation-duration: 0.01ms;
+  }
+}

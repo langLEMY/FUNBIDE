@@ -3,6 +3,8 @@ import { useAuth } from '../../auth/AuthContext'
 import { api, ApiError } from '../../lib/api'
 import type { Usuario, RolUsuario, EspecialidadMedica } from '../../types/usuario'
 import { rolesAsignablesPara, ESPECIALIDADES, ETIQUETA_ESPECIALIDAD } from '../../types/personal'
+import { Modal } from '../ui/Modal'
+import { Boton } from '../ui/Boton'
 import './EditarPersonalModal.css'
 
 interface EditarPersonalModalProps {
@@ -80,14 +82,8 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
   }
 
   return (
-    <div className="editar-personal-overlay" onClick={onCerrar}>
-      <form
-        className="editar-personal-modal"
-        onClick={(event) => event.stopPropagation()}
-        onSubmit={(event) => void handleSubmit(event)}
-      >
-        <h2>Editar perfil</h2>
-
+    <Modal abierto onCerrar={onCerrar} titulo="Editar perfil" ancho={340}>
+      <form className="editar-personal-formulario" onSubmit={(event) => void handleSubmit(event)}>
         <label htmlFor="ep-nombre">Nombre completo</label>
         <input
           id="ep-nombre"
@@ -162,14 +158,14 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
         {error && <p className="editar-personal-error">{error}</p>}
 
         <div className="editar-personal-acciones">
-          <button type="button" className="editar-personal-cancelar" onClick={onCerrar} disabled={guardando}>
+          <Boton type="button" variante="secundario" onClick={onCerrar} disabled={guardando}>
             Cancelar
-          </button>
-          <button type="submit" className="editar-personal-guardar" disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Guardar'}
-          </button>
+          </Boton>
+          <Boton type="submit" variante="primario" cargando={guardando}>
+            Guardar
+          </Boton>
         </div>
       </form>
-    </div>
+    </Modal>
   )
 }

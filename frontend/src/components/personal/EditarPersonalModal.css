@@ -1,45 +1,16 @@
-.editar-personal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(var(--glass-scrim-blur));
-  -webkit-backdrop-filter: blur(var(--glass-scrim-blur));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 40;
-  animation: funbide-desvanecer var(--duracion-rapida) var(--ease-suave);
-}
-
-.editar-personal-modal {
-  position: relative;
-  background: var(--glass-float-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  border: 1px solid var(--glass-border);
-  border-top-color: var(--glass-border-top);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-float);
-  padding: 24px;
-  width: 340px;
+.editar-personal-formulario {
   display: flex;
   flex-direction: column;
-  animation: funbide-materializar var(--duracion-materializar) var(--ease-spring);
 }
 
-.editar-personal-modal h2 {
-  margin: 0 0 16px;
-  font-size: 16px;
-}
-
-.editar-personal-modal label {
+.editar-personal-formulario label {
   font-size: 13px;
   color: var(--text-secondary);
   margin-bottom: 6px;
 }
 
-.editar-personal-modal input,
-.editar-personal-modal select {
+.editar-personal-formulario input,
+.editar-personal-formulario select {
   background: var(--surface-1);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-control);
@@ -59,38 +30,4 @@
   display: flex;
   gap: 8px;
   margin-top: 4px;
-}
-
-.editar-personal-acciones button {
-  flex: 1;
-  padding: 10px;
-  border-radius: var(--radius-control);
-  border: 1px solid var(--border-hairline);
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.editar-personal-cancelar {
-  background: var(--surface-1);
-  color: var(--text-primary);
-}
-
-.editar-personal-cancelar:hover {
-  background: var(--surface-hover);
-}
-
-.editar-personal-guardar {
-  background: var(--series-pacientes);
-  color: var(--text-primary);
-  border: none;
-  font-weight: 600;
-}
-
-.editar-personal-guardar:hover {
-  filter: brightness(1.1);
-}
-
-.editar-personal-acciones button:disabled {
-  opacity: 0.6;
-  cursor: default;
 }

@@ -3,6 +3,8 @@ import { api, ApiError } from '../../lib/api'
 import type { ModuloPermiso, Usuario } from '../../types/usuario'
 import { ETIQUETA_MODULO, GRUPOS_MODULOS } from '../../types/permisos'
 import type { ModuloPermisoEstado, PermisoDeseado, PermisosUsuario } from '../../types/permisos'
+import { Modal } from '../ui/Modal'
+import { Boton } from '../ui/Boton'
 import './EditarPermisosModal.css'
 
 interface EditarPermisosModalProps {
@@ -61,13 +63,28 @@ export function EditarPermisosModal({ usuario, onCerrar }: EditarPermisosModalPr
   }
 
   return (
-    <div className="editar-permisos-overlay" onClick={onCerrar}>
-      <div className="editar-permisos-modal" onClick={(event) => event.stopPropagation()}>
-        <h2>Permisos de {usuario.nombreCompleto}</h2>
-        <p className="editar-permisos-subtitulo">
-          Rol: {usuario.rol} — los módulos marcados como "Personalizado" ya no siguen el default de su rol.
-        </p>
-
+    <Modal
+      abierto
+      onCerrar={onCerrar}
+      titulo={`Permisos de ${usuario.nombreCompleto}`}
+      subtitulo={`Rol: ${usuario.rol} — los módulos marcados como "Personalizado" ya no siguen el default de su rol.`}
+      acciones={
+        <>
+          <Boton type="button" variante="secundario" onClick={onCerrar} disabled={guardando}>
+            Cerrar
+          </Boton>
+          <Boton
+            type="button"
+            variante="primario"
+            onClick={() => void handleGuardar()}
+            cargando={guardando}
+            disabled={cargando || !modulos}
+          >
+            Guardar cambios
+          </Boton>
+        </>
+      }
+    >
         {cargando ? (
           <p className="text-secondary cargando-pulso">Cargando permisos…</p>
         ) : modulos ? (
@@ -111,21 +128,6 @@ export function EditarPermisosModal({ usuario, onCerrar }: EditarPermisosModalPr
         ) : null}
 
         {error && <p className="editar-permisos-error">{error}</p>}
-
-        <div className="editar-permisos-acciones">
-          <button type="button" className="editar-permisos-cancelar" onClick={onCerrar} disabled={guardando}>
-            Cerrar
-          </button>
-          <button
-            type="button"
-            className="editar-permisos-guardar"
-            onClick={() => void handleGuardar()}
-            disabled={guardando || cargando || !modulos}
-          >
-            {guardando ? 'Guardando…' : 'Guardar cambios'}
-          </button>
-        </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
