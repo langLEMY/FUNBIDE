@@ -14,7 +14,11 @@
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
 
-    <Version>1.0.0</Version>
+    <!-- Fuente única de la versión: version.txt en la raíz del repo. instalacion/FUNBIDE.iss
+         lee el mismo archivo (vía preprocesador de Inno Setup) — antes cada uno tenía su
+         propio número y se desincronizaban. Ver Actualizacion/ServicioActualizacion.cs,
+         que compara esta versión contra el último tag publicado en GitHub Releases. -->
+    <Version>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)..\version.txt').Trim())</Version>
     <Product>FUNBIDE</Product>
     <Company>FUNBIDE</Company>
     <Description>Sistema de gestión clínica FUNBIDE</Description>
@@ -22,8 +26,27 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Ambas viven en subcarpetas de este proyecto (para quedar juntas en el árbol del
+         launcher), pero son proyectos SDK-style aparte con su propio glob de *.cs — sin
+         excluirlas acá, este .csproj también las compila por su cuenta (duplicando tipos
+         y, peor, absorbiendo los AssemblyInfo.cs generados en su obj/, que chocan con los
+         propios). Ver ProjectReference más abajo para Actualizacion; los Tests no se
+         referencian desde acá, solo hay que evitar que el glob los toque. -->
+    <Compile Remove="Actualizacion\**\*.cs" />
+    <Compile Remove="FUNBIDE.Launcher.Actualizacion.Tests\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4022.49" />
     <PackageReference Include="System.Management" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Sin WinForms: la lógica de chequeo/descarga/verificación vive acá para poder
+         testearla con xUnit en FUNBIDE.Launcher.Actualizacion.Tests, que corre en CI
+         (Ubuntu) — si esa lógica viviera en este proyecto (net9.0-windows,
+         UseWindowsForms), sus tests no podrían ejecutarse ahí. -->
+    <ProjectReference Include="Actualizacion\FUNBIDE.Launcher.Actualizacion.csproj" />
   </ItemGroup>
 
 </Project>

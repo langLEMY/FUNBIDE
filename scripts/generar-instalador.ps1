@@ -16,6 +16,9 @@
        eso lo hace el despliegue de servidor.
     3. Compila instalacion\FUNBIDE.iss con Inno Setup (ISCC.exe) y deja el .exe final
        en instalacion\Output\.
+    4. Genera el hash SHA256 del .exe (mismo nombre + ".sha256") -- el auto-update del
+       launcher (ver launcher\Actualizacion\ServicioActualizacion.cs) lo descarga y lo
+       compara antes de ejecutar nada. Subir AMBOS archivos como assets del Release.
 
     El instalador resultante NO lleva ninguna clave maestra de Supabase (ni la
     contrasena del rol admin, ni la ServiceRoleKey) — solo la contrasena del rol
@@ -110,9 +113,33 @@ Invoke-Paso "Compilando el instalador con Inno Setup" {
     & $iscc (Join-Path $raiz "instalacion\FUNBIDE.iss")
 }
 
+# El nombre del .exe incluye la version (ver instalacion\FUNBIDE.iss, OutputBaseFilename),
+# leida de version.txt -- se busca en vez de hardcodearlo para no desincronizarse.
+$versionTexto = (Get-Content (Join-Path $raiz "version.txt") -Raw).Trim()
+$outputDir = Join-Path $raiz "instalacion\Output"
+$rutaInstalador = Join-Path $outputDir "FUNBIDE-$versionTexto-Setup-x64.exe"
+
+if (-not (Test-Path $rutaInstalador)) {
+    throw "No se encontro el instalador esperado en '$rutaInstalador' -- revisa que version.txt y OutputBaseFilename en FUNBIDE.iss coincidan."
+}
+
+# Hash SHA256 publicado junto al .exe: el launcher lo descarga y lo compara ANTES de
+# ejecutar nada (ver launcher/Actualizacion/ServicioActualizacion.cs,
+# VerificarHash.Coincide) -- sin este archivo, el auto-update no ofrece la version nueva.
+# Hay que subir AMBOS archivos como assets del mismo GitHub Release, con estos mismos
+# nombres (el .sha256 tiene que llamarse exactamente "<nombre-del-exe>.sha256").
+Write-Host "==> Generando hash SHA256 del instalador" -ForegroundColor Cyan
+$hash = (Get-FileHash -Path $rutaInstalador -Algorithm SHA256).Hash
+$rutaHash = "$rutaInstalador.sha256"
+Set-Content -Path $rutaHash -Value $hash -Encoding ascii -NoNewline
+
 Write-Host ""
 Write-Host "Instalador listo:" -ForegroundColor Green
-Write-Host "  $(Join-Path $raiz 'instalacion\Output\FUNBIDE-Setup-x64.exe')"
+Write-Host "  $rutaInstalador"
+Write-Host "  $rutaHash"
+Write-Host ""
+Write-Host "Para que el auto-update (dentro de la app) encuentre esta version, subi AMBOS" -ForegroundColor Yellow
+Write-Host "archivos como assets del GitHub Release con el tag v$versionTexto." -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Ese .exe SI se puede repartir a las PCs de la fundacion: no lleva ninguna" -ForegroundColor Yellow
 Write-Host "clave maestra, solo la contrasena del rol acotado funbide_app." -ForegroundColor Yellow

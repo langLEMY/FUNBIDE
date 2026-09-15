@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using FUNBIDE.Launcher.Actualizacion;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
@@ -15,11 +16,19 @@ public sealed class FormPrincipal : Form
     private readonly Process? _procesoBackend;
     private readonly string _url;
     private readonly WebView2 _webView = new() { Dock = DockStyle.Fill };
+    private readonly ServicioActualizacion? _servicioActualizacion;
+    private readonly InfoActualizacion? _infoActualizacion;
 
-    public FormPrincipal(string url, Process? procesoBackend)
+    public FormPrincipal(
+        string url,
+        Process? procesoBackend,
+        ServicioActualizacion? servicioActualizacion = null,
+        InfoActualizacion? infoActualizacion = null)
     {
         _url = url;
         _procesoBackend = procesoBackend;
+        _servicioActualizacion = servicioActualizacion;
+        _infoActualizacion = infoActualizacion;
 
         Text = "FUNBIDE";
         Width = 1366;
@@ -33,6 +42,9 @@ public sealed class FormPrincipal : Form
         // normal funciona perfecto). Nacer en tamaño normal y maximizar después le da
         // al control un resize real del que agarrarse.
         Shown += (_, _) => WindowState = FormWindowState.Maximized;
+        // No-modal (.Show, no .ShowDialog) y recién en Shown: nunca debe interrumpir ni
+        // demorar la apertura de FUNBIDE — es un aviso ignorable, no un bloqueo.
+        Shown += MostrarAvisoDeActualizacionSiHay;
 
         // El .ico no se copia como archivo suelto al publicar (PublishSingleFile);
         // se extrae del recurso ya embebido en el propio .exe vía <ApplicationIcon>.
@@ -152,6 +164,19 @@ public sealed class FormPrincipal : Form
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
         }
+    }
+
+    private void MostrarAvisoDeActualizacionSiHay(object? sender, EventArgs e)
+    {
+        if (_servicioActualizacion is null || _infoActualizacion is null)
+        {
+            return;
+        }
+
+        // .Show(), no .ShowDialog(): queda flotando, no le saca el foco a FormPrincipal ni
+        // bloquea nada — ver FormActualizacionDisponible.
+        var aviso = new FormActualizacionDisponible(_servicioActualizacion, _infoActualizacion);
+        aviso.Show(this);
     }
 
     private void FormPrincipal_FormClosing(object? sender, FormClosingEventArgs e)

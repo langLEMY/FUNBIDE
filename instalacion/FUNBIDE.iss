@@ -9,8 +9,11 @@
 ;
 ; Requiere Inno Setup 6 (https://jrsoftware.org/isinfo.php).
 
+; La version se lee de version.txt en la raiz del repo (fuente unica compartida con
+; launcher/FUNBIDE.Launcher.csproj, que la lee via MSBuild) -- antes cada uno tenia su
+; propio numero hardcodeado y se desincronizaban. Ver launcher/Actualizacion/ServicioActualizacion.cs.
 #define MyAppName "FUNBIDE"
-#define MyAppVersion "1.4.0"
+#define MyAppVersion Trim(FileRead(FileOpen("..\version.txt")))
 #define MyAppPublisher "FUNBIDE"
 #define MyAppExeName "FUNBIDE.exe"
 #define SourceDir "..\dist-offline"
@@ -25,7 +28,7 @@ AppPublisher={#MyAppPublisher}
 DefaultDirName={localappdata}\Programs\FUNBIDE
 DefaultGroupName=FUNBIDE
 DisableProgramGroupPage=yes
-OutputBaseFilename=FUNBIDE-1.4-Setup-x64
+OutputBaseFilename=FUNBIDE-{#MyAppVersion}-Setup-x64
 OutputDir=Output
 SetupIconFile=..\launcher\funbide.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}

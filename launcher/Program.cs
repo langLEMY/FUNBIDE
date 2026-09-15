@@ -1,13 +1,22 @@
 using System.Diagnostics;
+using System.Net.Http;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Windows.Forms;
 using FUNBIDE.Launcher;
+using FUNBIDE.Launcher.Actualizacion;
 
 namespace FUNBIDE.Launcher;
 
 internal static class Program
 {
     private const int Puerto = 5090;
+
+    // Cuánto se espera, como máximo, la respuesta de GitHub antes de seguir arrancando
+    // sin más — ver BuscarActualizacionAsync. Instalaciones "Local" offline/USB (ver
+    // ASPNETCORE_ENVIRONMENT=Local más abajo) nunca van a tener red: para esas, este es
+    // exactamente el tiempo de más que tarda en abrir FUNBIDE, siempre.
+    private static readonly TimeSpan TimeoutChequeoActualizacion = TimeSpan.FromSeconds(2.5);
 
     // Hilo STA único de punta a punta: WebView2 inicializa su propio apartamento COM
     // más adelante (en FormPrincipal) y choca (RPC_E_CHANGED_MODE) si el hilo no fue
@@ -17,6 +26,19 @@ internal static class Program
     private static void Main()
     {
         MatarWebView2HuerfanosAsync().GetAwaiter().GetResult();
+
+        // No bloqueante en el sentido de "nunca interrumpe": corre acá, antes de levantar
+        // la ventana, con un timeout corto — si no hay red o GitHub no contesta a tiempo,
+        // sigue el arranque normal sin ningún diálogo (ver ServicioActualizacion, que
+        // nunca lanza). El aviso en sí (si hay algo nuevo) recién se muestra, ignorable,
+        // una vez que FormPrincipal ya está abierto — ver FormPrincipal.Shown.
+        // Timeout del HttpClient en 10 minutos (no el default de 100s): se reusa esta
+        // misma instancia para el chequeo corto (con su propio CancellationToken de 2.5s,
+        // más restrictivo, ver BuscarActualizacionAsync) y para la descarga del instalador
+        // (con hasta 5 minutos, ver FormActualizacionDisponible) — el Timeout del cliente
+        // no puede ser menor que eso o cortaría la descarga sin importar el token pasado.
+        var servicioActualizacion = new ServicioActualizacion(new HttpClient { Timeout = TimeSpan.FromMinutes(10) });
+        var infoActualizacion = BuscarActualizacionAsync(servicioActualizacion).GetAwaiter().GetResult();
 
         var url = $"http://127.0.0.1:{Puerto}";
 
@@ -72,7 +94,24 @@ internal static class Program
         Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
         Application.ThreadException += (_, e) => RegistrarCrash(e.Exception, raiz);
         AppDomain.CurrentDomain.UnhandledException += (_, e) => RegistrarCrash(e.ExceptionObject as Exception, raiz);
-        Application.Run(new FormPrincipal(url, procesoBackend));
+        Application.Run(new FormPrincipal(url, procesoBackend, servicioActualizacion, infoActualizacion));
+    }
+
+    private static async Task<InfoActualizacion?> BuscarActualizacionAsync(ServicioActualizacion servicioActualizacion)
+    {
+        try
+        {
+            var versionLocal = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(0, 0, 0);
+            using var cancelacion = new CancellationTokenSource(TimeoutChequeoActualizacion);
+            return await servicioActualizacion.BuscarActualizacionAsync(versionLocal, cancelacion.Token);
+        }
+        catch
+        {
+            // ServicioActualizacion.BuscarActualizacionAsync ya atrapa todo lo suyo, pero
+            // esto cubre igual cualquier cosa rara (p. ej. el propio timeout cancelando la
+            // tarea) — jamás debe impedir que FUNBIDE arranque.
+            return null;
+        }
     }
 
     private static void RegistrarCrash(Exception? ex, string raiz)

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- net9.0 puro, sin WinForms: lo referencia FUNBIDE.Launcher (la UI) y lo testea
+       FUNBIDE.Launcher.Actualizacion.Tests. Si esta lógica viviera directo en el proyecto
+       WinForms (net9.0-windows), sus tests no podrían correr en CI (Ubuntu) porque el
+       test host necesitaría el framework compartido de escritorio de Windows solo para
+       cargar el ensamblado, aunque el código de test nunca toque un Form. -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
