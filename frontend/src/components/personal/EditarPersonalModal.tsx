@@ -5,6 +5,7 @@ import type { Usuario, RolUsuario, EspecialidadMedica } from '../../types/usuari
 import { rolesAsignablesPara, ESPECIALIDADES, ETIQUETA_ESPECIALIDAD } from '../../types/personal'
 import { Modal } from '../ui/Modal'
 import { Boton } from '../ui/Boton'
+import { Tooltip } from '../ui/Tooltip'
 import './EditarPersonalModal.css'
 
 interface EditarPersonalModalProps {
@@ -135,7 +136,10 @@ export function EditarPersonalModal({ usuario, onCerrar, onGuardado }: EditarPer
               ))}
             </select>
 
-            <label htmlFor="ep-exequatur">Exequátur (colegiatura médica)</label>
+            <label htmlFor="ep-exequatur" className="editar-personal-label-con-ayuda">
+              Exequátur (colegiatura médica)
+              <Tooltip texto="Número de colegiatura otorgado por el Colegio Médico Dominicano (CMD) al habilitar al doctor." />
+            </label>
             <input
               id="ep-exequatur"
               placeholder="Ej. 12345-67"

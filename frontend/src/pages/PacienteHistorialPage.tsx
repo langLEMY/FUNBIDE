@@ -2,6 +2,8 @@ import { ArrowLeft } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
+import { Modal } from '../components/ui/Modal'
+import { Boton } from '../components/ui/Boton'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import { imprimirVentana } from '../lib/imprimir'
@@ -94,6 +96,36 @@ export function PacienteHistorialPage() {
   const [errorRegistrar, setErrorRegistrar] = useState<string | null>(null)
 
   const [entradaAImprimir, setEntradaAImprimir] = useState<EntradaHistorial | null>(null)
+  const [mostrarConfirmacionSalir, setMostrarConfirmacionSalir] = useState(false)
+
+  // El formulario de registro es el único "largo" de esta página (notas clínicas,
+  // recetas o documentos con varios campos) — perder eso por un click accidental en
+  // "Volver" es justo el escenario que esta confirmación evita.
+  const hayCambiosSinGuardar =
+    diagnostico.trim() !== '' ||
+    tratamiento.trim() !== '' ||
+    notas.trim() !== '' ||
+    notasGenerales.trim() !== '' ||
+    itemsReceta.some((item) => Object.values(item).some((valor) => valor.trim() !== '')) ||
+    Object.values(camposDocumento).some((valor) => valor.trim() !== '')
+
+  useEffect(() => {
+    if (!hayCambiosSinGuardar) return
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hayCambiosSinGuardar])
+
+  const handleClickVolver = () => {
+    if (hayCambiosSinGuardar) {
+      setMostrarConfirmacionSalir(true)
+      return
+    }
+    navigate('/pacientes')
+  }
 
   useEffect(() => {
     let cancelado = false
@@ -232,9 +264,28 @@ export function PacienteHistorialPage() {
 
   return (
     <DashboardLayout titulo="Historial clínico">
-      <button type="button" className="historial-volver no-imprimir" onClick={() => navigate('/pacientes')}>
+      <button type="button" className="historial-volver no-imprimir" onClick={handleClickVolver}>
         <ArrowLeft size={15} aria-hidden="true" /> Volver
       </button>
+
+      <Modal
+        abierto={mostrarConfirmacionSalir}
+        onCerrar={() => setMostrarConfirmacionSalir(false)}
+        titulo="¿Salir sin guardar?"
+        subtitulo="Hay una entrada del historial sin guardar. Si salís ahora, se pierde."
+        acciones={
+          <>
+            <Boton variante="secundario" onClick={() => setMostrarConfirmacionSalir(false)}>
+              Seguir editando
+            </Boton>
+            <Boton variante="destructivo" onClick={() => navigate('/pacientes')}>
+              Salir sin guardar
+            </Boton>
+          </>
+        }
+      >
+        <></>
+      </Modal>
 
       {cargando ? (
         <p className="text-secondary cargando-pulso no-imprimir">Cargando…</p>

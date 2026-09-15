@@ -1,0 +1,36 @@
+.ui-campo-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ui-campo-texto-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ui-campo-texto-obligatorio {
+  color: var(--danger);
+}
+
+.ui-campo-texto-input {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+}
+
+.ui-campo-texto-input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.ui-campo-texto-error {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--danger);
+}

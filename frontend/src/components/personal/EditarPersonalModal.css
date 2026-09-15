@@ -9,6 +9,12 @@
   margin-bottom: 6px;
 }
 
+.editar-personal-label-con-ayuda {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .editar-personal-formulario input,
 .editar-personal-formulario select {
   background: var(--surface-1);

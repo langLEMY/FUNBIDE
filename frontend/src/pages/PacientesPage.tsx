@@ -5,11 +5,14 @@ import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { PacienteRow } from '../components/pacientes/PacienteRow'
 import { ImportarExcel } from '../components/ImportarExcel'
 import { Boton } from '../components/ui/Boton'
+import { CampoTexto } from '../components/ui/CampoTexto'
+import { Tooltip } from '../components/ui/Tooltip'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import type { Paciente, PacientesPaginados, ImportarPacientesResultado } from '../types/paciente'
 import { ESTADOS_PACIENTE, type EstadoPaciente } from '../types/paciente'
 import { esquemaCrearPaciente, type DatosCrearPaciente } from '../schemas/paciente'
+import { formatearCedulaEnVivo, formatearTelefonoEnVivo } from '../utils/mascaras'
 import './PacientesPage.css'
 
 const FILTRO_TODOS = 'Todos'
@@ -172,25 +175,38 @@ export function PacientesPage() {
         <section className="pacientes-crear-card">
           <h2>Agregar paciente</h2>
           <form className="pacientes-crear-form" onSubmit={handleSubmitCrearPaciente(handleCrear)}>
-            <input placeholder="Nombre" {...registrarCampoPaciente('nombre')} />
-            <input placeholder="Apellido" {...registrarCampoPaciente('apellido')} />
-            <input placeholder="Cédula" {...registrarCampoPaciente('cedula')} />
-            <input placeholder="Teléfono (opcional)" {...registrarCampoPaciente('telefono')} />
+            <CampoTexto
+              etiqueta="Nombre"
+              obligatorio
+              registro={registrarCampoPaciente('nombre')}
+              error={erroresCrearPaciente.nombre?.message}
+            />
+            <CampoTexto
+              etiqueta="Apellido"
+              obligatorio
+              registro={registrarCampoPaciente('apellido')}
+              error={erroresCrearPaciente.apellido?.message}
+            />
+            <CampoTexto
+              etiqueta="Cédula"
+              obligatorio
+              registro={registrarCampoPaciente('cedula')}
+              error={erroresCrearPaciente.cedula?.message}
+              mascara={formatearCedulaEnVivo}
+              inputMode="numeric"
+              ayuda={<Tooltip texto="Formato dominicano: 000-0000000-0. Se completa solo mientras escribís." />}
+            />
+            <CampoTexto
+              etiqueta="Teléfono"
+              registro={registrarCampoPaciente('telefono')}
+              mascara={formatearTelefonoEnVivo}
+              inputMode="numeric"
+            />
             <Boton type="submit" cargando={creando}>
               Agregar
             </Boton>
           </form>
-          {(erroresCrearPaciente.nombre?.message ??
-            erroresCrearPaciente.apellido?.message ??
-            erroresCrearPaciente.cedula?.message ??
-            errorCrear) && (
-            <p className="pacientes-error">
-              {erroresCrearPaciente.nombre?.message ??
-                erroresCrearPaciente.apellido?.message ??
-                erroresCrearPaciente.cedula?.message ??
-                errorCrear}
-            </p>
-          )}
+          {errorCrear && <p className="pacientes-error">{errorCrear}</p>}
         </section>
       )}
 
