@@ -1,0 +1,118 @@
+.ui-rango-fechas {
+  position: relative;
+  display: inline-block;
+}
+
+.ui-rango-fechas-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 13.5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ui-rango-fechas-boton:hover {
+  background: var(--surface-hover);
+}
+
+.ui-rango-fechas-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  width: 260px;
+  background: var(--glass-float-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-top);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-float);
+  padding: 14px;
+  animation: funbide-desplegar var(--duracion-base) var(--ease-entrada);
+}
+
+.ui-rango-fechas-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.ui-rango-fechas-mes {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.ui-rango-fechas-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.ui-rango-fechas-nav:hover {
+  background: var(--surface-hover);
+}
+
+.ui-rango-fechas-grilla {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.ui-rango-fechas-diasemana {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+.ui-rango-fechas-dia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.ui-rango-fechas-dia:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.ui-rango-fechas-dia-fuera {
+  color: var(--text-muted);
+}
+
+.ui-rango-fechas-dia-en-rango {
+  background: color-mix(in srgb, var(--series-pacientes) 18%, transparent);
+}
+
+.ui-rango-fechas-dia-extremo {
+  background: var(--series-pacientes);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.ui-rango-fechas-dia:disabled {
+  opacity: 0.35;
+  cursor: default;
+}

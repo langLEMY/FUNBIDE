@@ -1,3 +1,4 @@
+import { ArrowRight } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
@@ -273,7 +274,7 @@ export function DashboardPage() {
                 ))}
               </ul>
               <Link to="/inventario" className="dashboard-alerta-link">
-                Ver inventario →
+                Ver inventario <ArrowRight size={14} aria-hidden="true" />
               </Link>
             </div>
           )}

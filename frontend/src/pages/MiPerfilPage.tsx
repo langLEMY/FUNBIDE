@@ -1,3 +1,4 @@
+import { Archive, Database, Download, HardDrive } from 'lucide-react'
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -580,15 +581,7 @@ export function MiPerfilPage() {
               <div className="mi-perfil-herramientas-grilla">
                 <article className="mi-perfil-herramienta">
                   <span className="mi-perfil-herramienta-icono" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M7 3h8l4 4v14H7V3Z M9 3v6h6V3 M9 21v-6h6v6"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <Archive size={18} />
                   </span>
                   <div className="mi-perfil-herramienta-texto">
                     <p className="mi-perfil-herramienta-titulo">Forzar backup ahora</p>
@@ -611,15 +604,7 @@ export function MiPerfilPage() {
 
                 <article className="mi-perfil-herramienta">
                   <span className="mi-perfil-herramienta-icono" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <ellipse cx="12" cy="5.5" rx="7" ry="2.5" stroke="currentColor" strokeWidth="1.6" />
-                      <path
-                        d="M5 5.5V18c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V5.5M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                      />
-                    </svg>
+                    <Database size={18} />
                   </span>
                   <div className="mi-perfil-herramienta-texto">
                     <p className="mi-perfil-herramienta-titulo">Verificar conexiones (base de datos y almacenamiento)</p>
@@ -632,15 +617,7 @@ export function MiPerfilPage() {
 
                 <article className="mi-perfil-herramienta">
                   <span className="mi-perfil-herramienta-icono" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M12 3v13m0 0 4-4m-4 4-4-4M5 19h14"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
+                    <Download size={18} />
                   </span>
                   <div className="mi-perfil-herramienta-texto">
                     <p className="mi-perfil-herramienta-titulo">Exportar registro de actividad</p>
@@ -653,11 +630,7 @@ export function MiPerfilPage() {
 
                 <article className="mi-perfil-herramienta">
                   <span className="mi-perfil-herramienta-icono" aria-hidden="true">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <rect x="3" y="8" width="18" height="8" rx="2" stroke="currentColor" strokeWidth="1.6" />
-                      <circle cx="7.5" cy="12" r="1" fill="currentColor" />
-                      <path d="M11 12h6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                    </svg>
+                    <HardDrive size={18} />
                   </span>
                   <div className="mi-perfil-herramienta-texto">
                     <p className="mi-perfil-herramienta-titulo">Verificar espacio en disco</p>

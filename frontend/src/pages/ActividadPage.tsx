@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
+import { SelectorRangoFechas } from '../components/ui/SelectorRangoFechas'
 import { api, ApiError } from '../lib/api'
 import type { Usuario } from '../types/usuario'
 import './ActividadPage.css'
@@ -152,14 +153,15 @@ export function ActividadPage() {
           ))}
         </div>
         <form className="actividad-rango" onSubmit={handleFiltrar}>
-          <label>
-            Desde
-            <input type="date" value={desde} max={hasta} onChange={(event) => setDesde(event.target.value)} />
-          </label>
-          <label>
-            Hasta
-            <input type="date" value={hasta} min={desde} onChange={(event) => setHasta(event.target.value)} />
-          </label>
+          <SelectorRangoFechas
+            desde={desde}
+            hasta={hasta}
+            onCambiar={(nuevoDesde, nuevoHasta) => {
+              setDesde(nuevoDesde)
+              setHasta(nuevoHasta)
+            }}
+            max={aFechaISO(hoy)}
+          />
           <button type="submit" disabled={cargando}>
             {cargando ? 'Filtrando…' : 'Filtrar'}
           </button>

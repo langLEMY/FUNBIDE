@@ -1,11 +1,15 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { PacienteRow } from '../components/pacientes/PacienteRow'
 import { ImportarExcel } from '../components/ImportarExcel'
+import { Boton } from '../components/ui/Boton'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import type { Paciente, PacientesPaginados, ImportarPacientesResultado } from '../types/paciente'
 import { ESTADOS_PACIENTE, type EstadoPaciente } from '../types/paciente'
+import { esquemaCrearPaciente, type DatosCrearPaciente } from '../schemas/paciente'
 import './PacientesPage.css'
 
 const FILTRO_TODOS = 'Todos'
@@ -43,12 +47,16 @@ export function PacientesPage() {
   const [busquedaDebounced, setBusquedaDebounced] = useState('')
   const [filtroEstado, setFiltroEstado] = useState<EstadoPaciente | typeof FILTRO_TODOS>(FILTRO_TODOS)
 
-  const [nombre, setNombre] = useState('')
-  const [apellido, setApellido] = useState('')
-  const [cedula, setCedula] = useState('')
-  const [telefono, setTelefono] = useState('')
-  const [creando, setCreando] = useState(false)
   const [errorCrear, setErrorCrear] = useState<string | null>(null)
+  const {
+    register: registrarCampoPaciente,
+    handleSubmit: handleSubmitCrearPaciente,
+    reset: resetFormularioPaciente,
+    formState: { errors: erroresCrearPaciente, isSubmitting: creando },
+  } = useForm<DatosCrearPaciente>({
+    resolver: zodResolver(esquemaCrearPaciente),
+    defaultValues: { nombre: '', apellido: '', cedula: '', telefono: '' },
+  })
 
   useEffect(() => {
     const temporizador = setTimeout(() => setBusquedaDebounced(busqueda), 300)
@@ -94,23 +102,18 @@ export function PacientesPage() {
 
   const quitarDeLista = (_pacienteId: string) => recargar()
 
-  const handleCrear = async (event: FormEvent) => {
-    event.preventDefault()
+  const handleCrear = async (datos: DatosCrearPaciente) => {
     setErrorCrear(null)
-    setCreando(true)
     try {
       await api.post<Paciente>('/api/pacientes', {
-        nombre,
-        apellido,
-        cedula,
-        telefono: telefono.trim() || null,
+        nombre: datos.nombre,
+        apellido: datos.apellido,
+        cedula: datos.cedula,
+        telefono: datos.telefono?.trim() || null,
         edad: null,
         condicion: null,
       })
-      setNombre('')
-      setApellido('')
-      setCedula('')
-      setTelefono('')
+      resetFormularioPaciente()
       if (pagina === 1) {
         recargar()
       } else {
@@ -118,8 +121,6 @@ export function PacientesPage() {
       }
     } catch (err) {
       setErrorCrear(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo agregar al paciente.')
-    } finally {
-      setCreando(false)
     }
   }
 
@@ -170,35 +171,26 @@ export function PacientesPage() {
       {puedeCrear && (
         <section className="pacientes-crear-card">
           <h2>Agregar paciente</h2>
-          <form className="pacientes-crear-form" onSubmit={(event) => void handleCrear(event)}>
-            <input
-              placeholder="Nombre"
-              value={nombre}
-              onChange={(event) => setNombre(event.target.value)}
-              required
-            />
-            <input
-              placeholder="Apellido"
-              value={apellido}
-              onChange={(event) => setApellido(event.target.value)}
-              required
-            />
-            <input
-              placeholder="Cédula"
-              value={cedula}
-              onChange={(event) => setCedula(event.target.value)}
-              required
-            />
-            <input
-              placeholder="Teléfono (opcional)"
-              value={telefono}
-              onChange={(event) => setTelefono(event.target.value)}
-            />
-            <button type="submit" disabled={creando}>
-              {creando ? 'Agregando…' : 'Agregar'}
-            </button>
+          <form className="pacientes-crear-form" onSubmit={handleSubmitCrearPaciente(handleCrear)}>
+            <input placeholder="Nombre" {...registrarCampoPaciente('nombre')} />
+            <input placeholder="Apellido" {...registrarCampoPaciente('apellido')} />
+            <input placeholder="Cédula" {...registrarCampoPaciente('cedula')} />
+            <input placeholder="Teléfono (opcional)" {...registrarCampoPaciente('telefono')} />
+            <Boton type="submit" cargando={creando}>
+              Agregar
+            </Boton>
           </form>
-          {errorCrear && <p className="pacientes-error">{errorCrear}</p>}
+          {(erroresCrearPaciente.nombre?.message ??
+            erroresCrearPaciente.apellido?.message ??
+            erroresCrearPaciente.cedula?.message ??
+            errorCrear) && (
+            <p className="pacientes-error">
+              {erroresCrearPaciente.nombre?.message ??
+                erroresCrearPaciente.apellido?.message ??
+                erroresCrearPaciente.cedula?.message ??
+                errorCrear}
+            </p>
+          )}
         </section>
       )}
 

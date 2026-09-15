@@ -68,6 +68,9 @@
 }
 
 .dashboard-alerta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 13px;
   font-weight: 600;
 }

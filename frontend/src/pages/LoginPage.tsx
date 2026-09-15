@@ -1,9 +1,13 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Eye, EyeOff } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useTheme } from '../theme/ThemeContext'
 import { traducirErrorAuth } from '../auth/mensajesError'
 import { ThemeToggleButton } from '../components/layout/ThemeToggleButton'
+import { esquemaLogin, type DatosLogin } from '../schemas/login'
 import './LoginPage.css'
 
 const CLAVE_USUARIO_RECORDADO = 'funbide-usuario-recordado'
@@ -31,54 +35,53 @@ export function LoginPage() {
   const navigate = useNavigate()
   const { tema } = useTheme()
 
-  const [nombreUsuario, setNombreUsuario] = useState('')
-  const [contrasena, setContrasena] = useState('')
   const [mostrarContrasena, setMostrarContrasena] = useState(false)
   const [recordarme, setRecordarme] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [enviando, setEnviando] = useState(false)
+  const [errorServidor, setErrorServidor] = useState<string | null>(null)
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<DatosLogin>({
+    resolver: zodResolver(esquemaLogin),
+    defaultValues: { nombreUsuario: '', contrasena: '' },
+  })
 
   useEffect(() => {
     const guardado = window.localStorage.getItem(CLAVE_USUARIO_RECORDADO)
     if (guardado) {
-      setNombreUsuario(guardado)
+      setValue('nombreUsuario', guardado)
       setRecordarme(true)
     }
-  }, [])
+  }, [setValue])
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault()
-    setError(null)
-
-    if (!nombreUsuario.trim() || !contrasena.trim()) {
-      setError('Ingresa tu usuario y tu contraseña.')
-      return
-    }
-
-    setEnviando(true)
+  const onSubmit = async (datos: DatosLogin) => {
+    setErrorServidor(null)
     try {
-      await iniciarSesion(nombreUsuario, contrasena)
-      registrarEventoLogin(nombreUsuario, true)
+      await iniciarSesion(datos.nombreUsuario, datos.contrasena)
+      registrarEventoLogin(datos.nombreUsuario, true)
       if (recordarme) {
-        window.localStorage.setItem(CLAVE_USUARIO_RECORDADO, nombreUsuario)
+        window.localStorage.setItem(CLAVE_USUARIO_RECORDADO, datos.nombreUsuario)
       } else {
         window.localStorage.removeItem(CLAVE_USUARIO_RECORDADO)
       }
       navigate('/', { replace: true })
     } catch (err) {
-      registrarEventoLogin(nombreUsuario, false)
+      registrarEventoLogin(datos.nombreUsuario, false)
       const mensaje = err instanceof Error ? err.message : undefined
-      setError(traducirErrorAuth(mensaje, 'No se pudo iniciar sesión.'))
-    } finally {
-      setEnviando(false)
+      setErrorServidor(traducirErrorAuth(mensaje, 'No se pudo iniciar sesión.'))
     }
   }
+
+  const errorMostrado = errors.nombreUsuario?.message ?? errors.contrasena?.message ?? errorServidor
 
   return (
     <div className="login-page">
       <ThemeToggleButton className="login-tema-boton" />
 
-      <form className="login-card" onSubmit={(event) => void handleSubmit(event)}>
+      <form className="login-card" onSubmit={handleSubmit(onSubmit)}>
         <div className="login-ventana-barra">
           <div className="login-ventana-puntos">
             <span className="login-punto login-punto-rojo" />
@@ -107,8 +110,7 @@ export function LoginPage() {
             type="text"
             placeholder="usuario123"
             autoComplete="username"
-            value={nombreUsuario}
-            onChange={(event) => setNombreUsuario(event.target.value)}
+            {...register('nombreUsuario')}
           />
 
           <label className="login-label" htmlFor="contrasena">
@@ -121,8 +123,7 @@ export function LoginPage() {
               type={mostrarContrasena ? 'text' : 'password'}
               placeholder="Ingresa tu contraseña"
               autoComplete="current-password"
-              value={contrasena}
-              onChange={(event) => setContrasena(event.target.value)}
+              {...register('contrasena')}
             />
             <button
               type="button"
@@ -131,25 +132,9 @@ export function LoginPage() {
               aria-label={mostrarContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             >
               {mostrarContrasena ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.4 5.5A9.7 9.7 0 0 1 12 5c5 0 9 4 10 7-.4 1.2-1.3 2.6-2.5 3.9M6.3 6.9C4.2 8.2 2.6 10 2 12c1 3 5 7 10 7 1.1 0 2.1-.2 3.1-.5"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+                <EyeOff size={16} aria-hidden="true" />
               ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M2 12c1-3 5-7 10-7s9 4 10 7c-1 3-5 7-10 7s-9-4-10-7z"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinejoin="round"
-                  />
-                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" />
-                </svg>
+                <Eye size={16} aria-hidden="true" />
               )}
             </button>
           </div>
@@ -168,11 +153,11 @@ export function LoginPage() {
             </Link>
           </div>
 
-          {error && <p className="login-error">{error}</p>}
+          {errorMostrado && <p className="login-error">{errorMostrado}</p>}
 
-          <button className="login-boton" type="submit" disabled={enviando}>
-            {enviando && <span className="login-spinner" aria-hidden="true" />}
-            {enviando ? 'Verificando…' : 'Iniciar sesión'}
+          <button className="login-boton" type="submit" disabled={isSubmitting}>
+            {isSubmitting && <span className="login-spinner" aria-hidden="true" />}
+            {isSubmitting ? 'Verificando…' : 'Iniciar sesión'}
           </button>
         </div>
       </form>

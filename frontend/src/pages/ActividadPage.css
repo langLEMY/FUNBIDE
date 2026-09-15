@@ -34,26 +34,9 @@
 
 .actividad-rango {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-}
-
-.actividad-rango label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.actividad-rango input[type='date'] {
-  background: var(--surface-2);
-  border: 1px solid var(--border-hairline);
-  border-radius: var(--radius-control);
-  color: var(--text-primary);
-  padding: 8px 10px;
-  font-size: 13px;
 }
 
 .actividad-rango button {

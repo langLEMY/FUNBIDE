@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
@@ -232,7 +233,7 @@ export function PacienteHistorialPage() {
   return (
     <DashboardLayout titulo="Historial clínico">
       <button type="button" className="historial-volver no-imprimir" onClick={() => navigate('/pacientes')}>
-        ← Volver
+        <ArrowLeft size={15} aria-hidden="true" /> Volver
       </button>
 
       {cargando ? (
