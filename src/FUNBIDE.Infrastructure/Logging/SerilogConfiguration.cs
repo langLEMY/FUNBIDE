@@ -37,8 +37,18 @@ public static class SerilogConfiguration
             // (p. ej. la contraseña temporal del admin inicial, que sí debe verse en
             // "docker compose logs" pero no debe quedar persistida indefinidamente en
             // la tabla de auditoría / backups de la base) lleguen al sink de Postgres.
+            //
+            // También se excluye RequestAuditLoggingMiddleware por su SourceContext: ese
+            // middleware loguea un evento con las MISMAS propiedades (Accion/Recurso/
+            // CodigoRespuestaHttp) por CADA petición HTTP -- sin este filtro, cada GET, cada
+            // polling del sidebar (cada 20s) terminaba como una fila más en
+            // "auditoria_logs" junto a los eventos de negocio reales (cobros.registrar,
+            // pacientes.crear, etc.), ahogándolos en ruido técnico. Ese log técnico por
+            // request sigue existiendo (ver items de observabilidad) -- solo deja de
+            // mezclarse con la auditoría de negocio que ve Lemy en "Actividad".
             .WriteTo.Logger(sublogger => sublogger
                 .Filter.ByExcluding(Matching.WithProperty("ExcluirDeAuditoria"))
+                .Filter.ByExcluding(Matching.FromSource("FUNBIDE.API.Middleware.RequestAuditLoggingMiddleware"))
                 .WriteTo.PostgreSQL(
                     connectionString: connectionString,
                     tableName: "auditoria_logs",

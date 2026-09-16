@@ -45,6 +45,22 @@ public sealed class RegistrarCobroUseCase(
     {
         return unitOfWork.EjecutarEnTransaccionAsync(async ct =>
         {
+            // Chequeo de idempotencia primero, antes de tocar ningún bloqueo: un
+            // doble-click en "Registrar" (o un reintento de red tras un timeout que en
+            // realidad sí procesó) no debe ni siquiera competir por el bloqueo de la caja,
+            // solo devolver el mismo resultado que ya se generó la primera vez. Distinto de
+            // ExisteCobroParaCitaAsync más abajo: esto protege contra repetir la MISMA
+            // petición, aquello protege contra cobrar la MISMA cita en dos peticiones
+            // distintas (dos sesiones, dos claves de idempotencia diferentes).
+            if (!string.IsNullOrWhiteSpace(request.ClaveIdempotencia))
+            {
+                var existente = await cobroRepository.ObtenerPorClaveIdempotenciaAsync(request.ClaveIdempotencia, ct);
+                if (existente is not null)
+                {
+                    return await MapearADtoAsync(existente, ct);
+                }
+            }
+
             // Bloqueo de fila (no un simple SELECT): sin esto, un cobro podía colarse
             // justo mientras CerrarTurnoCajaUseCase está calculando el efectivo esperado
             // del arqueo, quedando fuera de esa cuenta aunque el turno siguiera "Abierto"
@@ -117,7 +133,8 @@ public sealed class RegistrarCobroUseCase(
                 tarifario?.Id,
                 tarifario?.MontoSeguro,
                 tarifario?.MontoFondo,
-                request.DoctorId);
+                request.DoctorId,
+                request.ClaveIdempotencia);
 
             await cobroRepository.AgregarAsync(cobro, ct);
             await cobroRepository.GuardarCambiosAsync(ct);
@@ -177,5 +194,40 @@ public sealed class RegistrarCobroUseCase(
                 cobro.UsuarioId, cobro.RegistradoEn, cobro.TarifarioProcedimientoId, cobro.MontoFondo,
                 cobro.DoctorId, doctorNombre);
         }, cancellationToken);
+    }
+
+    /// <summary>
+    /// Reconstruye el <see cref="CobroDto"/> de un cobro ya existente (camino de
+    /// idempotencia) resolviendo paciente/aseguradora/doctor desde sus ids, igual que el
+    /// mapeo final del cobro recién creado más arriba — separado en vez de compartido
+    /// porque ese camino ya tiene esos objetos en memoria y no vale la pena volver a
+    /// consultarlos.
+    /// </summary>
+    private async Task<CobroDto> MapearADtoAsync(Cobro cobro, CancellationToken ct)
+    {
+        var paciente = await pacienteRepository.ObtenerPorIdAsync(cobro.PacienteId, ct)
+            ?? throw new RecursoNoEncontradoException(nameof(Paciente), cobro.PacienteId);
+
+        string? seguroNombre = null;
+        if (cobro.SeguroMedicoId.HasValue)
+        {
+            var seguro = await seguroMedicoRepository.ObtenerPorIdAsync(cobro.SeguroMedicoId.Value, ct);
+            seguroNombre = seguro?.Nombre;
+        }
+
+        string? doctorNombre = null;
+        if (cobro.DoctorId.HasValue)
+        {
+            var nombresDoctores = await usuarioRepository.ObtenerNombresPorIdsAsync([cobro.DoctorId.Value], ct);
+            doctorNombre = nombresDoctores.GetValueOrDefault(cobro.DoctorId.Value);
+        }
+
+        return new CobroDto(
+            cobro.Id, cobro.PacienteId, paciente.NombreCompleto, cobro.CitaId, cobro.TurnoCajaId, cobro.Concepto,
+            cobro.MontoTotal, cobro.SeguroMedicoId, seguroNombre, cobro.PorcentajeCobertura, cobro.MontoCobertura,
+            cobro.CodigoAutorizacion, cobro.Pagos.Select(p => new PagoDto(p.Metodo, p.Monto)).ToList(),
+            cobro.MontoACargoPaciente, cobro.MontoPagado, cobro.MontoPendiente,
+            cobro.UsuarioId, cobro.RegistradoEn, cobro.TarifarioProcedimientoId, cobro.MontoFondo,
+            cobro.DoctorId, doctorNombre);
     }
 }

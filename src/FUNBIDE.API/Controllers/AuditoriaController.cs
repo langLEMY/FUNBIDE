@@ -28,6 +28,9 @@ public sealed class AuditoriaController(IObtenerLogsAuditoriaUseCase obtenerLogs
         [FromQuery] DateTimeOffset? desde,
         [FromQuery] DateTimeOffset? hasta,
         [FromQuery] string? recurso,
+        [FromQuery] int? pagina,
+        [FromQuery] int? tamanoPagina,
         CancellationToken cancellationToken) =>
-        Ok(await obtenerLogs.EjecutarAsync(new ConsultarAuditoriaRequest(desde, hasta, recurso), cancellationToken));
+        Ok(await obtenerLogs.EjecutarAsync(
+            new ConsultarAuditoriaRequest(desde, hasta, recurso, pagina, tamanoPagina), cancellationToken));
 }

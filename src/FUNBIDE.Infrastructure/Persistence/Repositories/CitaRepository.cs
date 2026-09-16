@@ -71,14 +71,20 @@ public sealed class CitaRepository(FunbideDbContext dbContext, IDateTimeProvider
             (c.Estado == EstadoCita.Programada || c.Estado == EstadoCita.EnEspera),
             cancellationToken);
 
-    public async Task<IReadOnlyList<Cita>> ObtenerPorFiltroAsync(
-        DateOnly? fecha, Guid? doctorId, CancellationToken cancellationToken)
+    public async Task<(IReadOnlyList<Cita> Items, int Total)> ObtenerPaginadoAsync(
+        DateOnly? fecha, Guid? doctorId, EstadoCita? estado, int pagina, int tamanoPagina,
+        CancellationToken cancellationToken)
     {
         var query = dbContext.Citas.AsNoTracking().AsQueryable();
 
         if (doctorId is not null)
         {
             query = query.Where(c => c.DoctorId == doctorId);
+        }
+
+        if (estado is not null)
+        {
+            query = query.Where(c => c.Estado == estado);
         }
 
         if (fecha is not null)
@@ -88,7 +94,15 @@ public sealed class CitaRepository(FunbideDbContext dbContext, IDateTimeProvider
             query = query.Where(c => c.Intervalo != null && c.Intervalo.Inicio >= inicioDia && c.Intervalo.Inicio < finDia);
         }
 
-        return await query.OrderBy(c => c.Intervalo!.Inicio).ToListAsync(cancellationToken);
+        var total = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderBy(c => c.Intervalo!.Inicio)
+            .Skip((pagina - 1) * tamanoPagina)
+            .Take(tamanoPagina)
+            .ToListAsync(cancellationToken);
+
+        return (items, total);
     }
 
     public async Task<IReadOnlyList<Cita>> ObtenerSalaDeEsperaAsync(DateOnly hoy, CancellationToken cancellationToken)

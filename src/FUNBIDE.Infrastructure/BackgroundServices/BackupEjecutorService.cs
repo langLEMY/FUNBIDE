@@ -15,7 +15,8 @@ namespace FUNBIDE.Infrastructure.BackgroundServices;
 public sealed class BackupEjecutorService(
     IOptions<BackupOptions> options,
     AesBackupEncryptor encryptor,
-    ILogger<BackupEjecutorService> logger) : IBackupEjecutorService
+    ILogger<BackupEjecutorService> logger,
+    IAlertaAdminService alertaAdmin) : IBackupEjecutorService
 {
     private readonly BackupOptions _options = options.Value;
 
@@ -47,6 +48,23 @@ public sealed class BackupEjecutorService(
         {
             logger.LogError(ex, "Falló la ejecución del backup de la base de datos.");
             await EscribirEstadoAsync(exitoso: false, mensaje: ex.Message, cancellationToken);
+
+            // Antes esto solo quedaba en estado.json, visible únicamente si alguien entra
+            // a "Estado del sistema" en Mi Perfil por su cuenta -- sin esto, el primer
+            // indicio de que el backup viene fallando podía ser el día que hiciera falta
+            // restaurar y no hubiera nada reciente.
+            try
+            {
+                await alertaAdmin.NotificarFalloAsync(
+                    "Backup automático falló", ex.Message, cancellationToken);
+            }
+            catch (Exception exAlerta) when (exAlerta is not OperationCanceledException)
+            {
+                // Best-effort: que falle el AVISO del fallo no debe ocultar el fallo
+                // original (ya logueado arriba y propagado con throw de todas formas).
+                logger.LogWarning(exAlerta, "No se pudo enviar la alerta de fallo de backup.");
+            }
+
             throw;
         }
     }

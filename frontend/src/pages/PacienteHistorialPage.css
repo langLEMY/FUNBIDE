@@ -1,20 +1,3 @@
-.historial-volver {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 20px;
-}
-
-.historial-volver:hover {
-  color: var(--text-primary);
-}
-
 .historial-encabezado-card,
 .historial-crear-card,
 .historial-lista-card {

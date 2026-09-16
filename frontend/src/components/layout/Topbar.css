@@ -21,10 +21,39 @@
   box-shadow: var(--shadow-chrome);
 }
 
+.topbar-titulo-grupo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .topbar-titulo {
   font-size: 18px;
   font-weight: 700;
   margin: 0;
+}
+
+.topbar-ventana-puntos {
+  display: flex;
+  gap: 6px;
+}
+
+.topbar-punto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.topbar-punto-rojo {
+  background: var(--danger);
+}
+
+.topbar-punto-amarillo {
+  background: var(--series-dinero);
+}
+
+.topbar-punto-verde {
+  background: var(--series-pacientes);
 }
 
 .topbar-acciones {

@@ -150,6 +150,16 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddFunbideValidators(this IServiceCollection services)
     {
+        // NOTA: se intentó activar la traducción global de FluentValidation acá
+        // (ValidatorOptions.Global.LanguageManager.Culture = new CultureInfo("es")), pero
+        // FUNBIDE.API.csproj tiene <InvariantGlobalization>true</InvariantGlobalization> --
+        // bajo ese modo, .NET solo permite construir la cultura invariante; cualquier otra
+        // ("es" incluido) tira CultureNotFoundException, lo que tumbaba la API entera al
+        // arrancar (se detectó con `dotnet ef migrations add`, que sí inicializa el host
+        // real, antes de que llegara a producción). Revertido: por ahora cada validador
+        // necesita su propio WithMessage() en español (ver CrearPacienteRequestValidator y
+        // RegistrarCobroRequestValidator como ejemplo) -- una traducción global correcta
+        // acá requeriría un ILanguageManager a medida que no dependa de CultureInfo.
         services.AddValidatorsFromAssemblyContaining<IObtenerCitasPorEstadoUseCase>();
         return services;
     }

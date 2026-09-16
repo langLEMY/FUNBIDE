@@ -31,6 +31,34 @@ public sealed class InventarioRepository(FunbideDbContext dbContext) : IInventar
             .OrderBy(i => i.Nombre)
             .ToListAsync(cancellationToken);
 
+    public async Task<(IReadOnlyList<InventarioItem> Items, int Total)> ObtenerPaginadoAsync(
+        string? busqueda, int pagina, int tamanoPagina, CancellationToken cancellationToken)
+    {
+        var query = dbContext.InventarioItems.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(busqueda))
+        {
+            // Mismo escape de comodines de LIKE que PacienteRepository.ObtenerPaginadoAsync.
+            var textoEscapado = busqueda.Trim()
+                .Replace("\\", "\\\\")
+                .Replace("%", "\\%")
+                .Replace("_", "\\_");
+            var patron = $"%{textoEscapado}%";
+            query = query.Where(i =>
+                EF.Functions.ILike(i.Nombre, patron, "\\") || EF.Functions.ILike(i.Codigo, patron, "\\"));
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderBy(i => i.Nombre)
+            .Skip((pagina - 1) * tamanoPagina)
+            .Take(tamanoPagina)
+            .ToListAsync(cancellationToken);
+
+        return (items, total);
+    }
+
     public async Task<IReadOnlyList<InventarioItem>> ObtenerTodosParaImportarAsync(CancellationToken cancellationToken) =>
         await dbContext.InventarioItems.ToListAsync(cancellationToken);
 

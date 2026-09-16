@@ -22,3 +22,32 @@
   justify-content: center;
   font-size: 13px;
 }
+
+/* Tooltip de recharts restyleado con el mismo material de vidrio que el
+   resto de la app (modales, menús) -- recharts no hereda esto por defecto,
+   por eso se pasa como `content` custom en vez del `contentStyle` plano de
+   <Tooltip>, que solo admite inline styles (no puede leer backdrop-filter de
+   una variable CSS de forma confiable). */
+.monthly-chart-tooltip {
+  background: var(--glass-float-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-top);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-float);
+  padding: 8px 12px;
+}
+
+.monthly-chart-tooltip-label {
+  margin: 0 0 2px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.monthly-chart-tooltip-valor {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}

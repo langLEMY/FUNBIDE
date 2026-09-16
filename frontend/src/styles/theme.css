@@ -55,15 +55,49 @@
   --shadow-chrome: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 24px 60px -20px rgba(0, 0, 0, 0.85);
   --shadow-float: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 28px 70px -18px rgba(0, 0, 0, 0.85),
     0 4px 16px -6px rgba(0, 0, 0, 0.6);
+  /* Sombra de "hay más contenido" en los bordes de contenedores con scroll
+     horizontal (ver .ui-tabla-contenedor) -- mismo negro que el resto de
+     --shadow-*, funciona igual en ambos modos. */
+  --scroll-sombra: rgba(0, 0, 0, 0.18);
 
   /* Dorado metálico → ámbar cálido: se siente más cercano/amigable (una fundación
-     de salud, no un banco privado) sin perder la asociación con "dinero". */
+     de salud, no un banco privado) sin perder la asociación con "dinero".
+     REGLA DE USO: --series-dinero y --series-pacientes son SEMÁNTICOS, no
+     decorativos — dinero es dinero (gráficos financieros, montos), pacientes es
+     pacientes (gráficos de conteo, badges de estado de paciente). Nunca elegir
+     uno de los dos "porque queda lindo" en una pantalla que no es ni lo uno ni
+     lo otro (Personal, Donaciones, Recepción, etc.).
+     Excepción documentada: --series-pacientes se reutiliza hoy, en todo el
+     resto de la app, como el acento primario genérico (botones primarios,
+     anillo de foco, estado activo del sidebar) — es un patrón preexistente y
+     extendido (ver Boton.css, Sidebar.css, y el focus-visible más abajo), no
+     un uso suelto aislado. Corregirlo del todo implica introducir un token
+     --acento-primario separado y migrar cada uno de esos usos; queda fuera de
+     este cambio puntual por el tamaño del refactor, no por descuido. */
   --series-dinero: #e2984f;
   --series-dinero-fill: rgba(226, 152, 79, 0.12);
   --series-pacientes: #2fbf8f;
   --series-pacientes-fill: rgba(47, 191, 143, 0.12);
 
   --danger: #dd7d70;
+  /* Acento de "alerta/atención" (vencimientos, pendientes): distinto de
+     --danger (que es error/destructivo) y de --series-dinero (que es
+     estrictamente montos) — un dorado más frío que el ámbar de dinero para
+     que ambos convivan sin confundirse en la misma pantalla (p. ej. Cobros). */
+  --acento-alerta: #e0b23c;
+  --acento-alerta-fill: rgba(224, 178, 60, 0.14);
+  /* Quinto color de la paleta de avatares por hash de nombre (ver
+     lib/colorPorNombre.ts) -- mismo azul que colorPorRol.ts usa para
+     "Doctor" en coloresRolPorTema, reutilizado acá para no inventar un
+     acento nuevo sin uso en ningún otro lado. */
+  --avatar-azul: #3987e5;
+
+  /* Franjas de estado de fila para <Tabla> (ver ColumnaTabla/estadoFila en
+     Tabla.tsx) — alpha bajo a propósito: son una señal de fondo, el texto y
+     los badges siguen siendo la fuente principal de verdad. */
+  --fila-vencido-bg: rgba(221, 125, 112, 0.08);
+  --fila-pendiente-bg: rgba(224, 178, 60, 0.08);
+  --fila-al-dia-bg: rgba(47, 191, 143, 0.05);
 
   /* Sobre negro puro, un lavado radial apenas perceptible desde arriba le da
      profundidad al plano de fondo sin comprometer el negro AMOLED en la
@@ -75,6 +109,10 @@
      misma tarjeta con esquinas casi rectas. */
   --radius-card: 16px;
   --radius-control: 10px;
+
+  /* Único punto de verdad para "esto está deshabilitado" — antes cada
+     componente hardcodeaba su propio 0.6/0.75 suelto. */
+  --opacidad-deshabilitado: 0.6;
 
   /* Motion tipo iOS/macOS: easing "out" pronunciado al inicio y que frena suave,
      nunca lineal ni con rebote exagerado. Duraciones cortas para que se sientan
@@ -144,6 +182,13 @@
   --series-pacientes-fill: rgba(47, 191, 143, 0.12);
 
   --danger: #c4574b;
+  --acento-alerta: #b3860f;
+  --acento-alerta-fill: rgba(179, 134, 15, 0.12);
+  --avatar-azul: #2a78d6;
+
+  --fila-vencido-bg: rgba(196, 87, 75, 0.07);
+  --fila-pendiente-bg: rgba(179, 134, 15, 0.07);
+  --fila-al-dia-bg: rgba(47, 191, 143, 0.06);
 
   --page-wash: none;
 
@@ -488,12 +533,62 @@ table tbody tr:hover {
   }
 }
 
+/* Barrido circular al cambiar de tema (ver ThemeToggleButton.tsx, que solo
+   entra acá cuando el navegador soporta View Transitions y no hay
+   prefers-reduced-motion): el documento nuevo (ya con el tema aplicado)
+   entra recortado por un círculo que crece desde el punto del click, en vez
+   de que todas las variables de color salten de golpe. --tema-barrido-* los
+   escribe JS en cada click porque dependen de dónde se hizo click, no son
+   valores fijos del tema. */
+::view-transition-old(root) {
+  animation: none;
+}
+
+::view-transition-new(root) {
+  animation: tema-barrido var(--duracion-abrir) var(--ease-entrada);
+}
+
+@keyframes tema-barrido {
+  from {
+    clip-path: circle(0px at var(--tema-barrido-x, 50%) var(--tema-barrido-y, 50%));
+  }
+  to {
+    clip-path: circle(var(--tema-barrido-radio, 150%) at var(--tema-barrido-x, 50%) var(--tema-barrido-y, 50%));
+  }
+}
+
 .text-secondary {
   color: var(--text-secondary);
 }
 
 .text-muted {
   color: var(--text-muted);
+}
+
+/* Utilitarias de cursor: la mayoría de los elementos ya resuelven su cursor
+   solo (button:not(:disabled) más arriba, "text" es el default del navegador
+   en inputs) — estas clases son para los casos que SÍ hace falta declarar a
+   mano: un <div>/<span> clickeable que no es <button>, drag-and-drop, o un
+   control deshabilitado que no es un <button disabled> nativo. */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-grab:active,
+.cursor-grabbing {
+  cursor: grabbing;
+}
+
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+
+.cursor-text {
+  cursor: text;
 }
 
 .pantalla-centrada {

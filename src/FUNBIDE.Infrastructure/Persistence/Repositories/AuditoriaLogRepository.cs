@@ -6,27 +6,27 @@ namespace FUNBIDE.Infrastructure.Persistence.Repositories;
 
 public sealed class AuditoriaLogRepository(FunbideDbContext dbContext) : IAuditoriaLogRepository
 {
-    public async Task<IReadOnlyList<AuditoriaLog>> ObtenerAsync(
-        DateTimeOffset? desde, DateTimeOffset? hasta, string? recurso, CancellationToken cancellationToken)
+    public async Task<(IReadOnlyList<AuditoriaLog> Items, int Total)> ObtenerPaginadoAsync(
+        DateTimeOffset desde, DateTimeOffset hasta, string? recurso, int pagina, int tamanoPagina,
+        CancellationToken cancellationToken)
     {
-        var query = dbContext.AuditoriaLogs.AsNoTracking().AsQueryable();
-
-        if (desde is not null)
-        {
-            query = query.Where(l => l.RegistradoEn >= desde);
-        }
-
-        if (hasta is not null)
-        {
-            query = query.Where(l => l.RegistradoEn <= hasta);
-        }
+        var query = dbContext.AuditoriaLogs.AsNoTracking()
+            .Where(l => l.RegistradoEn >= desde && l.RegistradoEn <= hasta);
 
         if (!string.IsNullOrWhiteSpace(recurso))
         {
             query = query.Where(l => l.Recurso == recurso);
         }
 
-        return await query.ToListAsync(cancellationToken);
+        var total = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderByDescending(l => l.RegistradoEn)
+            .Skip((pagina - 1) * tamanoPagina)
+            .Take(tamanoPagina)
+            .ToListAsync(cancellationToken);
+
+        return (items, total);
     }
 
     public async Task RegistrarAsync(AuditoriaLog log, CancellationToken cancellationToken)

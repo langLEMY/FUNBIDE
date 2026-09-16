@@ -16,6 +16,15 @@ public interface IInventarioRepository
     Task<IReadOnlyList<InventarioItem>> ObtenerTodosAsync(CancellationToken cancellationToken);
 
     /// <summary>
+    /// Para la tabla de Inventario. Igual que el resto de los ObtenerPaginadoAsync del
+    /// proyecto: <see cref="ObtenerTodosAsync"/> sigue existiendo aparte porque
+    /// ObtenerAlertasAdminUseCase necesita TODOS los ítems para calcular el stock bajo, no
+    /// puede paginar esa consulta.
+    /// </summary>
+    Task<(IReadOnlyList<InventarioItem> Items, int Total)> ObtenerPaginadoAsync(
+        string? busqueda, int pagina, int tamanoPagina, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Con seguimiento de cambios (sin AsNoTracking), para que <c>ImportarInventarioUseCase</c>
     /// pueda reconciliar el archivo contra los ítems existentes (por código) y actualizarlos
     /// en la misma unidad de trabajo. No usar en rutas de solo lectura: para eso está

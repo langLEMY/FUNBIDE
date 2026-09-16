@@ -1,4 +1,5 @@
 .ui-boton {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -12,8 +13,27 @@
 }
 
 .ui-boton:disabled {
-  opacity: 0.6;
-  cursor: default;
+  opacity: var(--opacidad-deshabilitado);
+  cursor: not-allowed;
+}
+
+/* Presión con física de resorte (--ease-spring), en vez de heredar el
+   scale/--ease-suave genérico de "button:not(:disabled):active" en
+   theme.css — acá se pisa a propósito porque un botón de acción primaria
+   se siente mejor con un poco de rebote al soltar. */
+.ui-boton:not(:disabled):active {
+  transform: scale(0.97);
+  transition: transform var(--duracion-rapida) var(--ease-spring);
+}
+
+/* Ícono (lucide-react) del botón se adelanta sutilmente en hover — nunca el
+   texto, y nunca el spinner de "cargando" (ese gira, no se traslada). */
+.ui-boton:hover:not(:disabled) svg:not(.ui-boton-spinner) {
+  transform: translateX(2px);
+}
+
+.ui-boton svg:not(.ui-boton-spinner) {
+  transition: transform var(--duracion-rapida) var(--ease-suave);
 }
 
 .ui-boton-spinner {
@@ -56,6 +76,25 @@
 
 .ui-boton-destructivo:hover:not(:disabled) {
   filter: brightness(1.1);
+}
+
+/* Estado "¿Seguro?" de la confirmación inline (ver prop confirmarAntes en
+   Boton.tsx): un pulso único, no un loop — confirma que el click SÍ registró
+   sin ser tan agresivo como el shake de error. */
+.ui-boton-confirmando {
+  animation: ui-boton-confirmar-pulso var(--duracion-lenta) var(--ease-spring);
+}
+
+@keyframes ui-boton-confirmar-pulso {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .ui-boton-texto {

@@ -2,57 +2,64 @@ using FUNBIDE.Domain.Entities;
 using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.Interfaces;
 using FUNBIDE.Domain.ValueObjects;
+using FUNBIDE.Infrastructure.Resiliencia;
 using Microsoft.EntityFrameworkCore;
 
 namespace FUNBIDE.Infrastructure.Persistence.Repositories;
 
 public sealed class PacienteRepository(FunbideDbContext dbContext) : IPacienteRepository
 {
-    public async Task<(IReadOnlyList<Paciente> Items, int Total)> ObtenerPaginadoAsync(
+    // Envuelto en PoliticaReintentoLectura a modo de referencia (es el listado de mayor
+    // tráfico de la app): un corte de red breve contra Supabase ya no tumba la pantalla de
+    // Pacientes de una, se reintenta sola un par de veces antes de fallar de verdad. El
+    // resto de los repositorios de solo lectura pueden adoptar el mismo patrón cuando haga
+    // falta; no se propagó a los ~20 repositorios de golpe en este pase.
+    public Task<(IReadOnlyList<Paciente> Items, int Total)> ObtenerPaginadoAsync(
         int pagina, int tamanoPagina, string? busqueda, EstadoPaciente? estado, OrdenPaciente orden,
-        CancellationToken cancellationToken)
-    {
-        var query = dbContext.Pacientes.AsNoTracking();
-
-        if (estado is not null)
+        CancellationToken cancellationToken) =>
+        PoliticaReintentoLectura.EjecutarAsync(async ct =>
         {
-            query = query.Where(p => p.Estado == estado);
-        }
+            var query = dbContext.Pacientes.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(busqueda))
-        {
-            // Escapar los comodines de LIKE (%, _) y el propio carácter de escape antes de
-            // envolver en %...%: sin esto, alguien que busca "50%" o "a_b" literal recibe
-            // coincidencias más amplias de las esperadas (% y _ se interpretan como
-            // comodines reales en vez de texto literal).
-            var textoEscapado = busqueda.Trim()
-                .Replace("\\", "\\\\")
-                .Replace("%", "\\%")
-                .Replace("_", "\\_");
-            var patron = $"%{textoEscapado}%";
-            query = query.Where(p =>
-                EF.Functions.ILike(p.Nombre, patron, "\\") ||
-                EF.Functions.ILike(p.Apellido, patron, "\\") ||
-                (p.Condicion != null && EF.Functions.ILike(p.Condicion, patron, "\\")));
-        }
+            if (estado is not null)
+            {
+                query = query.Where(p => p.Estado == estado);
+            }
 
-        var total = await query.CountAsync(cancellationToken);
+            if (!string.IsNullOrWhiteSpace(busqueda))
+            {
+                // Escapar los comodines de LIKE (%, _) y el propio carácter de escape antes de
+                // envolver en %...%: sin esto, alguien que busca "50%" o "a_b" literal recibe
+                // coincidencias más amplias de las esperadas (% y _ se interpretan como
+                // comodines reales en vez de texto literal).
+                var textoEscapado = busqueda.Trim()
+                    .Replace("\\", "\\\\")
+                    .Replace("%", "\\%")
+                    .Replace("_", "\\_");
+                var patron = $"%{textoEscapado}%";
+                query = query.Where(p =>
+                    EF.Functions.ILike(p.Nombre, patron, "\\") ||
+                    EF.Functions.ILike(p.Apellido, patron, "\\") ||
+                    (p.Condicion != null && EF.Functions.ILike(p.Condicion, patron, "\\")));
+            }
 
-        query = orden switch
-        {
-            OrdenPaciente.NombreDesc => query.OrderByDescending(p => p.Nombre).ThenByDescending(p => p.Apellido),
-            OrdenPaciente.MasRecientes => query.OrderByDescending(p => p.CreadoEn),
-            OrdenPaciente.MasAntiguos => query.OrderBy(p => p.CreadoEn),
-            _ => query.OrderBy(p => p.Nombre).ThenBy(p => p.Apellido),
-        };
+            var total = await query.CountAsync(ct);
 
-        var items = await query
-            .Skip((pagina - 1) * tamanoPagina)
-            .Take(tamanoPagina)
-            .ToListAsync(cancellationToken);
+            query = orden switch
+            {
+                OrdenPaciente.NombreDesc => query.OrderByDescending(p => p.Nombre).ThenByDescending(p => p.Apellido),
+                OrdenPaciente.MasRecientes => query.OrderByDescending(p => p.CreadoEn),
+                OrdenPaciente.MasAntiguos => query.OrderBy(p => p.CreadoEn),
+                _ => query.OrderBy(p => p.Nombre).ThenBy(p => p.Apellido),
+            };
 
-        return (items, total);
-    }
+            var items = await query
+                .Skip((pagina - 1) * tamanoPagina)
+                .Take(tamanoPagina)
+                .ToListAsync(ct);
+
+            return ((IReadOnlyList<Paciente>)items, total);
+        }, cancellationToken);
 
     public async Task<IReadOnlyList<Paciente>> ObtenerTodosParaImportarAsync(CancellationToken cancellationToken) =>
         await dbContext.Pacientes.ToListAsync(cancellationToken);

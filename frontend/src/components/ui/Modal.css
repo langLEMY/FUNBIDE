@@ -8,8 +8,24 @@
   align-items: center;
   justify-content: center;
   z-index: 40;
-  animation: funbide-desvanecer var(--duracion-rapida) var(--ease-suave);
+  animation: ui-modal-scrim-aparecer var(--duracion-materializar) var(--ease-suave);
   padding: 24px;
+}
+
+/* El desenfoque del fondo también entra animado (de 0 a --glass-scrim-blur),
+   no aparece ya desenfocado de golpe — antes solo el opacity animaba
+   (funbide-desvanecer), el blur era instantáneo. */
+@keyframes ui-modal-scrim-aparecer {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(var(--glass-scrim-blur));
+    -webkit-backdrop-filter: blur(var(--glass-scrim-blur));
+  }
 }
 
 .ui-modal {

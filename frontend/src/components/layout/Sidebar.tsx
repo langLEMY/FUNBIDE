@@ -1,3 +1,4 @@
+import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
@@ -7,6 +8,8 @@ import type { ModuloPermiso, RolUsuario } from '../../types/usuario'
 import type { CitaAgenda } from '../../types/cita'
 import { IconoNav, type NombreIconoNav } from './IconoNav'
 import './Sidebar.css'
+
+const CLAVE_SIDEBAR_COLAPSADO = 'funbide-sidebar-colapsado'
 
 interface ItemNav {
   to: string
@@ -88,6 +91,17 @@ const INTERVALO_BADGE_MS = 20000
 export function Sidebar() {
   const { perfil } = useAuth()
   const [pacientesEnEspera, setPacientesEnEspera] = useState(0)
+  const [colapsado, setColapsado] = useState(
+    () => window.localStorage.getItem(CLAVE_SIDEBAR_COLAPSADO) === '1',
+  )
+
+  const alternarColapsado = () => {
+    setColapsado((actual) => {
+      const nuevo = !actual
+      window.localStorage.setItem(CLAVE_SIDEBAR_COLAPSADO, nuevo ? '1' : '0')
+      return nuevo
+    })
+  }
 
   useEffect(() => {
     if (perfil?.rol !== 'Fondos') {
@@ -121,14 +135,14 @@ export function Sidebar() {
   let grupoAnterior: string | null = null
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${colapsado ? ' sidebar-colapsado' : ''}`}>
       <div className="sidebar-marca">
         <img className="sidebar-marca-icono" src="/logo-funbide.png" alt="FUNBIDE" />
-        <span>FUNBIDE</span>
+        <span className="sidebar-texto-colapsable">FUNBIDE</span>
       </div>
 
       {perfil && (
-        <p className="sidebar-saludo">
+        <p className="sidebar-saludo sidebar-texto-colapsable">
           Hola, <strong>{perfil.nombreCompleto.trim().split(/\s+/)[0]}</strong>
         </p>
       )}
@@ -140,14 +154,18 @@ export function Sidebar() {
 
           return (
             <div key={item.to} className="sidebar-nav-grupo-item">
-              {esInicioDeGrupo && <div className="sidebar-nav-grupo-titulo">{item.grupo}</div>}
-              <NavLink to={item.to} className={({ isActive }) => `sidebar-nav-item${isActive ? ' activo' : ''}`}>
+              {esInicioDeGrupo && <div className="sidebar-nav-grupo-titulo sidebar-texto-colapsable">{item.grupo}</div>}
+              <NavLink
+                to={item.to}
+                className={({ isActive }) => `sidebar-nav-item${isActive ? ' activo' : ''}`}
+                title={colapsado ? item.etiqueta : undefined}
+              >
                 <span className="sidebar-nav-icono">
                   <IconoNav nombre={item.icono} />
                 </span>
-                <span style={{ flex: 1 }}>{item.etiqueta}</span>
+                <span className="sidebar-nav-etiqueta sidebar-texto-colapsable">{item.etiqueta}</span>
                 {item.badge === 'pacientesEnEspera' && pacientesEnEspera > 0 && (
-                  <span className="sidebar-nav-badge">{pacientesEnEspera}</span>
+                  <span className="sidebar-nav-badge sidebar-texto-colapsable">{pacientesEnEspera}</span>
                 )}
               </NavLink>
             </div>
@@ -156,7 +174,11 @@ export function Sidebar() {
       </nav>
 
       {perfil && (
-        <NavLink to="/mi-perfil" className={({ isActive }) => `sidebar-perfil${isActive ? ' activo' : ''}`}>
+        <NavLink
+          to="/mi-perfil"
+          className={({ isActive }) => `sidebar-perfil${isActive ? ' activo' : ''}`}
+          title={colapsado ? 'Ver perfil' : undefined}
+        >
           {perfil.fotoPerfilUrl ? (
             <img className="sidebar-perfil-avatar" src={perfil.fotoPerfilUrl} alt="" />
           ) : (
@@ -164,12 +186,21 @@ export function Sidebar() {
               {iniciales(perfil.nombreCompleto)}
             </span>
           )}
-          <span className="sidebar-perfil-texto">
+          <span className="sidebar-perfil-texto sidebar-texto-colapsable">
             <span className="sidebar-perfil-nombre">{perfil.nombreCompleto}</span>
             <span className="sidebar-perfil-subtitulo">Ver perfil</span>
           </span>
         </NavLink>
       )}
+
+      <button
+        type="button"
+        className="sidebar-colapsar-boton"
+        onClick={alternarColapsado}
+        aria-label={colapsado ? 'Expandir menú' : 'Colapsar menú'}
+      >
+        {colapsado ? <ChevronsRight size={16} aria-hidden="true" /> : <ChevronsLeft size={16} aria-hidden="true" />}
+      </button>
     </aside>
   )
 }

@@ -5,11 +5,16 @@ import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { PacienteRow } from '../components/pacientes/PacienteRow'
 import { ImportarExcel } from '../components/ImportarExcel'
 import { Boton } from '../components/ui/Boton'
+import { CampoTexto } from '../components/ui/CampoTexto'
+import { Tooltip } from '../components/ui/Tooltip'
+import { Skeleton } from '../components/ui/Skeleton'
+import { useToast } from '../components/ui/ToastContext'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import type { Paciente, PacientesPaginados, ImportarPacientesResultado } from '../types/paciente'
 import { ESTADOS_PACIENTE, OPCIONES_ORDEN_PACIENTE, type EstadoPaciente, type OrdenPaciente } from '../types/paciente'
 import { esquemaCrearPaciente, type DatosCrearPaciente } from '../schemas/paciente'
+import { formatearCedulaEnVivo, formatearTelefonoEnVivo } from '../utils/mascaras'
 import './PacientesPage.css'
 
 const FILTRO_TODOS = 'Todos'
@@ -33,6 +38,7 @@ function construirQuery(
 
 export function PacientesPage() {
   const { perfil } = useAuth()
+  const { mostrarToast } = useToast()
   const puedeEditar = perfil?.rol === 'Lemy'
   const puedeEliminar = perfil?.rol === 'Lemy' || perfil?.rol === 'Admin' || perfil?.rol === 'Doctor'
   const puedeVerHistorial = perfil?.rol === 'Doctor' || perfil?.rol === 'Admin'
@@ -121,6 +127,7 @@ export function PacientesPage() {
         condicion: null,
       })
       resetFormularioPaciente()
+      mostrarToast(`Paciente agregado: ${datos.nombre} ${datos.apellido}.`, 'exito')
       if (pagina === 1) {
         recargar()
       } else {
@@ -179,25 +186,38 @@ export function PacientesPage() {
         <section className="pacientes-crear-card">
           <h2>Agregar paciente</h2>
           <form className="pacientes-crear-form" onSubmit={handleSubmitCrearPaciente(handleCrear)}>
-            <input placeholder="Nombre" {...registrarCampoPaciente('nombre')} />
-            <input placeholder="Apellido" {...registrarCampoPaciente('apellido')} />
-            <input placeholder="Cédula" {...registrarCampoPaciente('cedula')} />
-            <input placeholder="Teléfono (opcional)" {...registrarCampoPaciente('telefono')} />
+            <CampoTexto
+              etiqueta="Nombre"
+              obligatorio
+              registro={registrarCampoPaciente('nombre')}
+              error={erroresCrearPaciente.nombre?.message}
+            />
+            <CampoTexto
+              etiqueta="Apellido"
+              obligatorio
+              registro={registrarCampoPaciente('apellido')}
+              error={erroresCrearPaciente.apellido?.message}
+            />
+            <CampoTexto
+              etiqueta="Cédula"
+              obligatorio
+              registro={registrarCampoPaciente('cedula')}
+              error={erroresCrearPaciente.cedula?.message}
+              mascara={formatearCedulaEnVivo}
+              inputMode="numeric"
+              ayuda={<Tooltip texto="Formato dominicano: 000-0000000-0. Se completa solo mientras escribís." />}
+            />
+            <CampoTexto
+              etiqueta="Teléfono"
+              registro={registrarCampoPaciente('telefono')}
+              mascara={formatearTelefonoEnVivo}
+              inputMode="numeric"
+            />
             <Boton type="submit" cargando={creando}>
               Agregar
             </Boton>
           </form>
-          {(erroresCrearPaciente.nombre?.message ??
-            erroresCrearPaciente.apellido?.message ??
-            erroresCrearPaciente.cedula?.message ??
-            errorCrear) && (
-            <p className="pacientes-error">
-              {erroresCrearPaciente.nombre?.message ??
-                erroresCrearPaciente.apellido?.message ??
-                erroresCrearPaciente.cedula?.message ??
-                errorCrear}
-            </p>
-          )}
+          {errorCrear && <p className="pacientes-error">{errorCrear}</p>}
         </section>
       )}
 
@@ -250,7 +270,11 @@ export function PacientesPage() {
         {error && <p className="pacientes-error">{error}</p>}
 
         {cargando ? (
-          <p className="text-secondary cargando-pulso">Cargando pacientes…</p>
+          <div className="pacientes-skeleton">
+            {Array.from({ length: 6 }, (_, i) => (
+              <Skeleton key={i} alto="38px" />
+            ))}
+          </div>
         ) : pacientes.length === 0 ? (
           <p className="text-secondary">
             {total === 0 && !busqueda.trim() && filtroEstado === FILTRO_TODOS

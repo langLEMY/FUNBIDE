@@ -44,6 +44,16 @@ public sealed class Cobro : AppendOnlyEntity
     /// </summary>
     public decimal? MontoFondo { get; private set; }
 
+    /// <summary>
+    /// Clave generada por el cliente (no por el servidor) para detectar un doble-submit:
+    /// un botón "Registrar" presionado dos veces, o un reintento automático de red tras un
+    /// timeout que en realidad sí llegó a procesarse. <c>RegistrarCobroUseCase</c> busca
+    /// primero un cobro existente con esta clave antes de crear uno nuevo; si lo encuentra,
+    /// devuelve ese en vez de duplicar el cobro. Null es válido (un cliente que no manda
+    /// clave no queda protegido, pero tampoco se le exige el campo).
+    /// </summary>
+    public string? ClaveIdempotencia { get; private set; }
+
     private readonly List<PagoRecibido> _pagos = [];
     /// <summary>Cómo entró el dinero de este cobro, desglosado por método. Puede estar vacía (nada pagado todavía, todo a deuda).</summary>
     public IReadOnlyList<PagoRecibido> Pagos => _pagos.AsReadOnly();
@@ -104,7 +114,8 @@ public sealed class Cobro : AppendOnlyEntity
         Guid? tarifarioProcedimientoId = null,
         decimal? montoCoberturaExacto = null,
         decimal? montoFondoExacto = null,
-        Guid? doctorId = null)
+        Guid? doctorId = null,
+        string? claveIdempotencia = null)
     {
         if (string.IsNullOrWhiteSpace(concepto))
         {
@@ -165,6 +176,7 @@ public sealed class Cobro : AppendOnlyEntity
         CodigoAutorizacion = seguroMedicoId.HasValue ? codigoAutorizacion!.Trim() : null;
         MontoFondo = seguroMedicoId.HasValue ? montoFondoExacto : null;
         DoctorId = doctorId;
+        ClaveIdempotencia = string.IsNullOrWhiteSpace(claveIdempotencia) ? null : claveIdempotencia.Trim();
 
         var montoPagado = pagos.Sum(p => p.Monto);
         if (montoPagado < 0 || montoPagado > MontoACargoPaciente)

@@ -346,4 +346,51 @@ public class RegistrarCobroUseCaseTests
         await Assert.ThrowsAsync<RecursoNoEncontradoException>(
             () => CrearCasoDeUso().EjecutarAsync(request, CancellationToken.None));
     }
+
+    [Fact]
+    public async Task EjecutarAsync_ClaveIdempotenciaYaUsada_DevuelveElCobroExistenteSinAbrirLaCajaNiCrearOtro()
+    {
+        // Simula un doble-click en "Registrar" o un reintento de red: la segunda petición
+        // llega con la misma clave que la primera, que ya se procesó. No debe competir por
+        // el bloqueo de la caja ni crear un segundo Cobro -- eso sería el propio bug que
+        // esto previene.
+        var paciente = CrearPaciente();
+        var cobroExistente = new Cobro(
+            paciente.Id, null, Guid.NewGuid(), Guid.NewGuid(), "Consulta general", 1000m,
+            [new PagoRecibido(MetodoPago.Efectivo, 1000m)], claveIdempotencia: "clave-doble-submit-1");
+        _cobroRepository
+            .ObtenerPorClaveIdempotenciaAsync("clave-doble-submit-1", Arg.Any<CancellationToken>())
+            .Returns(cobroExistente);
+        _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
+
+        var request = new RegistrarCobroRequest(
+            paciente.Id, null, "Consulta general", 1000m, PagoEfectivo(1000m), null, null,
+            ClaveIdempotencia: "clave-doble-submit-1");
+
+        var resultado = await CrearCasoDeUso().EjecutarAsync(request, CancellationToken.None);
+
+        Assert.Equal(cobroExistente.Id, resultado.Id);
+        await _turnoCajaRepository.DidNotReceive().ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>());
+        await _cobroRepository.DidNotReceive().AgregarAsync(Arg.Any<Cobro>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task EjecutarAsync_ClaveIdempotenciaNueva_LaGuardaEnElCobroCreado()
+    {
+        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        var paciente = CrearPaciente();
+        _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
+        _cobroRepository
+            .ObtenerPorClaveIdempotenciaAsync("clave-nueva", Arg.Any<CancellationToken>())
+            .Returns((Cobro?)null);
+
+        var request = new RegistrarCobroRequest(
+            paciente.Id, null, "Consulta general", 1000m, PagoEfectivo(1000m), null, null,
+            ClaveIdempotencia: "clave-nueva");
+
+        await CrearCasoDeUso().EjecutarAsync(request, CancellationToken.None);
+
+        await _cobroRepository.Received(1).AgregarAsync(
+            Arg.Is<Cobro>(c => c.ClaveIdempotencia == "clave-nueva"), Arg.Any<CancellationToken>());
+    }
 }

@@ -28,8 +28,11 @@ public sealed class InventarioController(
     [HttpGet]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
     [RequierePermiso(ModuloPermiso.Inventario)]
-    public async Task<ActionResult<IReadOnlyList<InventarioItemDto>>> ListarAsync(CancellationToken cancellationToken) =>
-        Ok(await listarInventario.EjecutarAsync(cancellationToken));
+    public async Task<ActionResult<IReadOnlyList<InventarioItemDto>>> ListarAsync(
+        [FromQuery] string? busqueda, [FromQuery] int? pagina, [FromQuery] int? tamanoPagina,
+        CancellationToken cancellationToken) =>
+        Ok(await listarInventario.EjecutarAsync(
+            new ListarInventarioRequest(busqueda, pagina, tamanoPagina), cancellationToken));
 
     [HttpPost]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]

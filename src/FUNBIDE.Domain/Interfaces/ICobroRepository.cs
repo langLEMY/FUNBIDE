@@ -26,6 +26,14 @@ public interface ICobroRepository
     /// <summary>true si ya existe un cobro registrado contra esta cita (para no cobrarla dos veces).</summary>
     Task<bool> ExisteCobroParaCitaAsync(Guid citaId, CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Para la idempotencia de RegistrarCobroUseCase: si ya existe un cobro con esta
+    /// clave, se devuelve tal cual en vez de crear uno nuevo. Con datos de pago y
+    /// paciente/cobertura completos (no una proyección liviana) porque el resultado se
+    /// mapea directo a <c>CobroDto</c>, igual que el cobro recién creado.
+    /// </summary>
+    Task<Cobro?> ObtenerPorClaveIdempotenciaAsync(string claveIdempotencia, CancellationToken cancellationToken);
+
     Task AgregarAsync(Cobro cobro, CancellationToken cancellationToken);
 
     Task GuardarCambiosAsync(CancellationToken cancellationToken);

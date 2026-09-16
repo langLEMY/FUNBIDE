@@ -13,6 +13,12 @@ public sealed class ListarPacientesUseCase(IPacienteRepository pacienteRepositor
     private const int TamanoPaginaPorDefecto = 50;
     private const int TamanoPaginaMaximo = 100;
 
+    // Si el debounce del frontend llegara a fallar (o alguien pega texto y suelta antes de
+    // tiempo), un ILIKE '%x%' de un solo carácter es de los queries más pesados posibles
+    // (no puede usar el índice de forma selectiva) — mejor ignorar la búsqueda y devolver
+    // la lista sin filtrar que ejecutar eso contra toda la tabla.
+    private const int LongitudMinimaBusqueda = 2;
+
     public async Task<PacientesPaginadosDto> EjecutarAsync(
         ListarPacientesRequest request, CancellationToken cancellationToken)
     {
@@ -24,9 +30,10 @@ public sealed class ListarPacientesUseCase(IPacienteRepository pacienteRepositor
         var tamanoPagina = request.TamanoPagina < 1
             ? TamanoPaginaPorDefecto
             : Math.Min(request.TamanoPagina, TamanoPaginaMaximo);
+        var busqueda = request.Busqueda?.Trim().Length >= LongitudMinimaBusqueda ? request.Busqueda : null;
 
         var (pacientes, total) = await pacienteRepository.ObtenerPaginadoAsync(
-            pagina, tamanoPagina, request.Busqueda, request.Estado, request.Orden, cancellationToken);
+            pagina, tamanoPagina, busqueda, request.Estado, request.Orden, cancellationToken);
 
         var items = pacientes
             .Select(p => new PacienteDto(

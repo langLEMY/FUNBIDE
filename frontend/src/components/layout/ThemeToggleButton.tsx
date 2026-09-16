@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import { useTheme } from '../../theme/ThemeContext'
 import './ThemeToggleButton.css'
 
@@ -15,11 +16,37 @@ interface ThemeToggleButtonProps {
 export function ThemeToggleButton({ className }: ThemeToggleButtonProps) {
   const { tema, alternarTema } = useTheme()
 
+  const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
+    const doc = document as Document & { startViewTransition?: (callback: () => void) => unknown }
+    const prefiereMenosMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    // Barrido circular desde el punto exacto del click (View Transitions API,
+    // soportada en Chromium/WebView2) en vez de que todas las variables de
+    // color salten de golpe. Sin soporte (o con prefers-reduced-motion), cae
+    // al cambio instantáneo de siempre -- sigue siendo "suave" porque cada
+    // propiedad individual ya transiciona por la regla global de theme.css.
+    if (!doc.startViewTransition || prefiereMenosMovimiento) {
+      alternarTema()
+      return
+    }
+
+    const x = event.clientX
+    const y = event.clientY
+    const radio = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
+    document.documentElement.style.setProperty('--tema-barrido-x', `${x}px`)
+    document.documentElement.style.setProperty('--tema-barrido-y', `${y}px`)
+    document.documentElement.style.setProperty('--tema-barrido-radio', `${radio}px`)
+
+    doc.startViewTransition(() => {
+      alternarTema()
+    })
+  }
+
   return (
     <button
       type="button"
       className={`tema-toggle ${className}`}
-      onClick={alternarTema}
+      onClick={handleClick}
       aria-label={tema === 'oscuro' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
       aria-pressed={tema === 'claro'}
     >

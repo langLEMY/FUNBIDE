@@ -1,6 +1,7 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import { api, ApiError } from '../../lib/api'
 import { iniciales } from '../../lib/iniciales'
+import { colorPorNombre } from '../../lib/colorPorNombre'
 import { EditarPersonalModal } from './EditarPersonalModal'
 import type { Usuario } from '../../types/usuario'
 import { ETIQUETA_ESPECIALIDAD } from '../../types/personal'
@@ -89,7 +90,10 @@ export function PersonalRow({ usuario, onActualizado, onEliminadoPermanentemente
             {usuario.fotoPerfilUrl ? (
               <img src={usuario.fotoPerfilUrl} alt="" className="personal-row-avatar" />
             ) : (
-              <span className="personal-row-avatar personal-row-avatar-iniciales">
+              <span
+                className="personal-row-avatar personal-row-avatar-iniciales"
+                style={{ background: colorPorNombre(usuario.nombreCompleto) }}
+              >
                 {iniciales(usuario.nombreCompleto)}
               </span>
             )}

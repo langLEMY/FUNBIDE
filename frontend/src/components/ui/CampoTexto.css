@@ -1,0 +1,51 @@
+.ui-campo-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ui-campo-texto-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ui-campo-texto-obligatorio {
+  color: var(--danger);
+}
+
+.ui-campo-texto-input {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 10px;
+  font-size: 14px;
+}
+
+.ui-campo-texto-input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+/* Glow de foco vía box-shadow (no solo el cambio de border-color, que ya
+   transiciona solo por la regla global de theme.css) -- :focus, no
+   :focus-visible: en un campo de texto el glow ayuda igual a quien hace
+   click con mouse, no solo a navegación por teclado. */
+.ui-campo-texto-input:focus {
+  outline: none;
+  border-color: var(--series-pacientes);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--series-pacientes) 20%, transparent);
+}
+
+.ui-campo-texto-input[aria-invalid='true']:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 20%, transparent);
+}
+
+.ui-campo-texto-error {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--danger);
+}
