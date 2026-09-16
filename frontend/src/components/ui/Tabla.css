@@ -48,6 +48,18 @@
   background: var(--surface-hover);
 }
 
+.ui-tabla-fila-vencido {
+  background: var(--fila-vencido-bg);
+}
+
+.ui-tabla-fila-pendiente {
+  background: var(--fila-pendiente-bg);
+}
+
+.ui-tabla-fila-al-dia {
+  background: var(--fila-al-dia-bg);
+}
+
 .ui-tabla-vacia {
   display: flex;
   flex-direction: column;

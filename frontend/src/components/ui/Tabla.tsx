@@ -34,6 +34,16 @@ interface TablaProps<T> {
   onClickFila?: (fila: T) => void
   /** Clave de `claveFila` de la fila resaltada como activa/seleccionada. */
   filaActivaClave?: string
+  /** Franja de fondo sutil según el estado de la fila (ver --fila-*-bg en
+      theme.css) — p. ej. una cuota vencida vs. pendiente vs. al día. Opcional:
+      la mayoría de las tablas no necesitan esto. */
+  estadoFila?: (fila: T) => 'vencido' | 'pendiente' | 'al-dia' | undefined
+}
+
+const CLASE_ESTADO_FILA: Record<'vencido' | 'pendiente' | 'al-dia', string> = {
+  vencido: 'ui-tabla-fila-vencido',
+  pendiente: 'ui-tabla-fila-pendiente',
+  'al-dia': 'ui-tabla-fila-al-dia',
 }
 
 /**
@@ -50,6 +60,7 @@ export function Tabla<T>({
   textoVacio = 'No hay resultados que coincidan con la búsqueda.',
   onClickFila,
   filaActivaClave,
+  estadoFila,
 }: TablaProps<T>) {
   const [ordenPor, setOrdenPor] = useState<{ id: string; direccion: 'asc' | 'desc' } | null>(null)
   const [paginaActual, setPaginaActual] = useState(1)
@@ -122,10 +133,15 @@ export function Tabla<T>({
         <tbody>
           {filasVisibles.map((fila) => {
             const clave = claveFila(fila)
+            const estado = estadoFila?.(fila)
             return (
               <tr
                 key={clave}
-                className={[onClickFila && 'ui-tabla-fila-clickeable', filaActivaClave === clave && 'ui-tabla-fila-activa']
+                className={[
+                  onClickFila && 'ui-tabla-fila-clickeable',
+                  filaActivaClave === clave && 'ui-tabla-fila-activa',
+                  estado && CLASE_ESTADO_FILA[estado],
+                ]
                   .filter(Boolean)
                   .join(' ')}
                 onClick={() => onClickFila?.(fila)}
