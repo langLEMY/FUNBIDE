@@ -1,11 +1,31 @@
 # FUNBIDE
 
-Panel de administración de la Fundación Bienestar y Desarrollo: gestión de pacientes, citas, historial clínico, inventario de farmacia, finanzas y personal.
+Sistema de gestión clínica y administrativa de la Fundación Bienestar y Desarrollo: pacientes, citas, historial clínico, cobros (con o sin seguro médico), caja, finanzas, inventario de farmacia, personal y permisos, aseguradoras, donaciones y bitácora de actividad.
+
+Se distribuye de dos formas: como aplicación web (Docker + Nginx, ver "Notas de despliegue") y como instalador de escritorio para Windows con actualización automática (ver "Instalador de escritorio").
+
+## Módulos
+
+| Módulo | Qué cubre |
+|---|---|
+| Pacientes | Alta/edición, importación desde Excel, foto de cédula, historial clínico (notas, recetas, documentos). |
+| Citas / Agenda | Programar, completar y filtrar citas por doctor/especialidad. |
+| Recepción / Sala de espera | Registrar la llegada del paciente y su paso por sala de espera. |
+| Cobros | Registrar cobros particulares o con seguro médico, contra el tarifario de procedimientos de cada aseguradora; imprime el comprobante (con selección de impresora desde el instalador de escritorio). |
+| Caja | Apertura/cierre de turno con arqueo, ingresos y egresos manuales. |
+| Finanzas / Resumen | Movimientos financieros reales (cobros + ingresos/egresos), resumen por doctor, fondo de ganancias de la fundación. |
+| Aseguradoras | Seguros médicos y su tarifario de procedimientos por plan. |
+| Inventario | Farmacia: existencias, alertas de stock mínimo. |
+| Personal / Permisos | Altas/bajas de personal, roles, permisos por módulo, contraseñas. |
+| Donaciones | Registro de donaciones a la fundación. |
+| Actividad | Bitácora de auditoría (login, cambios, inventario, pacientes) con filtros por rango de fechas. |
+| Mi Perfil | Datos de la cuenta, versión instalada, y (para `Lemy`) herramientas de soporte: backup manual, estado del sistema, exportar bitácora, espacio en disco. |
 
 ## Stack
 
 - **Backend**: .NET 9 (Clean Architecture: `FUNBIDE.Domain`, `FUNBIDE.Application`, `FUNBIDE.Infrastructure`, `FUNBIDE.API`), Entity Framework Core, Postgres.
-- **Frontend**: React 19 + TypeScript + Vite, React Router.
+- **Frontend**: React 19 + TypeScript + Vite, React Router, react-hook-form + zod, lucide-react.
+- **Escritorio**: launcher en WinForms (.NET 9) que hospeda el frontend en un WebView2 apuntando a una instancia local de la API — ver "Instalador de escritorio".
 - **Auth y base de datos**: Supabase (Postgres + Auth). El login ocurre directo desde el navegador contra Supabase Auth; el backend valida el JWT resultante en cada petición.
 - **Despliegue**: Docker (imagen única que sirve la API y el SPA compilado) + Nginx como reverse proxy/TLS.
 
@@ -26,6 +46,7 @@ Pacientes e inventario están abiertos a los cuatro roles para agregar/consultar
 - Node.js 22+
 - Una cuenta/proyecto de Supabase (Postgres + Auth)
 - Docker + Docker Compose (solo para despliegue tipo producción)
+- Inno Setup 6 (solo para generar el instalador de escritorio, ver "Instalador de escritorio")
 
 ## Variables de entorno
 
@@ -78,6 +99,14 @@ La cobertura hoy es un punto de partida (invariantes de dominio más críticas y
 ## CI
 
 `.github/workflows/ci.yml` corre build+test de backend y frontend en cada push/PR a `main`. No hay despliegue automático configurado — es una decisión pendiente que requiere secretos de producción.
+
+## Instalador de escritorio
+
+Para PCs de la fundación que no dependen de tener internet en todo momento, existe un instalador de Windows (`instalacion/FUNBIDE.iss`, generado con Inno Setup) que empaqueta el frontend, la API (self-contained, sin requerir .NET instalado) y un launcher en WinForms. El launcher levanta la API en `localhost` (solo loopback) y la muestra en una ventana con WebView2, contra el mismo Postgres de Supabase pero con un rol de base de datos acotado (`funbide_app`, sin privilegios de esquema).
+
+- **Generar el instalador**: `pwsh scripts/generar-instalador.ps1 -DbPassword "..."` desde la raíz del repo. La versión sale de `version.txt` (fuente única, compartida con el launcher y la API).
+- **Publicar una actualización**: subir el `.exe` y su `.exe.sha256` como assets de un GitHub Release con tag `vX.Y.Z`. El launcher revisa `releases/latest` al arrancar (con timeout corto, nunca bloquea el inicio) y, si hay una versión más nueva, ofrece descargarla — verifica el SHA256 antes de ejecutar el instalador.
+- El `.exe` no lleva ninguna clave maestra de Supabase, así que se puede repartir libremente a las PCs de la fundación.
 
 ## Notas de despliegue
 
