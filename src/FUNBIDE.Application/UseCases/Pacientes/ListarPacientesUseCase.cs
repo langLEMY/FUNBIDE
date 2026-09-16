@@ -26,12 +26,12 @@ public sealed class ListarPacientesUseCase(IPacienteRepository pacienteRepositor
             : Math.Min(request.TamanoPagina, TamanoPaginaMaximo);
 
         var (pacientes, total) = await pacienteRepository.ObtenerPaginadoAsync(
-            pagina, tamanoPagina, request.Busqueda, request.Estado, cancellationToken);
+            pagina, tamanoPagina, request.Busqueda, request.Estado, request.Orden, cancellationToken);
 
         var items = pacientes
             .Select(p => new PacienteDto(
                 p.Id, p.Nombre, p.Apellido, p.Documento.Valor, p.Telefono, p.FotoCedulaPath is not null,
-                p.Edad, p.Condicion, p.Estado, p.UltimaVisita))
+                p.Edad, p.Condicion, p.Estado, p.UltimaVisita, p.CreadoEn))
             .ToList();
 
         return new PacientesPaginadosDto(items, total, pagina, tamanoPagina);

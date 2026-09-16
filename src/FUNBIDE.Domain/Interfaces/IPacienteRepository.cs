@@ -6,7 +6,8 @@ namespace FUNBIDE.Domain.Interfaces;
 public interface IPacienteRepository
 {
     Task<(IReadOnlyList<Paciente> Items, int Total)> ObtenerPaginadoAsync(
-        int pagina, int tamanoPagina, string? busqueda, EstadoPaciente? estado, CancellationToken cancellationToken);
+        int pagina, int tamanoPagina, string? busqueda, EstadoPaciente? estado, OrdenPaciente orden,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Carga completa y con seguimiento de cambios (sin AsNoTracking), solo para que

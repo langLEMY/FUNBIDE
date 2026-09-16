@@ -27,6 +27,7 @@ public sealed class ActualizarFotoCedulaUseCase(
 
         return new PacienteDto(
             paciente.Id, paciente.Nombre, paciente.Apellido, paciente.Documento.Valor, paciente.Telefono,
-            paciente.FotoCedulaPath is not null, paciente.Edad, paciente.Condicion, paciente.Estado, paciente.UltimaVisita);
+            paciente.FotoCedulaPath is not null, paciente.Edad, paciente.Condicion, paciente.Estado, paciente.UltimaVisita,
+            paciente.CreadoEn);
     }
 }

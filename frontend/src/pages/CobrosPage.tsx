@@ -196,7 +196,11 @@ export function CobrosPage() {
 
   const seleccionarPendiente = (cita: CitaAgenda) => {
     seleccionarPaciente(
-      { id: cita.pacienteId, nombre: cita.pacienteNombre, apellido: '', cedula: '', telefono: null, tieneFotoCedula: false, edad: null, condicion: null, estado: 'Activo', ultimaVisita: null },
+      {
+        id: cita.pacienteId, nombre: cita.pacienteNombre, apellido: '', cedula: '', telefono: null,
+        tieneFotoCedula: false, edad: null, condicion: null, estado: 'Activo', ultimaVisita: null,
+        creadoEn: new Date(0).toISOString(),
+      },
       cita.id,
       cita.doctorId,
     )

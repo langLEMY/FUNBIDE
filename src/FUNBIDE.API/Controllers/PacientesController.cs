@@ -34,9 +34,10 @@ public sealed class PacientesController(
     [RequierePermiso(ModuloPermiso.Pacientes)]
     public async Task<ActionResult<PacientesPaginadosDto>> ListarAsync(
         [FromQuery] int pagina, [FromQuery] int tamanoPagina, [FromQuery] string? busqueda,
-        [FromQuery] EstadoPaciente? estado, CancellationToken cancellationToken) =>
+        [FromQuery] EstadoPaciente? estado, [FromQuery] OrdenPaciente? orden, CancellationToken cancellationToken) =>
         Ok(await listarPacientes.EjecutarAsync(
-            new ListarPacientesRequest(pagina, tamanoPagina, busqueda, estado), cancellationToken));
+            new ListarPacientesRequest(pagina, tamanoPagina, busqueda, estado, orden ?? OrdenPaciente.NombreAsc),
+            cancellationToken));
 
     [HttpGet("{id:guid}")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]

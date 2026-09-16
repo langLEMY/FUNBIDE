@@ -12,4 +12,5 @@ public sealed record PacienteDto(
     int? Edad,
     string? Condicion,
     EstadoPaciente Estado,
-    DateOnly? UltimaVisita);
+    DateOnly? UltimaVisita,
+    DateTimeOffset CreadoEn);

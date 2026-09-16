@@ -30,6 +30,6 @@ public sealed class CrearPacienteUseCase(IPacienteRepository pacienteRepository)
 
         return new PacienteDto(
             paciente.Id, paciente.Nombre, paciente.Apellido, paciente.Documento.Valor, paciente.Telefono, false,
-            paciente.Edad, paciente.Condicion, paciente.Estado, paciente.UltimaVisita);
+            paciente.Edad, paciente.Condicion, paciente.Estado, paciente.UltimaVisita, paciente.CreadoEn);
     }
 }

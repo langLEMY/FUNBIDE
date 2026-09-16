@@ -9,7 +9,8 @@ namespace FUNBIDE.Infrastructure.Persistence.Repositories;
 public sealed class PacienteRepository(FunbideDbContext dbContext) : IPacienteRepository
 {
     public async Task<(IReadOnlyList<Paciente> Items, int Total)> ObtenerPaginadoAsync(
-        int pagina, int tamanoPagina, string? busqueda, EstadoPaciente? estado, CancellationToken cancellationToken)
+        int pagina, int tamanoPagina, string? busqueda, EstadoPaciente? estado, OrdenPaciente orden,
+        CancellationToken cancellationToken)
     {
         var query = dbContext.Pacientes.AsNoTracking();
 
@@ -37,9 +38,15 @@ public sealed class PacienteRepository(FunbideDbContext dbContext) : IPacienteRe
 
         var total = await query.CountAsync(cancellationToken);
 
+        query = orden switch
+        {
+            OrdenPaciente.NombreDesc => query.OrderByDescending(p => p.Nombre).ThenByDescending(p => p.Apellido),
+            OrdenPaciente.MasRecientes => query.OrderByDescending(p => p.CreadoEn),
+            OrdenPaciente.MasAntiguos => query.OrderBy(p => p.CreadoEn),
+            _ => query.OrderBy(p => p.Nombre).ThenBy(p => p.Apellido),
+        };
+
         var items = await query
-            .OrderBy(p => p.Nombre)
-            .ThenBy(p => p.Apellido)
             .Skip((pagina - 1) * tamanoPagina)
             .Take(tamanoPagina)
             .ToListAsync(cancellationToken);

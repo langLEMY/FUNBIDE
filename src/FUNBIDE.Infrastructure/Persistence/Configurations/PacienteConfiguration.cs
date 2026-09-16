@@ -33,7 +33,9 @@ public sealed class PacienteConfiguration : IEntityTypeConfiguration<Paciente>
             .IsRequired()
             .HasDefaultValue(Domain.Enums.EstadoPaciente.Activo);
         builder.Property(p => p.UltimaVisita);
+        builder.Property(p => p.CreadoEn).IsRequired();
 
         builder.HasIndex(p => new { p.Nombre, p.Apellido });
+        builder.HasIndex(p => p.CreadoEn);
     }
 }

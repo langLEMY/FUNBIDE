@@ -2,6 +2,15 @@ export type EstadoPaciente = 'Activo' | 'Seguimiento'
 
 export const ESTADOS_PACIENTE: EstadoPaciente[] = ['Activo', 'Seguimiento']
 
+export type OrdenPaciente = 'NombreAsc' | 'NombreDesc' | 'MasRecientes' | 'MasAntiguos'
+
+export const OPCIONES_ORDEN_PACIENTE: { valor: OrdenPaciente; etiqueta: string }[] = [
+  { valor: 'NombreAsc', etiqueta: 'Nombre (A-Z)' },
+  { valor: 'NombreDesc', etiqueta: 'Nombre (Z-A)' },
+  { valor: 'MasRecientes', etiqueta: 'Más recientes primero' },
+  { valor: 'MasAntiguos', etiqueta: 'Más antiguos primero' },
+]
+
 export interface Paciente {
   id: string
   nombre: string
@@ -13,6 +22,7 @@ export interface Paciente {
   condicion: string | null
   estado: EstadoPaciente
   ultimaVisita: string | null
+  creadoEn: string
 }
 
 export interface CrearPacienteRequest {

@@ -15,6 +15,7 @@ const paciente: Paciente = {
   condicion: 'Hipertensión',
   estado: 'Activo',
   ultimaVisita: null,
+  creadoEn: '2026-01-01T00:00:00Z',
 }
 
 function renderFila(props: Partial<React.ComponentProps<typeof PacienteRow>> = {}) {

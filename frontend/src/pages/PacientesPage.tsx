@@ -8,7 +8,7 @@ import { Boton } from '../components/ui/Boton'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import type { Paciente, PacientesPaginados, ImportarPacientesResultado } from '../types/paciente'
-import { ESTADOS_PACIENTE, type EstadoPaciente } from '../types/paciente'
+import { ESTADOS_PACIENTE, OPCIONES_ORDEN_PACIENTE, type EstadoPaciente, type OrdenPaciente } from '../types/paciente'
 import { esquemaCrearPaciente, type DatosCrearPaciente } from '../schemas/paciente'
 import './PacientesPage.css'
 
@@ -16,12 +16,18 @@ const FILTRO_TODOS = 'Todos'
 const TAMANO_PAGINA = 50
 const TAMANO_VENTANA_PAGINACION = 10
 
-function construirQuery(pagina: number, busqueda: string, filtroEstado: EstadoPaciente | typeof FILTRO_TODOS): string {
+function construirQuery(
+  pagina: number,
+  busqueda: string,
+  filtroEstado: EstadoPaciente | typeof FILTRO_TODOS,
+  orden: OrdenPaciente,
+): string {
   const params = new URLSearchParams()
   params.set('pagina', String(pagina))
   params.set('tamanoPagina', String(TAMANO_PAGINA))
   if (busqueda.trim()) params.set('busqueda', busqueda.trim())
   if (filtroEstado !== FILTRO_TODOS) params.set('estado', filtroEstado)
+  params.set('orden', orden)
   return params.toString()
 }
 
@@ -46,6 +52,7 @@ export function PacientesPage() {
   const [busqueda, setBusqueda] = useState('')
   const [busquedaDebounced, setBusquedaDebounced] = useState('')
   const [filtroEstado, setFiltroEstado] = useState<EstadoPaciente | typeof FILTRO_TODOS>(FILTRO_TODOS)
+  const [orden, setOrden] = useState<OrdenPaciente>('NombreAsc')
 
   const [errorCrear, setErrorCrear] = useState<string | null>(null)
   const {
@@ -65,14 +72,14 @@ export function PacientesPage() {
 
   useEffect(() => {
     setPagina(1)
-  }, [busquedaDebounced, filtroEstado])
+  }, [busquedaDebounced, filtroEstado, orden])
 
   useEffect(() => {
     let cancelado = false
 
     setCargando(true)
     api
-      .get<PacientesPaginados>(`/api/pacientes?${construirQuery(pagina, busquedaDebounced, filtroEstado)}`)
+      .get<PacientesPaginados>(`/api/pacientes?${construirQuery(pagina, busquedaDebounced, filtroEstado, orden)}`)
       .then((datos) => {
         if (cancelado) return
         if (datos.items.length === 0 && datos.pagina > 1) {
@@ -94,7 +101,7 @@ export function PacientesPage() {
     return () => {
       cancelado = true
     }
-  }, [pagina, busquedaDebounced, filtroEstado, recargarClave])
+  }, [pagina, busquedaDebounced, filtroEstado, orden, recargarClave])
 
   const recargar = () => setRecargarClave((clave) => clave + 1)
 
@@ -201,6 +208,18 @@ export function PacientesPage() {
           value={busqueda}
           onChange={(event) => setBusqueda(event.target.value)}
         />
+        <select
+          className="pacientes-orden-selector"
+          value={orden}
+          onChange={(event) => setOrden(event.target.value as OrdenPaciente)}
+          aria-label="Ordenar pacientes por"
+        >
+          {OPCIONES_ORDEN_PACIENTE.map((opcion) => (
+            <option key={opcion.valor} value={opcion.valor}>
+              {opcion.etiqueta}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="pacientes-tabs" role="tablist">

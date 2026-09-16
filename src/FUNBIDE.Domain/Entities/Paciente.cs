@@ -16,6 +16,16 @@ public sealed class Paciente : Entity
     public DateOnly? UltimaVisita { get; private set; }
 
     /// <summary>
+    /// Cuándo se agregó este paciente a la base de datos — para el orden "más recientes" de
+    /// Pacientes. Los pacientes que ya existían antes de este campo (migración
+    /// AgregarCreadoEnAPaciente) quedaron con <see cref="DateTimeOffset.MinValue"/> — ese
+    /// dato nunca se guardó y no hay forma de recuperarlo — así que caen correctamente al
+    /// final de "más recientes" (y primero en "más antiguos") en vez de aparecer todos como
+    /// recién agregados.
+    /// </summary>
+    public DateTimeOffset CreadoEn { get; private init; } = DateTimeOffset.UtcNow;
+
+    /// <summary>
     /// Ruta dentro del bucket privado de Supabase Storage, no una URL pública: la foto
     /// de la cédula es un documento de identidad, más sensible que una foto de perfil
     /// de personal, así que solo se sirve vía URL firmada de corta duración

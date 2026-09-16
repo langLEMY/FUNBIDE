@@ -511,6 +511,9 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<DateTimeOffset>("CreadoEn")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Documento")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -544,6 +547,8 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                         .HasColumnType("date");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreadoEn");
 
                     b.HasIndex("Documento")
                         .IsUnique();

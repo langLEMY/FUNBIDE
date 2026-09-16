@@ -74,12 +74,24 @@
 }
 
 .pacientes-buscador {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
 .pacientes-buscador input {
   width: 100%;
   max-width: 360px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
+  padding: 9px 12px;
+  font-size: 14px;
+}
+
+.pacientes-orden-selector {
   background: var(--surface-1);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-control);
