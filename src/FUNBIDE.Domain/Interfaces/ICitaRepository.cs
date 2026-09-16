@@ -30,9 +30,18 @@ public interface ICitaRepository
     /// <summary>true si el paciente ya tiene una cita Programada o EnEspera con ese doctor (evita duplicar una llegada walk-in).</summary>
     Task<bool> TieneCitaActivaAsync(Guid pacienteId, Guid doctorId, CancellationToken cancellationToken);
 
-    /// <summary>Para la Agenda de Recepción: todas las citas (cualquier doctor), filtrables por fecha y/o doctor.</summary>
-    Task<IReadOnlyList<Cita>> ObtenerPorFiltroAsync(
-        DateOnly? fecha, Guid? doctorId, CancellationToken cancellationToken);
+    /// <summary>
+    /// Para la Agenda de Recepción: todas las citas (cualquier doctor), filtrables por
+    /// fecha, doctor y/o estado. Igual que <see cref="IPacienteRepository.ObtenerPaginadoAsync"/>:
+    /// cuando el llamador no pide paginación explícita (ver ListarAgendaUseCase), sigue
+    /// devolviendo todo lo que matchea el filtro para no cambiar el comportamiento de hoy
+    /// de un momento a otro — sin fecha ni doctor, este filtro puede devolver TODA la
+    /// tabla de Citas, así que la paginación existe para protegerse de eso cuando haga
+    /// falta, no para forzarla siempre.
+    /// </summary>
+    Task<(IReadOnlyList<Cita> Items, int Total)> ObtenerPaginadoAsync(
+        DateOnly? fecha, Guid? doctorId, EstadoCita? estado, int pagina, int tamanoPagina,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Sala de espera: citas en <see cref="EstadoCita.EnEspera"/> (sin importar la fecha:

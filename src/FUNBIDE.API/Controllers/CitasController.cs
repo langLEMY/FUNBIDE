@@ -118,8 +118,10 @@ public sealed class CitasController(
     [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin)]
     [RequierePermiso(ModuloPermiso.Agenda, ModuloPermiso.Operaciones)]
     public async Task<ActionResult<IReadOnlyList<CitaAgendaDto>>> ObtenerAgendaAsync(
-        [FromQuery] DateOnly? fecha, [FromQuery] Guid? doctorId, CancellationToken cancellationToken) =>
-        Ok(await listarAgenda.EjecutarAsync(new ListarAgendaRequest(fecha, doctorId), cancellationToken));
+        [FromQuery] DateOnly? fecha, [FromQuery] Guid? doctorId, [FromQuery] EstadoCita? estado,
+        [FromQuery] int? pagina, [FromQuery] int? tamanoPagina, CancellationToken cancellationToken) =>
+        Ok(await listarAgenda.EjecutarAsync(
+            new ListarAgendaRequest(fecha, doctorId, estado, pagina, tamanoPagina), cancellationToken));
 
     [HttpGet("sala-espera")]
     [RequiereRol(RolUsuario.Fondos, RolUsuario.Admin, RolUsuario.Lemy)]
