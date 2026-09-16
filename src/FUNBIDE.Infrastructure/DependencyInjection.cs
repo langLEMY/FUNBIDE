@@ -29,7 +29,15 @@ public static class DependencyInjection
         services.AddDbContext<FunbideDbContext>(options =>
             options.UseNpgsql(
                 configuration.GetConnectionString("FunbideDatabase"),
-                npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", "funbide")));
+                npgsql => npgsql
+                    .MigrationsHistoryTable("__ef_migrations_history", "funbide")
+                    // Sin esto, un query colgado (Supabase caído, o una consulta que se
+                    // olvidó un índice) deja la petición esperando indefinidamente en vez
+                    // de fallar con un error legible -- 30s es generoso para cualquier
+                    // query normal de la app, pero corta antes de que alguien piense que
+                    // la app "se congeló". Ver ExceptionHandlingMiddleware, que traduce el
+                    // NpgsqlException resultante a un mensaje claro en vez del 500 genérico.
+                    .CommandTimeout(30)));
 
         services.AddScoped<ICitaRepository, CitaRepository>();
         services.AddScoped<IHistorialClinicoRepository, HistorialClinicoRepository>();

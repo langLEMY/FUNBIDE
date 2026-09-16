@@ -102,6 +102,24 @@ public sealed class ExceptionHandlingMiddleware(
         {
             await EscribirProblemaAsync(context, StatusCodes.Status409Conflict, "Modificado por otra operación", "El recurso fue modificado por otra operación mientras tanto. Recargá e intentá de nuevo.");
         }
+        // Sin esto, un timeout de comando (ver CommandTimeout en DependencyInjection) o
+        // Supabase caído/inalcanzable caía en el catch genérico de abajo: un 500 con
+        // "Ocurrió un error inesperado", que no le dice a nadie que el problema es la
+        // conexión a la base y no la petición en sí. 503 (no 500): es un problema temporal
+        // del servidor, no de lo que mandó el cliente -- reintentar en unos segundos tiene
+        // sentido, a diferencia de un 500 real. Dos catches porque una falla de conexión en
+        // una escritura llega envuelta en DbUpdateException (como el de arriba), pero en
+        // una lectura (ToListAsync, etc.) sale directo como NpgsqlException.
+        catch (DbUpdateException ex) when (ex.InnerException is NpgsqlException)
+        {
+            logger.LogError(ex, "No se pudo conectar a la base de datos procesando {Metodo} {Ruta}", context.Request.Method, context.Request.Path);
+            await EscribirProblemaAsync(context, StatusCodes.Status503ServiceUnavailable, "Base de datos no disponible", "No se pudo conectar a la base de datos. Intentá de nuevo en unos segundos.");
+        }
+        catch (NpgsqlException ex)
+        {
+            logger.LogError(ex, "No se pudo conectar a la base de datos procesando {Metodo} {Ruta}", context.Request.Method, context.Request.Path);
+            await EscribirProblemaAsync(context, StatusCodes.Status503ServiceUnavailable, "Base de datos no disponible", "No se pudo conectar a la base de datos. Intentá de nuevo en unos segundos.");
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error no controlado procesando {Metodo} {Ruta}", context.Request.Method, context.Request.Path);
