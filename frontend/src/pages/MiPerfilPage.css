@@ -68,6 +68,11 @@
   font-size: 13px;
 }
 
+.mi-perfil-version {
+  margin: 10px 0 0;
+  font-size: 12px;
+}
+
 .mi-perfil-badge-rol {
   display: inline-block;
   font-size: 11px;

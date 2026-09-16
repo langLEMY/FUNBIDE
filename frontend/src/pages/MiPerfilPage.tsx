@@ -102,6 +102,15 @@ export function MiPerfilPage() {
   const [estadoDisco, setEstadoDisco] = useState<EstadoDisco | null>(null)
   const [errorDisco, setErrorDisco] = useState<string | null>(null)
 
+  const [version, setVersion] = useState<string | null>(null)
+
+  useEffect(() => {
+    api
+      .get<{ version: string }>('/api/sistema/version')
+      .then((datos) => setVersion(datos.version))
+      .catch(() => undefined)
+  }, [])
+
   const verificarEstadoSistema = async () => {
     setVerificandoEstado(true)
     setErrorEstado(null)
@@ -395,6 +404,7 @@ export function MiPerfilPage() {
             </button>
             <input ref={inputFotoRef} type="file" accept="image/*" hidden onChange={handleArchivoSeleccionado} />
             {errorFoto && <p className="mi-perfil-error">{errorFoto}</p>}
+            {version && <p className="mi-perfil-version text-muted">FUNBIDE v{version}</p>}
           </section>
 
           <section className="mi-perfil-card">

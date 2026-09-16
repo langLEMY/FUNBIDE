@@ -7,6 +7,12 @@
     <RootNamespace>FUNBIDE.API</RootNamespace>
     <UserSecretsId>funbide-api-secrets-local</UserSecretsId>
     <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!-- Misma fuente unica de version que el launcher (ver launcher/FUNBIDE.Launcher.csproj
+         y launcher/Actualizacion/ServicioActualizacion.cs): version.txt en la raiz del
+         repo. Expuesta via /api/sistema/version para que "Mi perfil" pueda mostrar que
+         version de FUNBIDE esta corriendo, sin depender de que el frontend este actualizado. -->
+    <Version>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)..\..\version.txt').Trim())</Version>
   </PropertyGroup>
 
   <ItemGroup>
