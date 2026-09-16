@@ -101,6 +101,10 @@
   --radius-card: 16px;
   --radius-control: 10px;
 
+  /* Único punto de verdad para "esto está deshabilitado" — antes cada
+     componente hardcodeaba su propio 0.6/0.75 suelto. */
+  --opacidad-deshabilitado: 0.6;
+
   /* Motion tipo iOS/macOS: easing "out" pronunciado al inicio y que frena suave,
      nunca lineal ni con rebote exagerado. Duraciones cortas para que se sientan
      como respuesta inmediata de la interfaz, no como una animación decorativa. */

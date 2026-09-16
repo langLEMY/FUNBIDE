@@ -156,6 +156,14 @@
   opacity: 1;
 }
 
+/* Outline en reposo (fill:none, ver IconoNav.tsx), relleno sutil solo en el
+   item activo -- currentColor ya es --series-pacientes acá (ver .activo más
+   arriba), así que el fill hereda el mismo tono automáticamente. */
+.sidebar-nav-item.activo .sidebar-nav-icono svg {
+  fill: color-mix(in srgb, currentColor 16%, transparent);
+  transition: fill var(--duracion-base) var(--ease-suave);
+}
+
 .sidebar-perfil {
   flex-shrink: 0;
   display: flex;
