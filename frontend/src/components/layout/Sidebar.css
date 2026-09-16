@@ -16,6 +16,64 @@
      que no necesita ser "sticky" — pero sí queda fijo visualmente porque
      .dashboard-layout-main (a su lado) es quien scrollea, no la página
      entera; ver DashboardLayout.css. */
+  transition: width var(--duracion-base) var(--ease-suave), padding var(--duracion-base) var(--ease-suave);
+}
+
+.sidebar-colapsado {
+  width: 76px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+/* Todo el texto que desaparece al colapsar se desvanece por opacidad/ancho
+   en vez de saltar con display:none -- así el colapso se siente como una
+   transición, no como un parpadeo. */
+.sidebar-texto-colapsable {
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity var(--duracion-rapida) var(--ease-suave), width var(--duracion-base) var(--ease-suave);
+}
+
+.sidebar-colapsado .sidebar-texto-colapsable {
+  width: 0;
+  opacity: 0;
+}
+
+.sidebar-colapsado .sidebar-marca {
+  justify-content: center;
+}
+
+.sidebar-colapsado .sidebar-nav-item,
+.sidebar-colapsado .sidebar-perfil {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar-colapsar-boton {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-end;
+  width: 28px;
+  height: 28px;
+  margin-top: -12px;
+  border-radius: 50%;
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-1);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.sidebar-colapsado .sidebar-colapsar-boton {
+  align-self: center;
+}
+
+.sidebar-colapsar-boton:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
 }
 
 .sidebar-marca {
@@ -88,6 +146,10 @@
   justify-content: center;
   flex-shrink: 0;
   opacity: 0.75;
+}
+
+.sidebar-nav-etiqueta {
+  flex: 1;
 }
 
 .sidebar-nav-badge {

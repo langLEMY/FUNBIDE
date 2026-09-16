@@ -1,0 +1,53 @@
+.ui-breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.ui-breadcrumbs-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ui-breadcrumbs-separador {
+  color: var(--text-muted);
+}
+
+.ui-breadcrumbs-link {
+  position: relative;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding-bottom: 1px;
+}
+
+/* Subrayado que se desliza al hover (scaleX desde 0), en vez del
+   text-decoration: underline instantáneo del resto de los links de la app. */
+.ui-breadcrumbs-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--duracion-base) var(--ease-suave);
+}
+
+.ui-breadcrumbs-link:hover {
+  color: var(--text-primary);
+}
+
+.ui-breadcrumbs-link:hover::after {
+  transform: scaleX(1);
+}
+
+.ui-breadcrumbs-actual {
+  color: var(--text-primary);
+  font-weight: 600;
+}

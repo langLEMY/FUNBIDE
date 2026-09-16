@@ -1,9 +1,9 @@
-import { ArrowLeft } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { Modal } from '../components/ui/Modal'
 import { Boton } from '../components/ui/Boton'
+import { Breadcrumbs } from '../components/ui/Breadcrumbs'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import { imprimirVentana } from '../lib/imprimir'
@@ -264,9 +264,14 @@ export function PacienteHistorialPage() {
 
   return (
     <DashboardLayout titulo="Historial clínico">
-      <button type="button" className="historial-volver no-imprimir" onClick={handleClickVolver}>
-        <ArrowLeft size={15} aria-hidden="true" /> Volver
-      </button>
+      <div className="no-imprimir">
+        <Breadcrumbs
+          migas={[
+            { etiqueta: 'Pacientes', to: '/pacientes', onClick: handleClickVolver },
+            { etiqueta: paciente ? `${paciente.nombre} ${paciente.apellido}` : 'Historial clínico' },
+          ]}
+        />
+      </div>
 
       <Modal
         abierto={mostrarConfirmacionSalir}
