@@ -86,6 +86,11 @@
      que ambos convivan sin confundirse en la misma pantalla (p. ej. Cobros). */
   --acento-alerta: #e0b23c;
   --acento-alerta-fill: rgba(224, 178, 60, 0.14);
+  /* Quinto color de la paleta de avatares por hash de nombre (ver
+     lib/colorPorNombre.ts) -- mismo azul que colorPorRol.ts usa para
+     "Doctor" en coloresRolPorTema, reutilizado acá para no inventar un
+     acento nuevo sin uso en ningún otro lado. */
+  --avatar-azul: #3987e5;
 
   /* Franjas de estado de fila para <Tabla> (ver ColumnaTabla/estadoFila en
      Tabla.tsx) — alpha bajo a propósito: son una señal de fondo, el texto y
@@ -179,6 +184,7 @@
   --danger: #c4574b;
   --acento-alerta: #b3860f;
   --acento-alerta-fill: rgba(179, 134, 15, 0.12);
+  --avatar-azul: #2a78d6;
 
   --fila-vencido-bg: rgba(196, 87, 75, 0.07);
   --fila-pendiente-bg: rgba(179, 134, 15, 0.07);
@@ -524,6 +530,30 @@ table tbody tr:hover {
   .equipo-tarjeta:active,
   button:not(:disabled):active {
     transform: none !important;
+  }
+}
+
+/* Barrido circular al cambiar de tema (ver ThemeToggleButton.tsx, que solo
+   entra acá cuando el navegador soporta View Transitions y no hay
+   prefers-reduced-motion): el documento nuevo (ya con el tema aplicado)
+   entra recortado por un círculo que crece desde el punto del click, en vez
+   de que todas las variables de color salten de golpe. --tema-barrido-* los
+   escribe JS en cada click porque dependen de dónde se hizo click, no son
+   valores fijos del tema. */
+::view-transition-old(root) {
+  animation: none;
+}
+
+::view-transition-new(root) {
+  animation: tema-barrido var(--duracion-abrir) var(--ease-entrada);
+}
+
+@keyframes tema-barrido {
+  from {
+    clip-path: circle(0px at var(--tema-barrido-x, 50%) var(--tema-barrido-y, 50%));
+  }
+  to {
+    clip-path: circle(var(--tema-barrido-radio, 150%) at var(--tema-barrido-x, 50%) var(--tema-barrido-y, 50%));
   }
 }
 

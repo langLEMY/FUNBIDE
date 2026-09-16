@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { EditarPermisosModal } from '../components/permisos/EditarPermisosModal'
 import { iniciales } from '../lib/iniciales'
+import { colorPorNombre } from '../lib/colorPorNombre'
 import { api, ApiError } from '../lib/api'
 import type { Usuario } from '../types/usuario'
 import './PermisosPage.css'
@@ -95,7 +96,10 @@ export function PermisosPage() {
                       {usuario.fotoPerfilUrl ? (
                         <img src={usuario.fotoPerfilUrl} alt="" className="permisos-row-avatar" />
                       ) : (
-                        <span className="permisos-row-avatar permisos-row-avatar-iniciales">
+                        <span
+                          className="permisos-row-avatar permisos-row-avatar-iniciales"
+                          style={{ background: colorPorNombre(usuario.nombreCompleto) }}
+                        >
                           {iniciales(usuario.nombreCompleto)}
                         </span>
                       )}
