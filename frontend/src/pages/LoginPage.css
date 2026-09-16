@@ -10,6 +10,36 @@
   background: var(--page-plane);
 }
 
+/* Fondo que "respira" muy lento detrás de la tarjeta — apenas perceptible a
+   propósito, nunca debe competir por atención con .login-card. Duración
+   derivada de --duracion-lenta (no un valor propio) para heredar
+   prefers-reduced-motion automáticamente igual que el resto de la app. */
+.login-page::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  z-index: 0;
+  background: radial-gradient(
+    45% 35% at 50% 40%,
+    color-mix(in srgb, var(--series-pacientes) 10%, transparent),
+    transparent 70%
+  );
+  animation: login-respirar calc(var(--duracion-lenta) * 25) var(--ease-suave) infinite;
+  pointer-events: none;
+}
+
+@keyframes login-respirar {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
 .login-tema-boton {
   position: fixed;
   top: 24px;
@@ -47,6 +77,34 @@
      (400ms) en vez de --duracion-lenta para que se sienta como la apertura
      de una "escena" completa, no como la aparición de un elemento más. */
   animation: funbide-aparecer var(--duracion-abrir) var(--ease-entrada);
+}
+
+/* Error de credenciales (no de validación de campo vacío): un shake corto
+   más el borde pasando a --danger con fade (la transición de border-color ya
+   la da la regla global *, *::before, *::after de theme.css — acá solo se
+   cambia el color, nunca de golpe). */
+.login-card-error {
+  border-color: var(--danger);
+}
+
+.login-card-agitar {
+  animation: funbide-aparecer var(--duracion-abrir) var(--ease-entrada), login-agitar var(--duracion-lenta) var(--ease-suave);
+}
+
+@keyframes login-agitar {
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
 }
 
 .login-ventana-barra {
@@ -107,6 +165,13 @@
   margin: 0 auto 20px;
   object-fit: contain;
   filter: drop-shadow(0 6px 16px rgba(47, 191, 143, 0.28));
+  animation: funbide-aparecer var(--duracion-base) var(--ease-entrada) both;
+}
+
+/* El resto de la tarjeta entra ~80ms después que el logo — un escalonado
+   apenas perceptible, no una secuencia larga. */
+.login-cuerpo {
+  animation: funbide-aparecer var(--duracion-base) var(--ease-entrada) 80ms both;
 }
 
 .login-titulo {
@@ -200,13 +265,56 @@
 .login-recordarme {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   color: var(--text-secondary);
+}
+
+.login-recordarme label {
   cursor: pointer;
 }
 
-.login-recordarme input {
-  accent-color: var(--series-pacientes);
+/* Toggle custom (reemplaza el checkbox nativo): mismo patrón visual que el
+   interruptor de EditarPermisosModal, con --ease-spring en la perilla. */
+.login-interruptor {
+  position: relative;
+  width: 34px;
+  height: 19px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border-hairline);
+  background: var(--surface-2);
+  padding: 0;
+  cursor: pointer;
+}
+
+.login-interruptor.activo {
+  background: var(--series-pacientes);
+  border-color: var(--series-pacientes);
+}
+
+.login-interruptor-perilla {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  transition: transform var(--duracion-base) var(--ease-spring);
+}
+
+.login-interruptor.activo .login-interruptor-perilla {
+  transform: translateX(15px);
+}
+
+.login-caps-lock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--acento-alerta);
+  font-size: 12px;
+  margin: -10px 0 14px;
+  animation: funbide-desplegar var(--duracion-rapida) var(--ease-entrada);
 }
 
 .login-error {
