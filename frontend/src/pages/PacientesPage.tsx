@@ -8,6 +8,7 @@ import { Boton } from '../components/ui/Boton'
 import { CampoTexto } from '../components/ui/CampoTexto'
 import { Tooltip } from '../components/ui/Tooltip'
 import { Skeleton } from '../components/ui/Skeleton'
+import { useToast } from '../components/ui/ToastContext'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import type { Paciente, PacientesPaginados, ImportarPacientesResultado } from '../types/paciente'
@@ -31,6 +32,7 @@ function construirQuery(pagina: number, busqueda: string, filtroEstado: EstadoPa
 
 export function PacientesPage() {
   const { perfil } = useAuth()
+  const { mostrarToast } = useToast()
   const puedeEditar = perfil?.rol === 'Lemy'
   const puedeEliminar = perfil?.rol === 'Lemy' || perfil?.rol === 'Admin' || perfil?.rol === 'Doctor'
   const puedeVerHistorial = perfil?.rol === 'Doctor' || perfil?.rol === 'Admin'
@@ -118,6 +120,7 @@ export function PacientesPage() {
         condicion: null,
       })
       resetFormularioPaciente()
+      mostrarToast(`Paciente agregado: ${datos.nombre} ${datos.apellido}.`, 'exito')
       if (pagina === 1) {
         recargar()
       } else {

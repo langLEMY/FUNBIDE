@@ -278,7 +278,7 @@ export function PacienteHistorialPage() {
             <Boton variante="secundario" onClick={() => setMostrarConfirmacionSalir(false)}>
               Seguir editando
             </Boton>
-            <Boton variante="destructivo" onClick={() => navigate('/pacientes')}>
+            <Boton variante="destructivo" habilitarLuegoDeMs={1000} onClick={() => navigate('/pacientes')}>
               Salir sin guardar
             </Boton>
           </>

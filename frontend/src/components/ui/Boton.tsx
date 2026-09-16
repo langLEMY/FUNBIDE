@@ -19,6 +19,13 @@ interface BotonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
       onClick. No usar para acciones irreversibles de alto riesgo — esas siguen
       mereciendo un <Modal> de confirmación real. */
   confirmarAntes?: boolean
+  /** Mantiene el botón deshabilitado los primeros N ms después de montarse —
+      pensado para el botón de confirmar de un <Modal> de confirmación
+      destructiva e irreversible (ver PacienteHistorialPage, "Salir sin
+      guardar"): evita un click reflejo justo cuando el modal termina de
+      aparecer. No confundir con `confirmarAntes`, que es un mecanismo
+      distinto (doble click en el mismo botón, sin modal). */
+  habilitarLuegoDeMs?: number
   children: ReactNode
 }
 
@@ -27,13 +34,24 @@ export function Boton({
   cargando = false,
   disabled,
   confirmarAntes = false,
+  habilitarLuegoDeMs,
   children,
   className,
   onClick,
   ...resto
 }: BotonProps) {
   const [confirmando, setConfirmando] = useState(false)
+  const [esperandoHabilitacion, setEsperandoHabilitacion] = useState(Boolean(habilitarLuegoDeMs))
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!habilitarLuegoDeMs) return
+    const timeout = setTimeout(() => setEsperandoHabilitacion(false), habilitarLuegoDeMs)
+    return () => clearTimeout(timeout)
+    // Solo al montar: es una demora de apertura del modal, no algo que deba
+    // reiniciarse si habilitarLuegoDeMs cambia de valor en caliente.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -63,7 +81,13 @@ export function Boton({
     .join(' ')
 
   return (
-    <button className={clases} disabled={disabled || cargando} aria-busy={cargando} onClick={handleClick} {...resto}>
+    <button
+      className={clases}
+      disabled={disabled || cargando || esperandoHabilitacion}
+      aria-busy={cargando}
+      onClick={handleClick}
+      {...resto}
+    >
       {cargando && <Loader2 className="ui-boton-spinner" size={16} aria-hidden="true" />}
       {confirmando ? '¿Seguro?' : children}
     </button>
