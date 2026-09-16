@@ -24,8 +24,9 @@ public sealed class ListarMovimientosImportantesUseCase(
     public async Task<IReadOnlyList<MovimientoImportanteDto>> EjecutarAsync(
         ListarMovimientosImportantesRequest request, CancellationToken cancellationToken)
     {
-        var cobros = await cobroRepository.ObtenerPorRangoAsync(request.Desde, request.Hasta, cancellationToken);
-        var movimientos = await movimientoRepository.ObtenerPorRangoAsync(request.Desde, request.Hasta, cancellationToken);
+        var (desde, hasta) = RangoFechasHelper.RecortarASpanMaximo(request.Desde, request.Hasta);
+        var cobros = await cobroRepository.ObtenerPorRangoAsync(desde, hasta, cancellationToken);
+        var movimientos = await movimientoRepository.ObtenerPorRangoAsync(desde, hasta, cancellationToken);
 
         var nombresPacientes = await pacienteRepository.ObtenerNombresPorIdsAsync(
             cobros.Select(c => c.PacienteId).Distinct().ToList(), cancellationToken);

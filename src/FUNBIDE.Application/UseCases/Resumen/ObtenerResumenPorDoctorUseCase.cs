@@ -24,7 +24,8 @@ public sealed class ObtenerResumenPorDoctorUseCase(
 {
     public async Task<ResumenPorDoctorDto> EjecutarAsync(ResumenPorDoctorRequest request, CancellationToken cancellationToken)
     {
-        var cobros = await cobroRepository.ObtenerPorRangoAsync(request.Desde, request.Hasta, cancellationToken);
+        var (desde, hasta) = RangoFechasHelper.RecortarASpanMaximo(request.Desde, request.Hasta);
+        var cobros = await cobroRepository.ObtenerPorRangoAsync(desde, hasta, cancellationToken);
 
         var cobrosSinDoctorDirecto = cobros.Where(c => c.DoctorId is null && c.CitaId.HasValue).ToList();
         var citaIds = cobrosSinDoctorDirecto.Select(c => c.CitaId!.Value).Distinct().ToList();

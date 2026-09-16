@@ -22,7 +22,8 @@ public sealed class ListarTurnosCajaUseCase(
     public async Task<IReadOnlyList<TurnoCajaAdminDto>> EjecutarAsync(
         ListarTurnosCajaRequest request, CancellationToken cancellationToken)
     {
-        var turnos = await turnoCajaRepository.ObtenerPorRangoAsync(request.Desde, request.Hasta, cancellationToken);
+        var (desde, hasta) = RangoFechasHelper.RecortarASpanMaximo(request.Desde, request.Hasta);
+        var turnos = await turnoCajaRepository.ObtenerPorRangoAsync(desde, hasta, cancellationToken);
 
         var idsUsuarios = turnos
             .Select(t => t.UsuarioAperturaId)
