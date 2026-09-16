@@ -29,6 +29,21 @@
   border-color: var(--danger);
 }
 
+/* Glow de foco vía box-shadow (no solo el cambio de border-color, que ya
+   transiciona solo por la regla global de theme.css) -- :focus, no
+   :focus-visible: en un campo de texto el glow ayuda igual a quien hace
+   click con mouse, no solo a navegación por teclado. */
+.ui-campo-texto-input:focus {
+  outline: none;
+  border-color: var(--series-pacientes);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--series-pacientes) 20%, transparent);
+}
+
+.ui-campo-texto-input[aria-invalid='true']:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 20%, transparent);
+}
+
 .ui-campo-texto-error {
   margin: 0;
   font-size: 12.5px;

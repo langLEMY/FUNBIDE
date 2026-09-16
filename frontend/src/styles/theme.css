@@ -55,6 +55,10 @@
   --shadow-chrome: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 24px 60px -20px rgba(0, 0, 0, 0.85);
   --shadow-float: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 28px 70px -18px rgba(0, 0, 0, 0.85),
     0 4px 16px -6px rgba(0, 0, 0, 0.6);
+  /* Sombra de "hay más contenido" en los bordes de contenedores con scroll
+     horizontal (ver .ui-tabla-contenedor) -- mismo negro que el resto de
+     --shadow-*, funciona igual en ambos modos. */
+  --scroll-sombra: rgba(0, 0, 0, 0.18);
 
   /* Dorado metálico → ámbar cálido: se siente más cercano/amigable (una fundación
      de salud, no un banco privado) sin perder la asociación con "dinero".

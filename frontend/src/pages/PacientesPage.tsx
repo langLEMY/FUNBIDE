@@ -7,6 +7,7 @@ import { ImportarExcel } from '../components/ImportarExcel'
 import { Boton } from '../components/ui/Boton'
 import { CampoTexto } from '../components/ui/CampoTexto'
 import { Tooltip } from '../components/ui/Tooltip'
+import { Skeleton } from '../components/ui/Skeleton'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
 import type { Paciente, PacientesPaginados, ImportarPacientesResultado } from '../types/paciente'
@@ -247,7 +248,11 @@ export function PacientesPage() {
         {error && <p className="pacientes-error">{error}</p>}
 
         {cargando ? (
-          <p className="text-secondary cargando-pulso">Cargando pacientes…</p>
+          <div className="pacientes-skeleton">
+            {Array.from({ length: 6 }, (_, i) => (
+              <Skeleton key={i} alto="38px" />
+            ))}
+          </div>
         ) : pacientes.length === 0 ? (
           <p className="text-secondary">
             {total === 0 && !busqueda.trim() && filtroEstado === FILTRO_TODOS

@@ -1,6 +1,19 @@
 .ui-tabla-contenedor {
+  position: relative;
   width: 100%;
   overflow-x: auto;
+  /* Sombra de "hay más contenido" en los bordes: dos gradientes de fondo que
+     se desplazan con el scroll (cubren el borde mientras hay contenido de
+     ese lado) más dos radiales fijos (la sombra visible en sí) -- técnica
+     puramente CSS, sin JS ni listeners de scroll. */
+  background:
+    linear-gradient(to right, var(--surface-1) 30%, transparent) 0 0,
+    linear-gradient(to left, var(--surface-1) 30%, transparent) 100% 0,
+    radial-gradient(farthest-side at 0 50%, var(--scroll-sombra), transparent) 0 0,
+    radial-gradient(farthest-side at 100% 50%, var(--scroll-sombra), transparent) 100% 0;
+  background-repeat: no-repeat;
+  background-size: 24px 100%, 24px 100%, 8px 100%, 8px 100%;
+  background-attachment: local, local, scroll, scroll;
 }
 
 .ui-tabla {
@@ -33,6 +46,20 @@
 
 .ui-tabla-encabezado-icono-inactivo {
   opacity: 0.35;
+}
+
+/* Una sola flecha que rota (antes: dos íconos de lucide-react que se
+   reemplazaban de golpe al cambiar de asc a desc). */
+.ui-tabla-encabezado-flecha {
+  transition: transform var(--duracion-base) var(--ease-suave), opacity var(--duracion-rapida) var(--ease-suave);
+}
+
+.ui-tabla-encabezado-flecha-activa {
+  color: var(--series-pacientes);
+}
+
+.ui-tabla-encabezado-flecha-desc {
+  transform: rotate(180deg);
 }
 
 .ui-tabla tbody td {

@@ -7,6 +7,12 @@
   margin-bottom: 20px;
 }
 
+.pacientes-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .pacientes-crear-card h2 {
   margin: 0 0 14px;
   font-size: 15px;

@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ArrowUpDown, Inbox } from 'lucide-react'
+import { ArrowUp, Inbox } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Paginacion } from './Paginacion'
 import './Tabla.css'
@@ -113,17 +113,17 @@ export function Tabla<T>({
                 <span className="ui-tabla-encabezado-contenido">
                   {columna.encabezado}
                   {columna.ordenable && (
-                    <>
-                      {ordenPor?.id === columna.id ? (
-                        ordenPor.direccion === 'asc' ? (
-                          <ArrowUp size={13} aria-hidden="true" />
-                        ) : (
-                          <ArrowDown size={13} aria-hidden="true" />
-                        )
-                      ) : (
-                        <ArrowUpDown size={13} className="ui-tabla-encabezado-icono-inactivo" aria-hidden="true" />
-                      )}
-                    </>
+                    <ArrowUp
+                      size={13}
+                      aria-hidden="true"
+                      className={[
+                        'ui-tabla-encabezado-flecha',
+                        ordenPor?.id === columna.id ? 'ui-tabla-encabezado-flecha-activa' : 'ui-tabla-encabezado-icono-inactivo',
+                        ordenPor?.id === columna.id && ordenPor.direccion === 'desc' && 'ui-tabla-encabezado-flecha-desc',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    />
                   )}
                 </span>
               </th>
