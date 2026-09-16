@@ -22,7 +22,7 @@ public sealed class FinanzasAdminController(
     IRegistrarGastoAdminUseCase registrarGasto) : ControllerBase
 {
     [HttpGet("movimientos")]
-    [RequierePermiso(ModuloPermiso.Finanzas)]
+    [RequierePermiso(ModuloPermiso.Finanzas, ModuloPermiso.Resumen)]
     public async Task<ActionResult<IReadOnlyList<MovimientoImportanteDto>>> ListarMovimientosAsync(
         [FromQuery] DateTimeOffset desde, [FromQuery] DateTimeOffset hasta, CancellationToken cancellationToken) =>
         Ok(await listarMovimientos.EjecutarAsync(new ListarMovimientosImportantesRequest(desde, hasta), cancellationToken));
