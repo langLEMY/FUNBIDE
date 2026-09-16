@@ -124,27 +124,35 @@ public sealed class FormPrincipal : Form
     }
 
     /// <summary>
-    /// Imprime la página actual (el comprobante de Cobros) directo a la impresora
-    /// predeterminada de Windows, sin mostrar ningún diálogo — pensado para la
-    /// impresora térmica de recibos de Caja. No se fuerza ningún tamaño de papel
-    /// (MediaSize/PageWidth/PageHeight): se deja el que ya tenga configurado por
-    /// defecto el driver de esa impresora, para no arriesgar un valor incorrecto
-    /// para el modelo real que use la fundación.
+    /// Imprime la página actual (el comprobante de Cobros) sin el diálogo de impresión
+    /// de Windows (ese no se puede personalizar ni recordar la impresora), pero sí
+    /// preguntando primero, con nuestro propio diálogo (FormSeleccionarImpresora), a cuál
+    /// impresora instalada mandarlo — antes se mandaba siempre a la predeterminada del
+    /// sistema sin preguntar, lo que era un problema apenas había más de una impresora
+    /// (p. ej. la térmica de recibos y una normal para otros documentos). No se fuerza
+    /// ningún tamaño de papel (MediaSize/PageWidth/PageHeight): se deja el que ya tenga
+    /// configurado por defecto el driver de la impresora elegida.
     /// </summary>
     private async Task ImprimirDirectoAsync()
     {
+        using var selector = new FormSeleccionarImpresora();
+        if (selector.ShowDialog(this) != DialogResult.OK || selector.ImpresoraSeleccionada is null)
+        {
+            return;
+        }
+
         try
         {
             var configuracion = _webView.CoreWebView2.Environment.CreatePrintSettings();
             configuracion.ShouldPrintBackgrounds = true;
             configuracion.ShouldPrintHeaderAndFooter = false;
+            configuracion.PrinterName = selector.ImpresoraSeleccionada;
             // Márgenes chicos (el default de WebView2 es ~1cm por lado): un recibo
             // térmico angosto no puede darse el lujo de perder 2cm de ancho en blanco.
             configuracion.MarginTop = 0.08;
             configuracion.MarginBottom = 0.08;
             configuracion.MarginLeft = 0.08;
             configuracion.MarginRight = 0.08;
-            // PrinterName vacío = imprime a la impresora predeterminada del sistema.
 
             var resultado = await _webView.CoreWebView2.PrintAsync(configuracion);
             if (resultado != CoreWebView2PrintStatus.Succeeded)

@@ -5,39 +5,12 @@ import { api, ApiError } from '../lib/api'
 import { coloresParaTema } from '../styles/colors'
 import { useTheme } from '../theme/ThemeContext'
 import type { DoctorSimple } from '../types/doctor'
+import type { MovimientoImportante } from '../types/finanzasAdmin'
 import './ResumenPage.css'
 
 interface ResumenPorDoctor {
   pacientesAtendidos: number
   dineroGenerado: number
-}
-
-interface RegistroAuditoria {
-  id: string
-  usuarioId: string | null
-  accion: string
-  recurso: string
-  codigoRespuestaHttp: number | null
-  detalle: string
-  registradoEn: string
-}
-
-interface DetalleMovimiento {
-  Tipo: 'Ingreso' | 'Egreso'
-  Monto: number
-  Concepto: string
-}
-
-function parsearDetalleMovimiento(detalle: string): DetalleMovimiento | null {
-  try {
-    const datos = JSON.parse(detalle) as Partial<DetalleMovimiento>
-    if (typeof datos.Monto !== 'number' || typeof datos.Concepto !== 'string' || !datos.Tipo) {
-      return null
-    }
-    return datos as DetalleMovimiento
-  } catch {
-    return null
-  }
 }
 
 function aFechaISO(fecha: Date): string {
@@ -79,7 +52,7 @@ export function ResumenPage() {
   const [desde, setDesde] = useState(aFechaISO(sumarDias(hoy, -7)))
   const [hasta, setHasta] = useState(aFechaISO(hoy))
   const [presetActivo, setPresetActivo] = useState<string | null>('Últimos 7 días')
-  const [registros, setRegistros] = useState<RegistroAuditoria[]>([])
+  const [movimientos, setMovimientos] = useState<MovimientoImportante[]>([])
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -95,10 +68,17 @@ export function ResumenPage() {
     try {
       const desdeIso = encodeURIComponent(`${desdeValor}T00:00:00.000Z`)
       const hastaIso = encodeURIComponent(`${hastaValor}T23:59:59.999Z`)
-      const datos = await api.get<RegistroAuditoria[]>(`/api/auditoria?desde=${desdeIso}&hasta=${hastaIso}`)
-      // El Resumen de ADMIN es sobre movimientos financieros — no sobre lo que gestiona
-      // LEMY (altas/bajas de personal), aunque ambos queden en la misma auditoría.
-      setRegistros(datos.filter((registro) => registro.accion.startsWith('finanzas.')))
+      // Antes esto leía /api/auditoria filtrando por accion.startsWith('finanzas.') — pero
+      // un cobro normal audita como "cobros.registrar" y un gasto de Admin como
+      // "finanzas-admin.registrar-gasto", ninguno de los dos empieza con "finanzas.", así
+      // que el 90% de la actividad real (cobros a pacientes, gastos de Admin) nunca
+      // aparecía acá. /api/finanzas-admin/movimientos junta cobros + movimientos
+      // financieros reales (la misma fuente que usa Finanzas), así que ahora sí refleja
+      // toda la actividad del rango.
+      const datos = await api.get<MovimientoImportante[]>(
+        `/api/finanzas-admin/movimientos?desde=${desdeIso}&hasta=${hastaIso}`,
+      )
+      setMovimientos(datos)
     } catch (err) {
       setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar la actividad.')
     } finally {
@@ -149,6 +129,21 @@ export function ResumenPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctorSeleccionado])
 
+  useEffect(() => {
+    // No hay push (websockets/SignalR) desde el backend, así que sin esto la pantalla
+    // se quedaba con los datos del momento en que se abrió hasta que alguien tocaba un
+    // filtro — un cobro nuevo registrado en Cobros no aparecía acá hasta refrescar a
+    // mano. Reconsulta en segundo plano cada 20s con el rango/doctor actuales.
+    const intervalo = setInterval(() => {
+      void cargar(desde, hasta)
+      if (doctorSeleccionado) {
+        void cargarResumenDoctor(doctorSeleccionado, desde, hasta)
+      }
+    }, 20_000)
+    return () => clearInterval(intervalo)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [desde, hasta, doctorSeleccionado])
+
   const aplicarPreset = (preset: (typeof PRESETS)[number]) => {
     const fin = inicioDeHoy()
     const inicio = preset.calcularInicio(fin)
@@ -169,19 +164,15 @@ export function ResumenPage() {
 
   const datosGrafico = useMemo(() => {
     const netoPorDia = new Map<string, number>()
-    for (const registro of registros) {
-      const detalle = parsearDetalleMovimiento(registro.detalle)
-      if (!detalle) {
-        continue
-      }
-      const dia = registro.registradoEn.slice(0, 10)
-      const montoConSigno = detalle.Tipo === 'Ingreso' ? detalle.Monto : -detalle.Monto
+    for (const movimiento of movimientos) {
+      const dia = movimiento.fecha.slice(0, 10)
+      const montoConSigno = movimiento.tipo === 'Ingreso' ? movimiento.monto : -movimiento.monto
       netoPorDia.set(dia, (netoPorDia.get(dia) ?? 0) + montoConSigno)
     }
     return Array.from(netoPorDia.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([dia, neto]) => ({ dia: dia.slice(5), neto }))
-  }, [registros])
+  }, [movimientos])
 
   return (
     <DashboardLayout titulo="Resumen">
@@ -315,10 +306,10 @@ export function ResumenPage() {
       </section>
 
       <section className="resumen-tabla-card">
-        <p className="resumen-tabla-titulo">Detalle ({registros.length} movimientos)</p>
+        <p className="resumen-tabla-titulo">Detalle ({movimientos.length} movimientos)</p>
         {cargando ? (
           <p className="text-secondary cargando-pulso">Cargando…</p>
-        ) : registros.length === 0 ? (
+        ) : movimientos.length === 0 ? (
           <p className="text-secondary">Sin movimientos registrados en este rango.</p>
         ) : (
           <table className="resumen-tabla">
@@ -331,19 +322,16 @@ export function ResumenPage() {
               </tr>
             </thead>
             <tbody>
-              {registros.map((registro) => {
-                const detalle = parsearDetalleMovimiento(registro.detalle)
-                return (
-                  <tr key={registro.id}>
-                    <td>{formateadorFechaHora.format(new Date(registro.registradoEn))}</td>
-                    <td className={detalle?.Tipo === 'Egreso' ? 'resumen-tipo-egreso' : 'resumen-tipo-ingreso'}>
-                      {detalle?.Tipo ?? '—'}
-                    </td>
-                    <td>{detalle ? formateadorMoneda.format(detalle.Monto) : '—'}</td>
-                    <td className="text-muted">{detalle?.Concepto ?? registro.recurso}</td>
-                  </tr>
-                )
-              })}
+              {movimientos.map((movimiento) => (
+                <tr key={movimiento.id}>
+                  <td>{formateadorFechaHora.format(new Date(movimiento.fecha))}</td>
+                  <td className={movimiento.tipo === 'Egreso' ? 'resumen-tipo-egreso' : 'resumen-tipo-ingreso'}>
+                    {movimiento.tipo}
+                  </td>
+                  <td>{formateadorMoneda.format(movimiento.monto)}</td>
+                  <td className="text-muted">{movimiento.concepto}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         )}

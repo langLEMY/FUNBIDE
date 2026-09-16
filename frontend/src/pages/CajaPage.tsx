@@ -49,6 +49,12 @@ export function CajaPage() {
   const [registrandoEgreso, setRegistrandoEgreso] = useState(false)
   const [errorEgreso, setErrorEgreso] = useState<string | null>(null)
 
+  const [ingresoConcepto, setIngresoConcepto] = useState('')
+  const [ingresoMonto, setIngresoMonto] = useState('')
+  const [ingresoEsFondo, setIngresoEsFondo] = useState(false)
+  const [registrandoIngreso, setRegistrandoIngreso] = useState(false)
+  const [errorIngreso, setErrorIngreso] = useState<string | null>(null)
+
   const recargar = () => setRecargarClave((clave) => clave + 1)
 
   const actualizarResumen = () => {
@@ -61,10 +67,10 @@ export function CajaPage() {
   useEffect(() => {
     let cancelado = false
 
-    setCargando(true)
-    api
-      .get<TurnoCaja | null>('/api/caja/turnos/actual')
-      .then(async (turnoActual) => {
+    const cargarEstado = async (mostrarCargando: boolean) => {
+      if (mostrarCargando) setCargando(true)
+      try {
+        const turnoActual = await api.get<TurnoCaja | null>('/api/caja/turnos/actual')
         if (cancelado) return
         setTurno(turnoActual)
 
@@ -101,18 +107,26 @@ export function CajaPage() {
         ].sort((a, b) => new Date(b.registradoEn).getTime() - new Date(a.registradoEn).getTime())
 
         setTimeline(combinado)
-      })
-      .catch((err) => {
+      } catch (err) {
         if (!cancelado) {
           setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar el estado de caja.')
         }
-      })
-      .finally(() => {
-        if (!cancelado) setCargando(false)
-      })
+      } finally {
+        if (!cancelado && mostrarCargando) setCargando(false)
+      }
+    }
+
+    void cargarEstado(true)
+
+    // Sin esto, un cobro registrado en Cobros (otra pantalla/pestaña) no se reflejaba
+    // acá hasta salir y volver a entrar a Caja — el turno abierto, el efectivo y el
+    // timeline se quedaban congelados con los datos de cuando se montó la página.
+    // Recarga silenciosa (sin tocar `cargando`, para no parpadear la pantalla) cada 20s.
+    const intervalo = setInterval(() => void cargarEstado(false), 20_000)
 
     return () => {
       cancelado = true
+      clearInterval(intervalo)
     }
   }, [recargarClave])
 
@@ -196,6 +210,46 @@ export function CajaPage() {
       setErrorEgreso(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo registrar la salida.')
     } finally {
       setRegistrandoEgreso(false)
+    }
+  }
+
+  const handleRegistrarIngreso = async (event: FormEvent) => {
+    event.preventDefault()
+    setErrorIngreso(null)
+
+    const monto = Number(ingresoMonto)
+    if (!ingresoMonto.trim() || !Number.isFinite(monto) || monto <= 0) {
+      setErrorIngreso('Ingresa un monto válido, mayor que cero.')
+      return
+    }
+    if (!ingresoConcepto.trim()) {
+      setErrorIngreso('El concepto es obligatorio.')
+      return
+    }
+
+    setRegistrandoIngreso(true)
+    try {
+      // El "fondo de ganancias" de la fundación (gráfico y tarjeta de Finanzas) detecta
+      // este tipo de ingreso por la frase "ganancia de la fundación" en el concepto — ver
+      // ObtenerResumenAnualUseCase.EsGananciaDeLaFundacion.
+      const concepto = ingresoEsFondo && !/ganancia de la fundaci[oó]n/i.test(ingresoConcepto)
+        ? `Ganancia de la fundación — ${ingresoConcepto.trim()}`
+        : ingresoConcepto.trim()
+
+      await api.post<MovimientoFinanciero>('/api/finanzas/movimientos', {
+        tipo: 'Ingreso',
+        monto,
+        concepto,
+        citaId: null,
+      })
+      setIngresoConcepto('')
+      setIngresoMonto('')
+      setIngresoEsFondo(false)
+      recargar()
+    } catch (err) {
+      setErrorIngreso(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo registrar el ingreso.')
+    } finally {
+      setRegistrandoIngreso(false)
     }
   }
 
@@ -331,6 +385,41 @@ export function CajaPage() {
                 </button>
               </form>
               {errorEgreso && <p className="caja-error">{errorEgreso}</p>}
+            </section>
+          )}
+
+          {puedeRegistrarGastos && (
+            <section className="caja-egreso-card">
+              <h2>Registrar ingreso manual</h2>
+              <form className="caja-egreso-form" onSubmit={(event) => void handleRegistrarIngreso(event)}>
+                <input
+                  placeholder="Concepto"
+                  value={ingresoConcepto}
+                  onChange={(event) => setIngresoConcepto(event.target.value)}
+                  required
+                />
+                <input
+                  type="number"
+                  min={0.01}
+                  step="0.01"
+                  placeholder="Monto"
+                  value={ingresoMonto}
+                  onChange={(event) => setIngresoMonto(event.target.value)}
+                  required
+                />
+                <label className="caja-ingreso-fondo-check">
+                  <input
+                    type="checkbox"
+                    checked={ingresoEsFondo}
+                    onChange={(event) => setIngresoEsFondo(event.target.checked)}
+                  />
+                  Es ganancia de la fundación
+                </label>
+                <button type="submit" disabled={registrandoIngreso}>
+                  {registrandoIngreso ? 'Registrando…' : 'Registrar ingreso'}
+                </button>
+              </form>
+              {errorIngreso && <p className="caja-error">{errorIngreso}</p>}
             </section>
           )}
 

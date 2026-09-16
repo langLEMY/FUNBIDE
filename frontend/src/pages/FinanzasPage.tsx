@@ -48,45 +48,65 @@ export function FinanzasPage() {
 
   useEffect(() => {
     let cancelado = false
-    setCargandoResumen(true)
-    api
-      .get<ResumenMensual[]>(`/api/finanzas-admin/resumen-anual?anio=${anio}`)
-      .then((datos) => {
-        if (!cancelado) setResumenAnual(datos)
-      })
-      .catch((err) => {
-        if (!cancelado) setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar el resumen anual.')
-      })
-      .finally(() => {
-        if (!cancelado) setCargandoResumen(false)
-      })
+
+    const cargarResumenAnual = (mostrarCargando: boolean) => {
+      if (mostrarCargando) setCargandoResumen(true)
+      return api
+        .get<ResumenMensual[]>(`/api/finanzas-admin/resumen-anual?anio=${anio}`)
+        .then((datos) => {
+          if (!cancelado) setResumenAnual(datos)
+        })
+        .catch((err) => {
+          if (!cancelado) setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar el resumen anual.')
+        })
+        .finally(() => {
+          if (!cancelado && mostrarCargando) setCargandoResumen(false)
+        })
+    }
+
+    void cargarResumenAnual(true)
+    // Ver el mismo comentario en el efecto de movimientos: sin refresco periódico, un
+    // cobro o gasto nuevo no se veía reflejado en el gráfico hasta recargar la página.
+    const intervalo = setInterval(() => void cargarResumenAnual(false), 20_000)
+
     return () => {
       cancelado = true
+      clearInterval(intervalo)
     }
   }, [anio])
 
   useEffect(() => {
     let cancelado = false
     const { desde, hasta } = construirRango(anio, mes)
-    setCargandoMovimientos(true)
-    api
-      .get<MovimientoImportante[]>(
-        `/api/finanzas-admin/movimientos?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`,
-      )
-      .then((datos) => {
-        if (!cancelado) setMovimientos(datos)
-      })
-      .catch((err) => {
-        if (!cancelado) {
-          setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar los movimientos.')
-        }
-      })
-      .finally(() => {
-        if (!cancelado) setCargandoMovimientos(false)
-      })
+
+    const cargarMovimientos = (mostrarCargando: boolean) => {
+      if (mostrarCargando) setCargandoMovimientos(true)
+      return api
+        .get<MovimientoImportante[]>(
+          `/api/finanzas-admin/movimientos?desde=${encodeURIComponent(desde)}&hasta=${encodeURIComponent(hasta)}`,
+        )
+        .then((datos) => {
+          if (!cancelado) setMovimientos(datos)
+        })
+        .catch((err) => {
+          if (!cancelado) {
+            setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cargar los movimientos.')
+          }
+        })
+        .finally(() => {
+          if (!cancelado && mostrarCargando) setCargandoMovimientos(false)
+        })
+    }
+
+    void cargarMovimientos(true)
+    // Sin esto, un cobro registrado en Cobros o un gasto registrado en Caja/Admin no
+    // aparecía acá (ni en el gráfico de "Ganancias por mes") hasta recargar la página a
+    // mano. Recarga silenciosa (sin tocar `cargandoMovimientos`) cada 20s.
+    const intervalo = setInterval(() => void cargarMovimientos(false), 20_000)
 
     return () => {
       cancelado = true
+      clearInterval(intervalo)
     }
   }, [anio, mes])
 

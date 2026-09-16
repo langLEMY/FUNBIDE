@@ -11,9 +11,12 @@ public interface IObtenerResumenPorDoctorUseCase : IUseCase<ResumenPorDoctorRequ
 /// <summary>
 /// Pacientes atendidos y dinero generado por un doctor puntual en un rango de fechas, para
 /// los widgets filtrables de "Resumen" de Admin. Se ancla en <see cref="Domain.Entities.Cobro.RegistradoEn"/>
-/// (no en la cita) porque <see cref="Domain.Entities.Cita"/> no guarda cuándo se completó —
-/// un cobro sin <see cref="Domain.Entities.Cobro.CitaId"/> (pago particular sin cita) no se
-/// le puede atribuir a ningún doctor y queda fuera de ambos números.
+/// (no en la cita) porque <see cref="Domain.Entities.Cita"/> no guarda cuándo se completó.
+/// Un cobro se atribuye a un doctor de dos formas, en este orden: primero por
+/// <see cref="Domain.Entities.Cobro.DoctorId"/> (asignado directo, típico de un pago
+/// particular sin cita) y, si ese campo es null, por el doctor de la cita asociada — antes
+/// solo se miraba la cita, así que todo cobro particular con doctor asignado directo (sin
+/// CitaId) quedaba fuera del resumen de ese doctor.
 /// </summary>
 public sealed class ObtenerResumenPorDoctorUseCase(
     ICobroRepository cobroRepository,
@@ -22,19 +25,17 @@ public sealed class ObtenerResumenPorDoctorUseCase(
     public async Task<ResumenPorDoctorDto> EjecutarAsync(ResumenPorDoctorRequest request, CancellationToken cancellationToken)
     {
         var cobros = await cobroRepository.ObtenerPorRangoAsync(request.Desde, request.Hasta, cancellationToken);
-        var cobrosConCita = cobros.Where(c => c.CitaId.HasValue).ToList();
 
-        if (cobrosConCita.Count == 0)
-        {
-            return new ResumenPorDoctorDto(0, 0);
-        }
+        var cobrosSinDoctorDirecto = cobros.Where(c => c.DoctorId is null && c.CitaId.HasValue).ToList();
+        var citaIds = cobrosSinDoctorDirecto.Select(c => c.CitaId!.Value).Distinct().ToList();
+        var doctorPorCita = citaIds.Count > 0
+            ? await citaRepository.ObtenerDoctorIdsPorCitaIdsAsync(citaIds, cancellationToken)
+            : new Dictionary<Guid, Guid>();
 
-        var citaIds = cobrosConCita.Select(c => c.CitaId!.Value).Distinct().ToList();
-        var doctorPorCita = await citaRepository.ObtenerDoctorIdsPorCitaIdsAsync(citaIds, cancellationToken);
+        Guid? ResolverDoctorId(Domain.Entities.Cobro c) =>
+            c.DoctorId ?? (c.CitaId.HasValue && doctorPorCita.TryGetValue(c.CitaId.Value, out var doctorId) ? doctorId : null);
 
-        var cobrosDelDoctor = cobrosConCita
-            .Where(c => doctorPorCita.TryGetValue(c.CitaId!.Value, out var doctorId) && doctorId == request.DoctorId)
-            .ToList();
+        var cobrosDelDoctor = cobros.Where(c => ResolverDoctorId(c) == request.DoctorId).ToList();
 
         var pacientesAtendidos = cobrosDelDoctor.Select(c => c.PacienteId).Distinct().Count();
         var dineroGenerado = cobrosDelDoctor.Sum(c => c.MontoTotal);
