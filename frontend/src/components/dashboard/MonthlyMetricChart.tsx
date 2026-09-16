@@ -4,6 +4,11 @@ import { coloresParaTema } from '../../styles/colors'
 import { useTheme } from '../../theme/ThemeContext'
 import './MonthlyMetricChart.css'
 
+// Espejo JS de --duracion-lenta (theme.css) -- igual que chartColorsPorTema en
+// colors.ts, recharts recibe milisegundos como número, no puede leer un var()
+// CSS. Mantener sincronizado a mano si --duracion-lenta cambia.
+const DURACION_ANIMACION_MS = 320
+
 interface MonthlyMetricChartProps {
   titulo: string
   datos: ResumenDiario[]
@@ -12,10 +17,32 @@ interface MonthlyMetricChartProps {
   formatearValor: (valor: number) => string
 }
 
+interface TooltipVidrioProps {
+  active?: boolean
+  payload?: { value?: number }[]
+  label?: number | string
+  titulo: string
+  formatearValor: (valor: number) => string
+}
+
+function TooltipVidrio({ active, payload, label, titulo, formatearValor }: TooltipVidrioProps) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="monthly-chart-tooltip">
+      <p className="monthly-chart-tooltip-label">Día {label}</p>
+      <p className="monthly-chart-tooltip-valor">
+        {formatearValor(Number(payload[0].value))} · {titulo}
+      </p>
+    </div>
+  )
+}
+
 export function MonthlyMetricChart({ titulo, datos, dataKey, color, formatearValor }: MonthlyMetricChartProps) {
   const { tema } = useTheme()
   const chartColors = coloresParaTema(tema)
   const gradientId = `monthly-chart-fill-${dataKey}`
+  const animar =
+    typeof window === 'undefined' || !window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const puntos = datos.map((resumen) => ({
     dia: Number(resumen.fecha.slice(-2)),
@@ -54,15 +81,7 @@ export function MonthlyMetricChart({ titulo, datos, dataKey, color, formatearVal
               />
               <Tooltip
                 cursor={{ stroke: chartColors.baseline, strokeWidth: 1 }}
-                contentStyle={{
-                  background: chartColors.surface2,
-                  border: `1px solid ${chartColors.borderHairline}`,
-                  borderRadius: 8,
-                  fontSize: 13,
-                }}
-                labelStyle={{ color: chartColors.textMuted }}
-                labelFormatter={(dia) => `Día ${dia}`}
-                formatter={(valor) => [formatearValor(Number(valor)), titulo]}
+                content={<TooltipVidrio titulo={titulo} formatearValor={formatearValor} />}
               />
               <Area
                 type="monotone"
@@ -72,6 +91,9 @@ export function MonthlyMetricChart({ titulo, datos, dataKey, color, formatearVal
                 fill={`url(#${gradientId})`}
                 dot={false}
                 activeDot={{ r: 4, fill: color, stroke: chartColors.surface1, strokeWidth: 2 }}
+                isAnimationActive={animar}
+                animationDuration={DURACION_ANIMACION_MS}
+                animationEasing="ease-out"
               />
             </AreaChart>
           </ResponsiveContainer>
