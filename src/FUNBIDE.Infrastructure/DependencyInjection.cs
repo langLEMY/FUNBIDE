@@ -4,6 +4,7 @@ using FUNBIDE.Domain.Interfaces;
 using FUNBIDE.Infrastructure.BackgroundServices;
 using FUNBIDE.Infrastructure.Caching;
 using FUNBIDE.Infrastructure.Files;
+using FUNBIDE.Infrastructure.Health;
 using FUNBIDE.Infrastructure.Logging;
 using FUNBIDE.Infrastructure.Persistence;
 using FUNBIDE.Infrastructure.Persistence.Repositories;
@@ -62,12 +63,17 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.AddSingleton<IConfiguracionSistemaCache, ConfiguracionSistemaCache>();
 
+        // "database" es el nombre que después lee /health en Program.cs para armar el
+        // detalle de la respuesta -- si se renombra acá, hay que renombrarlo ahí también.
+        services.AddHealthChecks().AddCheck<SupabaseHealthCheck>("database");
+
         services.AddScoped<IAuditoriaLogService, AuditoriaLogService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IPermisoResolverService, PermisoResolverService>();
         services.AddScoped<IEstadoBaseDeDatosService, EstadoBaseDeDatosService>();
         services.AddScoped<IEstadoBackupService, EstadoBackupService>();
         services.AddScoped<IEspacioDiscoService, EspacioDiscoService>();
+        services.AddScoped<IAlertaAdminService, AlertaAdminLogService>();
         services.AddScoped<IExcelLectorService, ExcelLectorService>();
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 

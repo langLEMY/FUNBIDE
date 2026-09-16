@@ -7,7 +7,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Serilog;
+using System.Text.Json;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -148,7 +151,27 @@ app.UseHttpsRedirection();
 app.UseFunbidePipeline();
 
 app.MapControllers();
-app.MapGet("/health", () => Results.Ok(new { estado = "ok" })).AllowAnonymous();
+
+// Antes devolvía {estado:"ok"} siempre, sin verificar nada -- ahora corre
+// SupabaseHealthCheck (Database.CanConnectAsync real) y responde 503 si la base no es
+// alcanzable, para que tanto el healthcheck de Docker (docker-compose.yml) como quien
+// mire /health a mano vean el estado real, no solo "el proceso sigue vivo".
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var cuerpo = JsonSerializer.Serialize(new
+        {
+            estado = report.Status == HealthStatus.Healthy ? "ok" : "degradado",
+            baseDeDatos = report.Entries.TryGetValue("database", out var entrada)
+                ? entrada.Status == HealthStatus.Healthy ? "ok" : "no disponible"
+                : "desconocido",
+        });
+        await context.Response.WriteAsync(cuerpo);
+    }
+}).AllowAnonymous();
+
 app.MapFallbackToFile("index.html", opcionesArchivosEstaticos).AllowAnonymous();
 
 app.Run();
