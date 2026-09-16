@@ -65,6 +65,9 @@ public sealed class CobroRepository(FunbideDbContext dbContext) : ICobroReposito
     public Task<bool> ExisteCobroParaCitaAsync(Guid citaId, CancellationToken cancellationToken) =>
         dbContext.Cobros.AnyAsync(c => c.CitaId == citaId, cancellationToken);
 
+    public Task<Cobro?> ObtenerPorClaveIdempotenciaAsync(string claveIdempotencia, CancellationToken cancellationToken) =>
+        dbContext.Cobros.AsNoTracking().FirstOrDefaultAsync(c => c.ClaveIdempotencia == claveIdempotencia, cancellationToken);
+
     public async Task AgregarAsync(Cobro cobro, CancellationToken cancellationToken) =>
         await dbContext.Cobros.AddAsync(cobro, cancellationToken);
 

@@ -13,6 +13,7 @@ public sealed class RegistrarCobroRequestValidator : AbstractValidator<Registrar
             .MaximumLength(300).WithMessage("El concepto no puede tener más de 300 caracteres.");
         RuleFor(x => x.MontoTotal).GreaterThan(0).WithMessage("El monto total debe ser mayor a cero.");
         RuleFor(x => x.Pagos).NotNull().WithMessage("Agrega al menos una forma de pago.");
+        RuleFor(x => x.ClaveIdempotencia).MaximumLength(100).WithMessage("La clave de idempotencia no puede tener más de 100 caracteres.");
 
         RuleForEach(x => x.Pagos).ChildRules(pago =>
         {

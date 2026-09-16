@@ -26,6 +26,7 @@ public sealed class CobroConfiguration : IEntityTypeConfiguration<Cobro>
         builder.Property(c => c.DoctorId);
         builder.Property(c => c.MontoPagado).HasColumnType("decimal(12,2)").IsRequired();
         builder.Property(c => c.RegistradoEn).IsRequired();
+        builder.Property(c => c.ClaveIdempotencia).HasMaxLength(100);
 
         // Desglose de cómo se pagó (ver PagoRecibido): owned collection en su propia
         // tabla, sin identidad propia — vive y muere con el Cobro dueño. Clave natural
@@ -52,5 +53,10 @@ public sealed class CobroConfiguration : IEntityTypeConfiguration<Cobro>
         builder.HasIndex(c => c.CitaId);
         builder.HasIndex(c => c.RegistradoEn);
         builder.HasIndex(c => c.DoctorId);
+        // Único solo entre las filas que sí traen clave (la mayoría de los cobros no van a
+        // tenerla hasta que el frontend adopte el campo) -- sin el filtro, Postgres trataría
+        // cada NULL como distinto igual, pero el filtro deja la intención explícita y evita
+        // que el índice cargue con filas que nunca lo van a usar.
+        builder.HasIndex(c => c.ClaveIdempotencia).IsUnique().HasFilter("\"ClaveIdempotencia\" IS NOT NULL");
     }
 }

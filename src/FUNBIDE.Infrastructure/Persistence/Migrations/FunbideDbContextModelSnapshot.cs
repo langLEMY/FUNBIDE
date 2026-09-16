@@ -108,6 +108,10 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("CitaId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ClaveIdempotencia")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("CodigoAutorizacion")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -156,6 +160,10 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CitaId");
+
+                    b.HasIndex("ClaveIdempotencia")
+                        .IsUnique()
+                        .HasFilter("\"ClaveIdempotencia\" IS NOT NULL");
 
                     b.HasIndex("DoctorId");
 

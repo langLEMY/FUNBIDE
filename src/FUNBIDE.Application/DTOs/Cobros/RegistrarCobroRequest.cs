@@ -20,4 +20,12 @@ public sealed record RegistrarCobroRequest(
     /// </summary>
     Guid? TarifarioProcedimientoId = null,
     /// <summary>Doctor con el que se atiende el paciente — SupabaseUserId, igual que <c>Cita.DoctorId</c>.</summary>
-    Guid? DoctorId = null);
+    Guid? DoctorId = null,
+    /// <summary>
+    /// Generada por el cliente (ej. un GUID nuevo por cada intento de submit del
+    /// formulario), no por el servidor. Si se repite, RegistrarCobroUseCase devuelve el
+    /// cobro ya creado en vez de duplicarlo — protege contra un doble-click en "Registrar"
+    /// o un reintento automático de red tras un timeout que en realidad sí procesó.
+    /// Opcional: un cliente que no la manda simplemente no queda protegido.
+    /// </summary>
+    string? ClaveIdempotencia = null);
