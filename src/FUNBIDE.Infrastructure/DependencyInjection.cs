@@ -73,7 +73,11 @@ public static class DependencyInjection
         services.AddScoped<IEstadoBaseDeDatosService, EstadoBaseDeDatosService>();
         services.AddScoped<IEstadoBackupService, EstadoBackupService>();
         services.AddScoped<IEspacioDiscoService, EspacioDiscoService>();
-        services.AddScoped<IAlertaAdminService, AlertaAdminLogService>();
+        // Singleton, no Scoped: BackupEjecutorService (el único consumidor) es Singleton
+        // -- un servicio Scoped ahí sería un "captive dependency" que la validación de DI
+        // de ASP.NET Core rechaza al construir el host. AlertaAdminLogService no tiene
+        // estado por-request (solo envuelve un ILogger), así que ser singleton es seguro.
+        services.AddSingleton<IAlertaAdminService, AlertaAdminLogService>();
         services.AddScoped<IExcelLectorService, ExcelLectorService>();
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
