@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -60,7 +62,8 @@ public static class JwtAuthenticationExtensions
 
                 options.Events = new JwtBearerEvents
                 {
-                    OnTokenValidated = ProyectarRolDeAppMetadataAsync
+                    OnTokenValidated = ProyectarRolDeAppMetadataAsync,
+                    OnChallenge = EscribirDesafioComoProblemDetailsAsync
                 };
             });
 
@@ -112,12 +115,46 @@ public static class JwtAuthenticationExtensions
                     NameClaimType = "sub",
                     ClockSkew = TimeSpan.FromSeconds(30)
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = EscribirDesafioComoProblemDetailsAsync
+                };
             });
 
         services.AddAuthorization();
         services.AddHttpContextAccessor();
 
         return services;
+    }
+
+    /// <summary>
+    /// Sin esto, un token ausente/vencido/con firma inválida hace que JwtBearerHandler
+    /// escriba su 401 por defecto: solo el header WWW-Authenticate, sin cuerpo. Eso
+    /// rompe la consistencia con RoleAuthorizationMiddleware/PermisoAuthorizationMiddleware/
+    /// SesionRevocadaMiddleware, que sí devuelven ProblemDetails (RFC 7807) — acá se hace
+    /// lo mismo, para que "no autenticado" se vea igual sin importar en qué capa falló.
+    /// </summary>
+    private static async Task EscribirDesafioComoProblemDetailsAsync(JwtBearerChallengeContext context)
+    {
+        context.HandleResponse();
+        context.Response.ContentType = "application/problem+json";
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+
+        var detalle = context.AuthenticateFailure switch
+        {
+            SecurityTokenExpiredException => "Tu sesión expiró. Iniciá sesión de nuevo.",
+            null => "Esta operación requiere un token de acceso válido.",
+            _ => "El token de acceso no es válido."
+        };
+
+        await context.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Title = "No autenticado",
+            Detail = detalle,
+            Status = StatusCodes.Status401Unauthorized,
+            Instance = context.Request.Path
+        });
     }
 
     private static Task ProyectarRolDeAppMetadataAsync(TokenValidatedContext context)

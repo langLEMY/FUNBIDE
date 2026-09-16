@@ -150,6 +150,15 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddFunbideValidators(this IServiceCollection services)
     {
+        // Los 39 validadores de la app no ponen WithMessage() en casi ninguna regla, así
+        // que sin esto cada mensaje de error sale en el inglés por defecto de
+        // FluentValidation ("'Cedula' must not be empty.") -- FluentValidation ya trae
+        // traducciones al español out of the box, esto las activa globalmente sin tocar
+        // los 39 archivos uno por uno. Los validadores más usados (Pacientes, Cobros)
+        // además tienen WithMessage()/WithName() propios con lenguaje más natural que la
+        // traducción genérica; el resto ya queda en español aunque sea más técnico.
+        ValidatorOptions.Global.LanguageManager.Culture = new System.Globalization.CultureInfo("es");
+
         services.AddValidatorsFromAssemblyContaining<IObtenerCitasPorEstadoUseCase>();
         return services;
     }
