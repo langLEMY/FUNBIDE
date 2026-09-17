@@ -3035,10 +3035,12 @@ namespace FUNBIDE.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Correo")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("NOT \"EliminadoPermanentemente\"");
 
                     b.HasIndex("NombreUsuario")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("NOT \"EliminadoPermanentemente\"");
 
                     b.HasIndex("SupabaseUserId")
                         .IsUnique();

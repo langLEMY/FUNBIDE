@@ -224,7 +224,7 @@ export function PacientesPage() {
       <div className="pacientes-buscador">
         <input
           type="search"
-          placeholder="Buscar por nombre o condición…"
+          placeholder="Buscar por nombre, cédula o condición…"
           value={busqueda}
           onChange={(event) => setBusqueda(event.target.value)}
         />

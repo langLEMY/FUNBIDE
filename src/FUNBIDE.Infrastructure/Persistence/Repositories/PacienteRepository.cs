@@ -37,9 +37,27 @@ public sealed class PacienteRepository(FunbideDbContext dbContext) : IPacienteRe
                     .Replace("%", "\\%")
                     .Replace("_", "\\_");
                 var patron = $"%{textoEscapado}%";
+
+                // SQL crudo para la cédula, no EF.Functions.ILike(p.Documento...): acceder a
+                // un miembro de un Value Object convertido (HasConversion) dentro del
+                // predicado no traduce (ver ObtenerPorDocumentoAsync), y EF.Property<string>
+                // arrastra igual el conversor de DocumentoIdentidad al literal del patrón y
+                // revienta en tiempo de ejecución al armar el SQL. Consultar la columna cruda
+                // por SQL evita el problema de raíz.
+                var idsPorDocumento = await dbContext.Database
+                    .SqlQuery<Guid>(
+                        $"SELECT \"Id\" FROM funbide.pacientes WHERE documento_identidad ILIKE {patron} ESCAPE '\\'")
+                    .ToListAsync(ct);
+
                 query = query.Where(p =>
                     EF.Functions.ILike(p.Nombre, patron, "\\") ||
                     EF.Functions.ILike(p.Apellido, patron, "\\") ||
+                    // Sin esto, buscar "Milagros Hernandez" (nombre + apellido juntos, como
+                    // escribe cualquiera) no encontraba a un paciente con Nombre="Milagros"
+                    // y Apellido="Hernandez Santos": la frase completa no está contenida en
+                    // NINGUNA de las dos columnas por separado, solo en su concatenación.
+                    EF.Functions.ILike(p.Nombre + " " + p.Apellido, patron, "\\") ||
+                    idsPorDocumento.Contains(p.Id) ||
                     (p.Condicion != null && EF.Functions.ILike(p.Condicion, patron, "\\")));
             }
 
