@@ -46,9 +46,16 @@ public sealed class AutenticacionLocalService(
         // solo. Es una lectura pura (SELECT), así que reintentarla es seguro.
         var (usuario, credencial) = await PoliticaReintentoLectura.EjecutarAsync(async ct =>
         {
+            // "!EliminadoPermanentemente" es necesario, no cosmético: desde que el índice
+            // único de Correo quedó filtrado (para poder reactivar un correo de una cuenta
+            // borrada permanentemente, ver UsuarioConfiguration), puede haber DOS filas con
+            // el mismo correo -- la vieja (desactivada, tombstone) y la nueva cuenta real.
+            // Sin este filtro, esta consulta podía traer cualquiera de las dos sin orden
+            // definido, y si tocaba la vieja, el login fallaba siempre para la cuenta nueva
+            // aunque la contraseña fuera correcta.
             var usuarioEncontrado = await dbContext.Usuarios
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Correo == correoNormalizado, ct);
+                .FirstOrDefaultAsync(u => u.Correo == correoNormalizado && !u.EliminadoPermanentemente, ct);
 
             CredencialLocal? credencialEncontrada = null;
             if (usuarioEncontrado is not null && usuarioEncontrado.Activo && !usuarioEncontrado.EliminadoPermanentemente)
