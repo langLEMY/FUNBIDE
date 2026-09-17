@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using FUNBIDE.Application.Common.Interfaces;
 using FUNBIDE.Infrastructure.Persistence;
+using FUNBIDE.Infrastructure.Resiliencia;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -37,17 +38,28 @@ public sealed class AutenticacionLocalService(
         string correo, string contrasena, CancellationToken cancellationToken)
     {
         var correoNormalizado = correo.Trim().ToLowerInvariant();
-        var usuario = await dbContext.Usuarios
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Correo == correoNormalizado, cancellationToken);
 
-        CredencialLocal? credencial = null;
-        if (usuario is not null && usuario.Activo && !usuario.EliminadoPermanentemente)
+        // Envuelto en PoliticaReintentoLectura (mismo patrón que PacienteRepository): es la
+        // PRIMERA consulta que toca la base tras abrir la app, así que un corte de red breve
+        // acá terminaba disparando la pantalla de mantenimiento completa (ExceptionHandlingMiddleware
+        // -> 503) en el peor momento posible, justo al iniciar sesión, en vez de reintentarse
+        // solo. Es una lectura pura (SELECT), así que reintentarla es seguro.
+        var (usuario, credencial) = await PoliticaReintentoLectura.EjecutarAsync(async ct =>
         {
-            credencial = await dbContext.CredencialesLocales
+            var usuarioEncontrado = await dbContext.Usuarios
                 .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.UsuarioId == usuario.SupabaseUserId, cancellationToken);
-        }
+                .FirstOrDefaultAsync(u => u.Correo == correoNormalizado, ct);
+
+            CredencialLocal? credencialEncontrada = null;
+            if (usuarioEncontrado is not null && usuarioEncontrado.Activo && !usuarioEncontrado.EliminadoPermanentemente)
+            {
+                credencialEncontrada = await dbContext.CredencialesLocales
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(c => c.UsuarioId == usuarioEncontrado.SupabaseUserId, ct);
+            }
+
+            return (usuarioEncontrado, credencialEncontrada);
+        }, cancellationToken);
 
         var passwordValida = VerificarContrasena(credencial?.PasswordHash ?? HashFicticio, contrasena);
 

@@ -1,6 +1,7 @@
 using FUNBIDE.Domain.Entities;
 using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.Interfaces;
+using FUNBIDE.Infrastructure.Resiliencia;
 using Microsoft.EntityFrameworkCore;
 
 namespace FUNBIDE.Infrastructure.Persistence.Repositories;
@@ -25,8 +26,16 @@ public sealed class UsuarioRepository(FunbideDbContext dbContext) : IUsuarioRepo
 
     // Mismo criterio que ObtenerPorCorreoAsync: un usuario borrado permanentemente libera
     // su nombre de usuario para poder reusarse.
+    // Envuelto en PoliticaReintentoLectura: es la PRIMERA consulta a la base en cada intento
+    // de login (ResolverCorreoPorNombreUsuarioUseCase corre antes que la verificación de
+    // contraseña), así que un corte de red breve acá es lo más visible que le puede pasar
+    // a alguien recién abriendo la app — mejor reintentarlo solo que mostrar la pantalla de
+    // mantenimiento completa por una lectura que se resuelve sola medio segundo después.
     public Task<Usuario?> ObtenerPorNombreUsuarioAsync(string nombreUsuario, CancellationToken cancellationToken) =>
-        dbContext.Usuarios.AsNoTracking().FirstOrDefaultAsync(u => u.NombreUsuario == nombreUsuario && !u.EliminadoPermanentemente, cancellationToken);
+        PoliticaReintentoLectura.EjecutarAsync(
+            ct => dbContext.Usuarios.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.NombreUsuario == nombreUsuario && !u.EliminadoPermanentemente, ct),
+            cancellationToken);
 
     // Excluye a los borrados permanentemente: ya no existen en Supabase Auth, así que
     // no tiene sentido que sigan apareciendo en el listado de personal.
