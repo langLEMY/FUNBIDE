@@ -17,7 +17,9 @@ export function ThemeToggleButton({ className }: ThemeToggleButtonProps) {
   const { tema, alternarTema } = useTheme()
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
-    const doc = document as Document & { startViewTransition?: (callback: () => void) => unknown }
+    const doc = document as Document & {
+      startViewTransition?: (callback: () => void) => { finished: Promise<void> }
+    }
     const prefiereMenosMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     // Barrido circular desde el punto exacto del click (View Transitions API,
@@ -37,8 +39,22 @@ export function ThemeToggleButton({ className }: ThemeToggleButtonProps) {
     document.documentElement.style.setProperty('--tema-barrido-y', `${y}px`)
     document.documentElement.style.setProperty('--tema-barrido-radio', `${radio}px`)
 
-    doc.startViewTransition(() => {
+    // Sin esto, el barrido circular quedaba "duplicado": la View Transition ya
+    // anima el clip-path del snapshot nuevo (::view-transition-new), pero el
+    // DOM vivo debajo también dispara su propia transition de
+    // background-color/border-color/color (la regla global de theme.css) al
+    // mismo tiempo -- dos animaciones de color superpuestas, con timings
+    // distintos, se ven como un parpadeo/doble barrido en vez de un solo
+    // gesto limpio. .cambiando-tema anula esa transition global mientras dura
+    // la View Transition, para que el único movimiento visible sea el clip-path.
+    document.documentElement.classList.add('cambiando-tema')
+
+    const transicion = doc.startViewTransition(() => {
       alternarTema()
+    })
+
+    void transicion.finished.finally(() => {
+      document.documentElement.classList.remove('cambiando-tema')
     })
   }
 

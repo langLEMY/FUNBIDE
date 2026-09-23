@@ -67,17 +67,23 @@
      pacientes (gráficos de conteo, badges de estado de paciente). Nunca elegir
      uno de los dos "porque queda lindo" en una pantalla que no es ni lo uno ni
      lo otro (Personal, Donaciones, Recepción, etc.).
-     Excepción documentada: --series-pacientes se reutiliza hoy, en todo el
-     resto de la app, como el acento primario genérico (botones primarios,
-     anillo de foco, estado activo del sidebar) — es un patrón preexistente y
-     extendido (ver Boton.css, Sidebar.css, y el focus-visible más abajo), no
-     un uso suelto aislado. Corregirlo del todo implica introducir un token
-     --acento-primario separado y migrar cada uno de esos usos; queda fuera de
-     este cambio puntual por el tamaño del refactor, no por descuido. */
+     --series-pacientes ya NO es el acento primario genérico (botones
+     primarios, anillo de foco, estado activo del sidebar) — eso ahora es
+     --acento-primario, un token separado. --series-pacientes vuelve a ser
+     estrictamente semántico: gráficos/KPIs de conteo de pacientes, nada más. */
   --series-dinero: #e2984f;
   --series-dinero-fill: rgba(226, 152, 79, 0.12);
   --series-pacientes: #2fbf8f;
   --series-pacientes-fill: rgba(47, 191, 143, 0.12);
+
+  /* Acento primario genérico de la app: botones primarios, anillo de foco,
+     estado activo del sidebar, barrido del toggle de tema, cualquier link o
+     estado "seleccionado" que no sea literalmente una gráfica de pacientes.
+     Azul intencionalmente distinto de --series-pacientes (verde) y
+     --series-dinero (ámbar) para no competir con ninguna de las dos series
+     semánticas en la misma pantalla (p. ej. Finanzas, Dashboard). */
+  --acento-primario: #4c7dff;
+  --acento-primario-fill: rgba(76, 125, 255, 0.14);
 
   --danger: #dd7d70;
   /* Acento de "alerta/atención" (vencimientos, pendientes): distinto de
@@ -180,6 +186,16 @@
   --series-dinero-fill: rgba(193, 120, 48, 0.1);
   --series-pacientes: #2fbf8f;
   --series-pacientes-fill: rgba(47, 191, 143, 0.12);
+
+  /* Mucho más oscuro que el azul del modo oscuro (#4C7DFF): sobre fondo claro
+     un azul medio no llega a 3:1 de contraste. Verificado con la fórmula de
+     luminancia relativa de WCAG: #0B1E75 sobre --page-plane/--surface-1
+     (blanco/casi blanco) da ~14.4:1, y sobre --surface-2 (#f3f1ec) ~12.7:1 —
+     ambos superan AA (4.5:1 texto, 3:1 componentes) con margen amplio.
+     En modo oscuro, #4C7DFF sobre --page-plane/--surface-1/--surface-2
+     (negro/casi negro) da ~5.6:1 — también pasa AA. */
+  --acento-primario: #0b1e75;
+  --acento-primario-fill: rgba(11, 30, 117, 0.1);
 
   --danger: #c4574b;
   --acento-alerta: #b3860f;
@@ -328,6 +344,19 @@ p {
     color var(--duracion-base) var(--ease-suave);
 }
 
+/* Ver ThemeToggleButton.tsx: mientras dura la View Transition del barrido
+   circular, el DOM vivo NO debe transicionar sus propios colores -- si lo
+   hace, se superpone con el clip-path que ya anima el snapshot
+   (::view-transition-new) y el barrido se ve doble/parpadeante en vez de un
+   solo gesto limpio. !important porque tiene que ganarle a cualquier
+   transition más específica (button/a/input/select/textarea más abajo,
+   .equipo-tarjeta, etc.), no solo a la regla genérica de arriba. */
+:root.cambiando-tema *,
+:root.cambiando-tema *::before,
+:root.cambiando-tema *::after {
+  transition: none !important;
+}
+
 button,
 input,
 select {
@@ -365,8 +394,8 @@ textarea:focus-visible,
 button:focus-visible,
 a:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--series-pacientes) 35%, transparent);
-  border-color: var(--series-pacientes);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento-primario) 35%, transparent);
+  border-color: var(--acento-primario);
 }
 
 /* Respuesta a la presión para cualquier elemento clickeable, no solo <button>:
@@ -394,7 +423,7 @@ a:not([aria-disabled='true']):active {
      comunica "esto se levantó". */
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08),
     0 12px 28px -10px rgba(0, 0, 0, 0.7),
-    0 0 24px -8px color-mix(in srgb, var(--series-pacientes) 25%, transparent);
+    0 0 24px -8px color-mix(in srgb, var(--acento-primario) 25%, transparent);
 }
 
 .equipo-tarjeta:active {

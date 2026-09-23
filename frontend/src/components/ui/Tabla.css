@@ -55,7 +55,7 @@
 }
 
 .ui-tabla-encabezado-flecha-activa {
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
 }
 
 .ui-tabla-encabezado-flecha-desc {

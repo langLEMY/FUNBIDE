@@ -103,11 +103,11 @@
 }
 
 .ui-rango-fechas-dia-en-rango {
-  background: color-mix(in srgb, var(--series-pacientes) 18%, transparent);
+  background: color-mix(in srgb, var(--acento-primario) 18%, transparent);
 }
 
 .ui-rango-fechas-dia-extremo {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   color: var(--text-primary);
   font-weight: 600;
 }

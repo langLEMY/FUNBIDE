@@ -33,13 +33,13 @@
 }
 
 .resumen-presets button.activo {
-  background: var(--series-pacientes);
-  border-color: var(--series-pacientes);
+  background: var(--acento-primario);
+  border-color: var(--acento-primario);
   color: #ffffff;
 }
 
 .resumen-presets button.activo:hover {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   filter: brightness(1.05);
 }
 
@@ -214,7 +214,7 @@
 }
 
 .resumen-tipo-ingreso {
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
   font-weight: 500;
 }
 

@@ -110,7 +110,7 @@
 
 .permisos-row-estado.activo {
   background: rgba(25, 158, 112, 0.16);
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
 }
 
 .permisos-row-estado.inactivo {

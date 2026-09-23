@@ -120,7 +120,7 @@
 }
 
 .recepcion-tabla td button {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   color: var(--page-plane);
   border: none;
   border-radius: var(--radius-control);
@@ -149,8 +149,8 @@
 }
 
 .recepcion-badge-en-espera {
-  background: color-mix(in srgb, var(--series-pacientes) 20%, transparent);
-  color: var(--series-pacientes);
+  background: color-mix(in srgb, var(--acento-primario) 20%, transparent);
+  color: var(--acento-primario);
 }
 
 .recepcion-badge-deuda {

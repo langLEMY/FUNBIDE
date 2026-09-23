@@ -30,7 +30,7 @@
 }
 
 .directorio-crear-form button {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   color: var(--text-primary);
   border: none;
   border-radius: var(--radius-control);

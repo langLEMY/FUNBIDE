@@ -136,8 +136,8 @@
 }
 
 .actividad-badge-exito {
-  background: var(--series-pacientes-fill);
-  color: var(--series-pacientes);
+  background: var(--acento-primario-fill);
+  color: var(--acento-primario);
 }
 
 .actividad-badge-fallido {

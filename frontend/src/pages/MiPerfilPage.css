@@ -131,7 +131,7 @@
   padding: 12px;
   border-radius: var(--radius-control);
   border: none;
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   color: #0d0f0c;
   font-weight: 600;
   cursor: pointer;
@@ -155,7 +155,7 @@
 .mi-perfil-exito {
   margin: 0 0 4px;
   font-size: 13px;
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
 }
 
 .mi-perfil-estado-lista {
@@ -197,7 +197,7 @@
 }
 
 .mi-perfil-estado-bien {
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
 }
 
 .mi-perfil-estado-mal {
@@ -228,7 +228,7 @@
 /* Realce sutil al pasar el mouse: la tarjeta "responde" sin gritar (sin elevación
    ni sombra) — coherente con que estas acciones son de diagnóstico, no navegación. */
 .mi-perfil-herramienta:hover {
-  border-color: var(--series-pacientes);
+  border-color: var(--acento-primario);
 }
 
 .mi-perfil-herramienta-icono {
@@ -239,7 +239,7 @@
   height: 34px;
   border-radius: 50%;
   background: var(--surface-1);
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
   flex-shrink: 0;
 }
 

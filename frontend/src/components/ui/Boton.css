@@ -50,8 +50,8 @@
 }
 
 .ui-boton-primario {
-  background: var(--series-pacientes);
-  border-color: var(--series-pacientes);
+  background: var(--acento-primario);
+  border-color: var(--acento-primario);
   color: var(--text-primary);
 }
 

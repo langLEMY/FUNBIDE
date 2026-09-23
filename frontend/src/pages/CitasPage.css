@@ -31,7 +31,7 @@
 }
 
 .citas-crear-form button {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   color: var(--text-primary);
   border: none;
   border-radius: var(--radius-control);
@@ -131,13 +131,13 @@
 }
 
 .citas-badge-en-espera {
-  background: var(--series-pacientes-fill);
-  color: var(--series-pacientes);
+  background: var(--acento-primario-fill);
+  color: var(--acento-primario);
 }
 
 .citas-badge-completada {
-  background: var(--series-pacientes-fill);
-  color: var(--series-pacientes);
+  background: var(--acento-primario-fill);
+  color: var(--acento-primario);
 }
 
 .citas-badge-cancelada {

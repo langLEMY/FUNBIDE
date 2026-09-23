@@ -200,7 +200,7 @@
 }
 
 .caja-timeline-ingreso {
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
   font-weight: 600;
 }
 
@@ -250,4 +250,55 @@
 
 .caja-cierre-acciones button:last-child {
   background: var(--surface-2);
+}
+
+.caja-resultado-arqueo-acciones {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Oculto en pantalla — ver imprimirVentana()/@media print más abajo. Mismo patrón que
+   .cobros-comprobante en CobrosPage.css, pero a tamaño de hoja normal (no 80mm), porque
+   este reporte de cierre trae mucho más detalle que un recibo. */
+.caja-comprobante-cierre {
+  display: none;
+}
+
+.caja-comprobante-membrete {
+  text-align: center;
+  padding-bottom: 8px;
+}
+
+.caja-comprobante-subtitulo {
+  margin: 8px 0 4px;
+  font-weight: 700;
+}
+
+@media print {
+  @page {
+    size: auto;
+    margin: 15mm;
+  }
+
+  .caja-comprobante-cierre {
+    display: block;
+    width: 100%;
+    color: #000;
+  }
+
+  .caja-comprobante-cierre dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 2px 10px;
+    margin: 0;
+  }
+
+  .caja-comprobante-cierre dt {
+    font-weight: 700;
+  }
+
+  .caja-comprobante-cierre dd {
+    margin: 0;
+  }
 }

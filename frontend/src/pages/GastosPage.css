@@ -5,7 +5,7 @@
 }
 
 .gastos-exito {
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
   font-size: 13px;
   margin: 10px 0 0;
 }
@@ -59,7 +59,7 @@
 }
 
 .gastos-kpi-ingresos {
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
 }
 
 .gastos-kpi-gastos {
@@ -104,7 +104,7 @@
 }
 
 .gastos-barra-ingresos {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
 }
 
 .gastos-barra-gastos {
@@ -136,7 +136,7 @@
 }
 
 .gastos-leyenda-ingresos {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
 }
 
 .gastos-leyenda-gastos {

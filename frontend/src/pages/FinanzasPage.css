@@ -18,7 +18,7 @@
 }
 
 .finanzas-admin-exito {
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
   font-size: 13px;
   margin: 10px 0 0;
 }
@@ -142,7 +142,7 @@
 }
 
 .finanzas-admin-tipo-ingreso {
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
   font-weight: 500;
 }
 

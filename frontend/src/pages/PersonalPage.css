@@ -31,7 +31,7 @@
 }
 
 .personal-crear-form button {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   color: var(--text-primary);
   border: none;
   border-radius: var(--radius-control);
@@ -88,8 +88,8 @@
 }
 
 .personal-tab.activo {
-  background: var(--series-pacientes);
-  border-color: var(--series-pacientes);
+  background: var(--acento-primario);
+  border-color: var(--acento-primario);
   color: #ffffff;
 }
 
@@ -186,7 +186,7 @@
 
 .personal-row-estado.activo {
   background: rgba(25, 158, 112, 0.16);
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
 }
 
 .personal-row-estado.inactivo {

@@ -49,7 +49,7 @@
 }
 
 .inventario-crear-form button {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   color: var(--text-primary);
   border: none;
   border-radius: var(--radius-control);
@@ -130,8 +130,8 @@
 }
 
 .inventario-tab.activo {
-  background: var(--series-pacientes);
-  border-color: var(--series-pacientes);
+  background: var(--acento-primario);
+  border-color: var(--acento-primario);
   color: #ffffff;
 }
 
@@ -146,8 +146,8 @@
 }
 
 .inventario-badge-ok {
-  background: var(--series-pacientes-fill);
-  color: var(--series-pacientes);
+  background: var(--acento-primario-fill);
+  color: var(--acento-primario);
 }
 
 .inventario-badge-bajo {

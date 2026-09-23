@@ -23,7 +23,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   color: var(--text-primary);
   font-size: 13px;
   font-weight: 600;

@@ -5,7 +5,7 @@
 }
 
 .donaciones-exito {
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
   font-size: 13px;
   margin: 10px 0 0;
 }
@@ -39,7 +39,7 @@
   margin: 4px 0 0;
   font-size: 26px;
   font-weight: 700;
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
 }
 
 .donaciones-tabla-titulo {
@@ -101,7 +101,7 @@
 }
 
 .donaciones-registrar-form button {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   color: var(--surface-1);
   border: none;
   border-radius: var(--radius-control);

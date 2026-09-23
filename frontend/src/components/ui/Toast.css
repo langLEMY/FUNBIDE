@@ -37,11 +37,11 @@
 }
 
 .ui-toast-info .ui-toast-icono {
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
 }
 
 .ui-toast-exito .ui-toast-icono {
-  color: var(--series-pacientes);
+  color: var(--acento-primario);
 }
 
 .ui-toast-error .ui-toast-icono {

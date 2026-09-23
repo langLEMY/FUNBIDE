@@ -54,8 +54,8 @@
 }
 
 .editar-permisos-interruptor.activo {
-  background: var(--series-pacientes);
-  border-color: var(--series-pacientes);
+  background: var(--acento-primario);
+  border-color: var(--acento-primario);
 }
 
 .editar-permisos-interruptor-perilla {

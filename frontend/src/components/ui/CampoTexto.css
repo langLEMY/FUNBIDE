@@ -35,8 +35,8 @@
    click con mouse, no solo a navegación por teclado. */
 .ui-campo-texto-input:focus {
   outline: none;
-  border-color: var(--series-pacientes);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--series-pacientes) 20%, transparent);
+  border-color: var(--acento-primario);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--acento-primario) 20%, transparent);
 }
 
 .ui-campo-texto-input[aria-invalid='true']:focus {

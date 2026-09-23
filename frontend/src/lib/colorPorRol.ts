@@ -1,7 +1,7 @@
 import type { RolUsuario } from '../types/usuario'
 
 const COLORES: Record<RolUsuario, string> = {
-  Admin: 'var(--series-pacientes)',
+  Admin: 'var(--acento-primario)',
   Doctor: 'var(--series-dinero)',
   Fondos: 'var(--danger)',
   Lemy: 'var(--series-dinero)',

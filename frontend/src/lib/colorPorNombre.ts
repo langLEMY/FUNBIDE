@@ -4,7 +4,7 @@
 // Permisos) sin depender de colorPorRol.ts, que agrupa a todos los usuarios
 // del mismo rol bajo un único color y los vuelve indistinguibles entre sí.
 const PALETA = [
-  'var(--series-pacientes)',
+  'var(--acento-primario)',
   'var(--series-dinero)',
   'var(--avatar-azul)',
   'var(--acento-alerta)',

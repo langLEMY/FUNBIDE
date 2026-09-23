@@ -21,7 +21,7 @@
   z-index: 0;
   background: radial-gradient(
     45% 35% at 50% 40%,
-    color-mix(in srgb, var(--series-pacientes) 10%, transparent),
+    color-mix(in srgb, var(--acento-primario) 10%, transparent),
     transparent 70%
   );
   animation: login-respirar calc(var(--duracion-lenta) * 25) var(--ease-suave) infinite;
@@ -137,7 +137,7 @@
 }
 
 .login-punto-verde {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
 }
 
 .login-ventana-titulo {
@@ -288,8 +288,8 @@
 }
 
 .login-interruptor.activo {
-  background: var(--series-pacientes);
-  border-color: var(--series-pacientes);
+  background: var(--acento-primario);
+  border-color: var(--acento-primario);
 }
 
 .login-interruptor-perilla {
@@ -328,7 +328,7 @@
 }
 
 .login-boton {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   color: #0e1210;
   border: none;
   border-radius: var(--radius-control);

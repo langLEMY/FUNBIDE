@@ -135,8 +135,8 @@
 }
 
 .operaciones-badge-en-espera {
-  background: color-mix(in srgb, var(--series-pacientes) 20%, transparent);
-  color: var(--series-pacientes);
+  background: color-mix(in srgb, var(--acento-primario) 20%, transparent);
+  color: var(--acento-primario);
 }
 
 .operaciones-badge-completada {

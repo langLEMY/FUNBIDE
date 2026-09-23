@@ -181,14 +181,14 @@
 }
 
 .sidebar-nav-item.activo {
-  background: color-mix(in srgb, var(--series-pacientes) 12%, transparent);
-  color: var(--series-pacientes);
+  background: color-mix(in srgb, var(--acento-primario) 12%, transparent);
+  color: var(--acento-primario);
   font-weight: 700;
   /* Un halo suave del acento en vez de (o además de) la barrita lateral: un
      glow se nota y se siente premium sobre AMOLED, donde un shadow oscuro
      normal directamente no se ve. */
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--series-pacientes) 22%, transparent),
-    0 0 20px -6px color-mix(in srgb, var(--series-pacientes) 55%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--acento-primario) 22%, transparent),
+    0 0 20px -6px color-mix(in srgb, var(--acento-primario) 55%, transparent);
 }
 
 /* El indicador de item activo siempre está en el DOM (no solo cuando hay
@@ -203,7 +203,7 @@
   bottom: 6px;
   width: 3px;
   border-radius: 999px;
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   opacity: 0;
   transform: scaleY(0.4);
   transition: opacity var(--duracion-base) var(--ease-suave), transform var(--duracion-base) var(--ease-spring);
@@ -219,7 +219,7 @@
 }
 
 /* Outline en reposo (fill:none, ver IconoNav.tsx), relleno sutil solo en el
-   item activo -- currentColor ya es --series-pacientes acá (ver .activo más
+   item activo -- currentColor ya es --acento-primario acá (ver .activo más
    arriba), así que el fill hereda el mismo tono automáticamente. */
 .sidebar-nav-item.activo .sidebar-nav-icono svg {
   fill: color-mix(in srgb, currentColor 16%, transparent);
@@ -244,7 +244,7 @@
 }
 
 .sidebar-perfil.activo {
-  background: color-mix(in srgb, var(--series-pacientes) 12%, transparent);
+  background: color-mix(in srgb, var(--acento-primario) 12%, transparent);
 }
 
 .sidebar-perfil-avatar {
@@ -259,7 +259,7 @@
 }
 
 .sidebar-perfil-avatar-iniciales {
-  background: var(--series-pacientes);
+  background: var(--acento-primario);
   color: #ffffff;
   font-size: 13px;
   font-weight: 700;
