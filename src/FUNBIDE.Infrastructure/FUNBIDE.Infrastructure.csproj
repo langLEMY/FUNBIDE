@@ -14,7 +14,7 @@
   <ItemGroup>
     <PackageReference Include="ExcelDataReader" Version="3.9.0" />
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.9.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.20" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
