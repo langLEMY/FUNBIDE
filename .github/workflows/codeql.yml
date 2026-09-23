@@ -1,0 +1,60 @@
+# Análisis estático de seguridad (SAST) con CodeQL — gratis en repos públicos de GitHub.
+# Corre en cada push a main y en cada PR, sobre ambos lenguajes del repo (backend C#/.NET
+# y frontend JavaScript/TypeScript) como jobs independientes en paralelo. La primera corrida
+# suele sacar falsos positivos: revisarlos a mano en la pestaña Security > Code scanning y
+# descartarlos ahí (no acá) antes de confiar en la señal para bloquear PRs.
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  analyze:
+    name: Analizar (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # csharp necesita build-mode "manual": CodeQL analiza lo que efectivamente
+          # compila, no solo el código fuente — sin este paso, el análisis de C# queda
+          # incompleto o directamente vacío.
+          - language: csharp
+            build-mode: manual
+          # javascript-typescript no necesita compilar nada (CodeQL analiza el código
+          # fuente directo, no el bundle de Vite).
+          - language: javascript-typescript
+            build-mode: none
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Configurar .NET
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - name: Compilar el backend (build-mode manual lo exige)
+        if: matrix.language == 'csharp'
+        run: dotnet build FUNBIDE.sln -c Release
+
+      - name: Ejecutar el análisis de CodeQL
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
