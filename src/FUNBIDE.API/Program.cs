@@ -1,4 +1,6 @@
 using FUNBIDE.API.Extensions;
+using FUNBIDE.API.Hubs;
+using FUNBIDE.Application.Common.Interfaces;
 using FUNBIDE.Infrastructure;
 using FUNBIDE.Infrastructure.Logging;
 using FUNBIDE.Infrastructure.Persistence;
@@ -26,6 +28,12 @@ builder.Services
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Canal de solo-push para la ventana de Admin en tiempo real (ver CajaHub) — reemplaza el
+// sondeo de 20s de CajaPage por un empujón instantáneo cuando se registra un cobro/movimiento
+// o se cierra un turno.
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<INotificadorTiempoRealService, SignalRNotificadorTiempoRealService>();
 
 builder.Services.AddFunbideInfrastructure(builder.Configuration);
 builder.Services.AddFunbideUseCases();
@@ -151,6 +159,7 @@ app.UseHttpsRedirection();
 app.UseFunbidePipeline();
 
 app.MapControllers();
+app.MapHub<CajaHub>("/hubs/caja");
 
 // Antes devolvía {estado:"ok"} siempre, sin verificar nada -- ahora corre
 // SupabaseHealthCheck (Database.CanConnectAsync real) y responde 503 si la base no es

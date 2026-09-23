@@ -1,6 +1,7 @@
 using FUNBIDE.Application.Common;
 using FUNBIDE.Application.Common.Interfaces;
 using FUNBIDE.Application.DTOs.Caja;
+using FUNBIDE.Domain.Entities;
 using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.Interfaces;
 
@@ -18,11 +19,12 @@ public sealed class CerrarTurnoCajaUseCase(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
     IDateTimeProvider dateTimeProvider,
-    IAuditoriaLogService auditoriaLogService) : ICerrarTurnoCajaUseCase
+    IAuditoriaLogService auditoriaLogService,
+    INotificadorTiempoRealService notificadorTiempoReal) : ICerrarTurnoCajaUseCase
 {
-    public Task<TurnoCajaDto> EjecutarAsync(CerrarTurnoCajaRequest request, CancellationToken cancellationToken)
+    public async Task<TurnoCajaDto> EjecutarAsync(CerrarTurnoCajaRequest request, CancellationToken cancellationToken)
     {
-        return unitOfWork.EjecutarEnTransaccionAsync(async ct =>
+        var resultado = await unitOfWork.EjecutarEnTransaccionAsync(async ct =>
         {
             // Bloqueo de fila (ver ObtenerAbiertoConBloqueoAsync): serializa este cierre
             // contra cualquier RegistrarCobroUseCase concurrente sobre el mismo turno, para
@@ -59,5 +61,20 @@ public sealed class CerrarTurnoCajaUseCase(
                 turno.Id, turno.UsuarioAperturaId, turno.MontoInicial, turno.AbiertoEn, turno.Estado,
                 turno.UsuarioCierreId, turno.MontoFinalContado, turno.MontoEsperado, turno.Diferencia, turno.Notas, turno.CerradoEn);
         }, cancellationToken);
+
+        try
+        {
+            await notificadorTiempoReal.NotificarEventoCajaAsync(
+                new EventoCajaDto(
+                    "turno-cerrado", "Turno de caja cerrado", resultado.MontoFinalContado ?? 0,
+                    EsIngreso: false, resultado.CerradoEn ?? dateTimeProvider.UtcNow),
+                cancellationToken);
+        }
+        catch (Exception)
+        {
+            // Best-effort — ver RegistrarCobroUseCase.
+        }
+
+        return resultado;
     }
 }

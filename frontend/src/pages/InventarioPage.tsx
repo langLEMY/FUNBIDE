@@ -256,6 +256,7 @@ export function InventarioPage() {
                   key={item.id}
                   item={item}
                   onDespachado={actualizarEnLista}
+                  onEntrada={actualizarEnLista}
                   onEditado={actualizarEnLista}
                   onEliminado={quitarDeLista}
                 />

@@ -12,6 +12,14 @@ namespace FUNBIDE.Domain.Entities;
 /// </summary>
 public sealed class TurnoCaja : Entity
 {
+    /// <summary>
+    /// Fondo fijo con el que arranca cada turno — ya no lo escribe la cajera a mano: el
+    /// turno se abre solo con la primera transacción del día (cobro o movimiento
+    /// financiero) usando siempre este monto, ver
+    /// <see cref="FUNBIDE.Domain.Interfaces.ITurnoCajaRepository.ObtenerAbiertoConBloqueoOAbrirAsync"/>.
+    /// </summary>
+    public const decimal FondoFijo = 2000m;
+
     public Guid UsuarioAperturaId { get; private set; }
     public decimal MontoInicial { get; private set; }
     public DateTimeOffset AbiertoEn { get; private set; }

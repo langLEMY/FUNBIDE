@@ -29,7 +29,6 @@ public sealed class EditarInventarioItemUseCase(
                 ?? throw new RecursoNoEncontradoException(nameof(Domain.Entities.InventarioItem), request.InventarioItemId);
 
             item.ActualizarDatos(request.Nombre, request.StockMinimo);
-            item.AjustarStock(request.StockActual);
 
             await inventarioRepository.GuardarCambiosAsync(ct);
 

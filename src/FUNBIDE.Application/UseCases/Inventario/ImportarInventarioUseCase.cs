@@ -17,11 +17,14 @@ public interface IImportarInventarioUseCase : IUseCase<Stream, ImportarInventari
 /// coincidencia, se actualizan nombre/stock mínimo/stock actual (igual que un ajuste manual
 /// tras un conteo, ver <see cref="InventarioItem.AjustarStock"/>) en vez de crear un ítem
 /// nuevo — así reimportar el mismo archivo (por ejemplo, un conteo periódico) no duplica
-/// ítems con el mismo código.
+/// ítems con el mismo código. Cuando el conteo cambia el stock de un ítem ya existente,
+/// además deja un <see cref="MovimientoInventario"/> de tipo <see cref="TipoMovimientoInventario.AjusteInventario"/>
+/// — sin esto, esta era la única forma de mover stock que no dejaba rastro en el historial.
 /// </summary>
 public sealed class ImportarInventarioUseCase(
     IExcelLectorService excelLector,
-    IInventarioRepository inventarioRepository) : IImportarInventarioUseCase
+    IInventarioRepository inventarioRepository,
+    ICurrentUserService currentUser) : IImportarInventarioUseCase
 {
     public async Task<ImportarInventarioResultDto> EjecutarAsync(Stream request, CancellationToken cancellationToken)
     {
@@ -63,8 +66,18 @@ public sealed class ImportarInventarioUseCase(
 
             if (itemsPorCodigo.TryGetValue(codigo, out var itemExistente))
             {
+                var stockAnterior = itemExistente.StockActual;
                 itemExistente.ActualizarDatos(nombre, stockMinimo);
                 itemExistente.AjustarStock(stockActual);
+
+                if (stockActual != stockAnterior)
+                {
+                    var movimiento = new MovimientoInventario(
+                        itemExistente.Id, currentUser.UsuarioId, TipoMovimientoInventario.AjusteInventario,
+                        stockActual - stockAnterior, stockActual, "Importación Excel");
+                    await inventarioRepository.RegistrarMovimientoAsync(movimiento, cancellationToken);
+                }
+
                 actualizados++;
                 continue;
             }

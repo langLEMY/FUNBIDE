@@ -5,18 +5,19 @@ import type { InventarioItem, MovimientoInventarioDto } from '../../types/invent
 interface InventarioRowProps {
   item: InventarioItem
   onDespachado: (item: InventarioItem) => void
+  onEntrada: (item: InventarioItem) => void
   onEditado: (item: InventarioItem) => void
   onEliminado: (itemId: string) => void
 }
 
-export function InventarioRow({ item, onDespachado, onEditado, onEliminado }: InventarioRowProps) {
+export function InventarioRow({ item, onDespachado, onEntrada, onEditado, onEliminado }: InventarioRowProps) {
   const [despachando, setDespachando] = useState(false)
+  const [entrando, setEntrando] = useState(false)
   const [cantidad, setCantidad] = useState('')
   const [referencia, setReferencia] = useState('')
 
   const [editando, setEditando] = useState(false)
   const [nombreEdit, setNombreEdit] = useState(item.nombre)
-  const [stockActualEdit, setStockActualEdit] = useState(item.stockActual.toString())
   const [stockMinimoEdit, setStockMinimoEdit] = useState(item.stockMinimo.toString())
 
   const [enviando, setEnviando] = useState(false)
@@ -25,8 +26,9 @@ export function InventarioRow({ item, onDespachado, onEditado, onEliminado }: In
 
   const bajoMinimo = item.stockActual < item.stockMinimo
 
-  const cancelarDespacho = () => {
+  const cancelarMovimiento = () => {
     setDespachando(false)
+    setEntrando(false)
     setCantidad('')
     setReferencia('')
     setError(null)
@@ -48,7 +50,7 @@ export function InventarioRow({ item, onDespachado, onEditado, onEliminado }: In
         referencia: referencia.trim() || null,
       })
       onDespachado({ ...item, stockActual: movimiento.stockResultante })
-      cancelarDespacho()
+      cancelarMovimiento()
     } catch (err) {
       setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo despachar el ítem.')
     } finally {
@@ -56,34 +58,50 @@ export function InventarioRow({ item, onDespachado, onEditado, onEliminado }: In
     }
   }
 
-  // Resincroniza los campos con el item vigente al ENTRAR a edición (no solo al montar el
-  // componente): sin esto, despachar stock desde esta misma fila y después abrir "Editar"
-  // sin recargar la página mostraba el stock viejo, y guardar sin tocarlo lo revertía en
-  // silencio (AjustarStock toma stockActual como valor absoluto, no como delta).
+  // Registra una entrada de stock (compra, donación recibida, devolución) — junto con
+  // "Despachar", es ahora el único camino para mover stock: ver RegistrarEntradaInventarioUseCase,
+  // "Editar" ya no permite escribir un número de stock a mano.
+  const confirmarEntrada = async () => {
+    const cantidadNumero = Number(cantidad)
+    if (!cantidad.trim() || !Number.isInteger(cantidadNumero) || cantidadNumero <= 0) {
+      setError('Ingresa una cantidad válida.')
+      return
+    }
+
+    setError(null)
+    setEnviando(true)
+    try {
+      const movimiento = await api.post<MovimientoInventarioDto>('/api/inventario/entrada', {
+        inventarioItemId: item.id,
+        cantidad: cantidadNumero,
+        referencia: referencia.trim() || null,
+      })
+      onEntrada({ ...item, stockActual: movimiento.stockResultante })
+      cancelarMovimiento()
+    } catch (err) {
+      setError(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo registrar la entrada.')
+    } finally {
+      setEnviando(false)
+    }
+  }
+
   const iniciarEdicion = () => {
     setNombreEdit(item.nombre)
-    setStockActualEdit(item.stockActual.toString())
     setStockMinimoEdit(item.stockMinimo.toString())
     setEditando(true)
   }
 
   const cancelarEdicion = () => {
     setNombreEdit(item.nombre)
-    setStockActualEdit(item.stockActual.toString())
     setStockMinimoEdit(item.stockMinimo.toString())
     setEditando(false)
     setError(null)
   }
 
   const guardarEdicion = async () => {
-    const stockActualNumero = Number(stockActualEdit)
     const stockMinimoNumero = Number(stockMinimoEdit)
     if (!nombreEdit.trim()) {
       setError('El nombre es obligatorio.')
-      return
-    }
-    if (!Number.isInteger(stockActualNumero) || stockActualNumero < 0) {
-      setError('La disponibilidad debe ser un número entero mayor o igual a cero.')
       return
     }
     if (!Number.isInteger(stockMinimoNumero) || stockMinimoNumero < 0) {
@@ -97,7 +115,6 @@ export function InventarioRow({ item, onDespachado, onEditado, onEliminado }: In
       const actualizado = await api.patch<InventarioItem>('/api/inventario', {
         inventarioItemId: item.id,
         nombre: nombreEdit.trim(),
-        stockActual: stockActualNumero,
         stockMinimo: stockMinimoNumero,
       })
       onEditado(actualizado)
@@ -133,14 +150,7 @@ export function InventarioRow({ item, onDespachado, onEditado, onEliminado }: In
           <span className="text-muted">({item.codigo})</span>
         </td>
         <td className="text-muted">{item.categoria === 'Medicamento' ? 'Medicamentos' : 'Insumos'}</td>
-        <td>
-          <input
-            type="number"
-            min={0}
-            value={stockActualEdit}
-            onChange={(event) => setStockActualEdit(event.target.value)}
-          />
-        </td>
+        <td className="text-muted">{item.stockActual}</td>
         <td>
           <input
             type="number"
@@ -178,7 +188,7 @@ export function InventarioRow({ item, onDespachado, onEditado, onEliminado }: In
           </span>
         </td>
         <td className="inventario-acciones">
-          {despachando ? (
+          {despachando || entrando ? (
             <div className="inventario-despacho-form">
               <input
                 type="number"
@@ -192,10 +202,14 @@ export function InventarioRow({ item, onDespachado, onEditado, onEliminado }: In
                 value={referencia}
                 onChange={(event) => setReferencia(event.target.value)}
               />
-              <button type="button" onClick={() => void confirmarDespacho()} disabled={enviando}>
-                {enviando ? 'Despachando…' : 'Confirmar'}
+              <button
+                type="button"
+                onClick={() => void (despachando ? confirmarDespacho() : confirmarEntrada())}
+                disabled={enviando}
+              >
+                {enviando ? 'Guardando…' : 'Confirmar'}
               </button>
-              <button type="button" onClick={cancelarDespacho} disabled={enviando}>
+              <button type="button" onClick={cancelarMovimiento} disabled={enviando}>
                 Cancelar
               </button>
             </div>
@@ -203,6 +217,9 @@ export function InventarioRow({ item, onDespachado, onEditado, onEliminado }: In
             <>
               <button type="button" onClick={iniciarEdicion} disabled={eliminando}>
                 Editar
+              </button>
+              <button type="button" onClick={() => setEntrando(true)} disabled={eliminando}>
+                Entrada
               </button>
               <button
                 type="button"

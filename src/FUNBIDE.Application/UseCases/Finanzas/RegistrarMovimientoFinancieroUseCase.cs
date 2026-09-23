@@ -2,6 +2,7 @@ using FUNBIDE.Application.Common;
 using FUNBIDE.Application.Common.Interfaces;
 using FUNBIDE.Application.DTOs.Finanzas;
 using FUNBIDE.Domain.Entities;
+using FUNBIDE.Domain.Enums;
 using FUNBIDE.Domain.Interfaces;
 
 namespace FUNBIDE.Application.UseCases.Finanzas;
@@ -24,15 +25,18 @@ public sealed class RegistrarMovimientoFinancieroUseCase(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
     IDateTimeProvider dateTimeProvider,
-    IAuditoriaLogService auditoriaLogService) : IRegistrarMovimientoFinancieroUseCase
+    IAuditoriaLogService auditoriaLogService,
+    INotificadorTiempoRealService notificadorTiempoReal) : IRegistrarMovimientoFinancieroUseCase
 {
-    public Task<MovimientoFinancieroDto> EjecutarAsync(
+    public async Task<MovimientoFinancieroDto> EjecutarAsync(
         RegistrarMovimientoFinancieroRequest request, CancellationToken cancellationToken)
     {
-        return unitOfWork.EjecutarEnTransaccionAsync(async ct =>
+        var resultado = await unitOfWork.EjecutarEnTransaccionAsync(async ct =>
         {
-            var turno = await turnoCajaRepository.ObtenerAbiertoAsync(ct)
-                ?? throw new InvalidOperationException("No hay una caja abierta. Abre la caja antes de registrar un movimiento.");
+            // Igual que RegistrarCobroUseCase: si no hay turno abierto, este mismo
+            // movimiento lo abre con el fondo fijo (TurnoCaja.FondoFijo).
+            var turno = await turnoCajaRepository.ObtenerAbiertoConBloqueoOAbrirAsync(
+                currentUser.UsuarioId, dateTimeProvider.UtcNow, ct);
 
             var movimiento = new MovimientoFinanciero(
                 request.Tipo, request.Monto, request.Concepto, currentUser.UsuarioId, request.CitaId, turno.Id);
@@ -58,5 +62,20 @@ public sealed class RegistrarMovimientoFinancieroUseCase(
                 movimiento.Id, movimiento.Tipo, movimiento.Monto, movimiento.Concepto,
                 movimiento.CitaId, movimiento.TurnoCajaId, movimiento.RegistradoEn);
         }, cancellationToken);
+
+        try
+        {
+            await notificadorTiempoReal.NotificarEventoCajaAsync(
+                new EventoCajaDto(
+                    "movimiento", resultado.Concepto, resultado.Monto,
+                    EsIngreso: resultado.Tipo == TipoMovimientoFinanciero.Ingreso, resultado.RegistradoEn),
+                cancellationToken);
+        }
+        catch (Exception)
+        {
+            // Best-effort — ver RegistrarCobroUseCase.
+        }
+
+        return resultado;
     }
 }

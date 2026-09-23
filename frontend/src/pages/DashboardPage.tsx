@@ -5,6 +5,7 @@ import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { StatCard } from '../components/dashboard/StatCard'
 import { MonthlyMetricChart } from '../components/dashboard/MonthlyMetricChart'
 import { Sparkline } from '../components/dashboard/Sparkline'
+import { Modal } from '../components/ui/Modal'
 import { api, ApiError } from '../lib/api'
 import type { AlertasAdmin, PacientesPorDoctor, ResumenDiario, SesionesActivas } from '../types/dashboard'
 import type { CitaAgenda } from '../types/cita'
@@ -26,6 +27,12 @@ const formateadorMoneda = new Intl.NumberFormat('es-DO', {
 })
 
 const formateadorEntero = new Intl.NumberFormat('es-DO')
+
+// Una vez por sesión de navegación (no en cada recarga de esta página en particular) —
+// sessionStorage sobrevive a navegar entre pantallas pero se limpia al cerrar la pestaña,
+// así que al volver a entrar al día siguiente el aviso vuelve a aparecer si sigue habiendo
+// medicamentos bajo mínimo.
+const CLAVE_POPUP_STOCK_BAJO_MOSTRADO = 'funbide-popup-stock-bajo-mostrado'
 
 const formateadorFechaLarga = new Intl.DateTimeFormat('es-DO', { dateStyle: 'long' })
 
@@ -60,6 +67,7 @@ export function DashboardPage() {
   const [sesionesActivas, setSesionesActivas] = useState<SesionesActivas | null>(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [mostrarPopupStockBajo, setMostrarPopupStockBajo] = useState(false)
 
   // Filtro de "Pacientes atendidos por doctor": vacío = histórico acumulado (comportamiento
   // original). Con fecha, se reconsulta la agenda de ese día en vez de pedirle al backend un
@@ -89,6 +97,18 @@ export function DashboardPage() {
           setResumenHoy(hoy)
           setResumenMes(mes)
           setAlertas(alertasAdmin)
+          if (alertasAdmin.stockBajo.length > 0) {
+            try {
+              if (!sessionStorage.getItem(CLAVE_POPUP_STOCK_BAJO_MOSTRADO)) {
+                sessionStorage.setItem(CLAVE_POPUP_STOCK_BAJO_MOSTRADO, '1')
+                setMostrarPopupStockBajo(true)
+              }
+            } catch {
+              // Storage bloqueado (navegación privada, etc.) — simplemente no se
+              // recuerda entre pantallas, el popup no es crítico.
+              setMostrarPopupStockBajo(true)
+            }
+          }
           setPersonal(personalLista)
           setPacientesPorDoctor(porDoctor)
           setSesionesActivas(sesiones)
@@ -218,6 +238,26 @@ export function DashboardPage() {
 
   return (
     <DashboardLayout titulo="Dashboard">
+      <Modal
+        abierto={mostrarPopupStockBajo}
+        onCerrar={() => setMostrarPopupStockBajo(false)}
+        titulo="Medicamentos por acabarse"
+        subtitulo={`${stockBajoCount} ítem${stockBajoCount === 1 ? '' : 's'} de inventario por debajo del stock mínimo`}
+        acciones={
+          <button type="button" onClick={() => setMostrarPopupStockBajo(false)}>
+            Entendido
+          </button>
+        }
+      >
+        <ul className="dashboard-alerta-lista">
+          {alertas?.stockBajo.slice(0, 10).map((item) => (
+            <li key={item.id}>
+              {item.nombre} — quedan {item.stockActual} (mínimo {item.stockMinimo})
+            </li>
+          ))}
+        </ul>
+      </Modal>
+
       {error && <p className="dashboard-error">{error}</p>}
 
       <section className="dashboard-stats">

@@ -63,6 +63,7 @@ public static class JwtAuthenticationExtensions
                 options.Events = new JwtBearerEvents
                 {
                     OnTokenValidated = ProyectarRolDeAppMetadataAsync,
+                    OnMessageReceived = LeerTokenDeQueryStringParaSignalRAsync,
                     OnChallenge = EscribirDesafioComoProblemDetailsAsync
                 };
             });
@@ -118,6 +119,7 @@ public static class JwtAuthenticationExtensions
 
                 options.Events = new JwtBearerEvents
                 {
+                    OnMessageReceived = LeerTokenDeQueryStringParaSignalRAsync,
                     OnChallenge = EscribirDesafioComoProblemDetailsAsync
                 };
             });
@@ -155,6 +157,26 @@ public static class JwtAuthenticationExtensions
             Status = StatusCodes.Status401Unauthorized,
             Instance = context.Request.Path
         });
+    }
+
+    /// <summary>
+    /// El navegador no puede mandar un header Authorization en el handshake de WebSocket de
+    /// SignalR, así que el cliente manda el JWT como query string (?access_token=...) —
+    /// convención estándar de SignalR. Sin esto, JwtBearerHandler solo mira el header y el
+    /// Hub queda siempre no autenticado. Acotado a rutas bajo /hubs para no aflojar la
+    /// validación de ningún endpoint REST normal.
+    /// </summary>
+    private static Task LeerTokenDeQueryStringParaSignalRAsync(MessageReceivedContext context)
+    {
+        var accessToken = context.Request.Query["access_token"];
+        var path = context.HttpContext.Request.Path;
+
+        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+        {
+            context.Token = accessToken;
+        }
+
+        return Task.CompletedTask;
     }
 
     private static Task ProyectarRolDeAppMetadataAsync(TokenValidatedContext context)

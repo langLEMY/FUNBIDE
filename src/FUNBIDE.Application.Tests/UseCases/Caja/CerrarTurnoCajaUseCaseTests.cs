@@ -18,6 +18,7 @@ public class CerrarTurnoCajaUseCaseTests
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
     private readonly IDateTimeProvider _dateTimeProvider = Substitute.For<IDateTimeProvider>();
     private readonly IAuditoriaLogService _auditoriaLogService = Substitute.For<IAuditoriaLogService>();
+    private readonly INotificadorTiempoRealService _notificadorTiempoReal = Substitute.For<INotificadorTiempoRealService>();
 
     public CerrarTurnoCajaUseCaseTests()
     {
@@ -29,7 +30,8 @@ public class CerrarTurnoCajaUseCaseTests
     }
 
     private CerrarTurnoCajaUseCase CrearCasoDeUso() => new(
-        _turnoCajaRepository, _cobroRepository, _movimientoRepository, _unitOfWork, _currentUser, _dateTimeProvider, _auditoriaLogService);
+        _turnoCajaRepository, _cobroRepository, _movimientoRepository, _unitOfWork, _currentUser, _dateTimeProvider,
+        _auditoriaLogService, _notificadorTiempoReal);
 
     [Fact]
     public async Task EjecutarAsync_SinTurnoAbierto_LanzaInvalidOperationException()

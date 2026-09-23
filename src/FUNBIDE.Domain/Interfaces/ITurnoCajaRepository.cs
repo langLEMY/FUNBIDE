@@ -16,6 +16,16 @@ public interface ITurnoCajaRepository
     /// </summary>
     Task<TurnoCaja?> ObtenerAbiertoConBloqueoAsync(CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Igual que <see cref="ObtenerAbiertoConBloqueoAsync"/>, pero si no hay ningún turno
+    /// abierto lo abre en el momento con <see cref="TurnoCaja.FondoFijo"/> — la caja ya no
+    /// se abre a mano, se abre sola con la primera transacción (cobro o movimiento
+    /// financiero) del día. Usado por <c>RegistrarCobroUseCase</c> y
+    /// <c>RegistrarMovimientoFinancieroUseCase</c> en vez de fallar con "no hay caja abierta".
+    /// </summary>
+    Task<TurnoCaja> ObtenerAbiertoConBloqueoOAbrirAsync(
+        Guid usuarioAperturaId, DateTimeOffset ahora, CancellationToken cancellationToken);
+
     Task<TurnoCaja?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<TurnoCaja>> ObtenerPorRangoAsync(

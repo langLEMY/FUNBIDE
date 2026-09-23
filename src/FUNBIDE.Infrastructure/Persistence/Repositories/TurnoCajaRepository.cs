@@ -21,6 +21,21 @@ public sealed class TurnoCajaRepository(FunbideDbContext dbContext) : ITurnoCaja
         return resultados.SingleOrDefault();
     }
 
+    public async Task<TurnoCaja> ObtenerAbiertoConBloqueoOAbrirAsync(
+        Guid usuarioAperturaId, DateTimeOffset ahora, CancellationToken cancellationToken)
+    {
+        var turno = await ObtenerAbiertoConBloqueoAsync(cancellationToken);
+        if (turno is not null)
+        {
+            return turno;
+        }
+
+        turno = new TurnoCaja(usuarioAperturaId, TurnoCaja.FondoFijo, ahora);
+        await dbContext.TurnosCaja.AddAsync(turno, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return turno;
+    }
+
     public Task<TurnoCaja?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.TurnosCaja.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 

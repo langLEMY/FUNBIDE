@@ -19,14 +19,22 @@ export interface CrearInventarioItemRequest {
   stockMinimo: number
 }
 
+// Ya no trae stockActual: el stock ya no se corrige escribiendo un número absoluto acá —
+// ver RegistrarEntradaInventarioRequest/DescargarInventarioRequest, los únicos dos caminos
+// para mover stock ahora, ambos con historial (MovimientoInventarioDto).
 export interface EditarInventarioItemRequest {
   inventarioItemId: string
   nombre: string
-  stockActual: number
   stockMinimo: number
 }
 
 export interface DescargarInventarioRequest {
+  inventarioItemId: string
+  cantidad: number
+  referencia: string | null
+}
+
+export interface RegistrarEntradaInventarioRequest {
   inventarioItemId: string
   cantidad: number
   referencia: string | null

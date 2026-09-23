@@ -39,11 +39,12 @@ public sealed class RegistrarCobroUseCase(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
     IDateTimeProvider dateTimeProvider,
-    IAuditoriaLogService auditoriaLogService) : IRegistrarCobroUseCase
+    IAuditoriaLogService auditoriaLogService,
+    INotificadorTiempoRealService notificadorTiempoReal) : IRegistrarCobroUseCase
 {
-    public Task<CobroDto> EjecutarAsync(RegistrarCobroRequest request, CancellationToken cancellationToken)
+    public async Task<CobroDto> EjecutarAsync(RegistrarCobroRequest request, CancellationToken cancellationToken)
     {
-        return unitOfWork.EjecutarEnTransaccionAsync(async ct =>
+        var resultado = await unitOfWork.EjecutarEnTransaccionAsync(async ct =>
         {
             // Chequeo de idempotencia primero, antes de tocar ningún bloqueo: un
             // doble-click en "Registrar" (o un reintento de red tras un timeout que en
@@ -64,9 +65,11 @@ public sealed class RegistrarCobroUseCase(
             // Bloqueo de fila (no un simple SELECT): sin esto, un cobro podía colarse
             // justo mientras CerrarTurnoCajaUseCase está calculando el efectivo esperado
             // del arqueo, quedando fuera de esa cuenta aunque el turno siguiera "Abierto"
-            // en el instante en que este cobro lo leyó.
-            var turno = await turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(ct)
-                ?? throw new InvalidOperationException("No hay una caja abierta. Abre la caja antes de registrar un cobro.");
+            // en el instante en que este cobro lo leyó. Si no hay turno abierto, este
+            // mismo cobro lo abre con el fondo fijo (ver TurnoCaja.FondoFijo) — la caja ya
+            // no se abre a mano, se abre sola con la primera transacción del día.
+            var turno = await turnoCajaRepository.ObtenerAbiertoConBloqueoOAbrirAsync(
+                currentUser.UsuarioId, dateTimeProvider.UtcNow, ct);
 
             var paciente = await pacienteRepository.ObtenerPorIdAsync(request.PacienteId, ct)
                 ?? throw new RecursoNoEncontradoException(nameof(Paciente), request.PacienteId);
@@ -194,6 +197,24 @@ public sealed class RegistrarCobroUseCase(
                 cobro.UsuarioId, cobro.RegistradoEn, cobro.TarifarioProcedimientoId, cobro.MontoFondo,
                 cobro.DoctorId, doctorNombre);
         }, cancellationToken);
+
+        // Best-effort y después de que la transacción ya confirmó: nunca debe hacer fallar
+        // un cobro que ya se guardó, ni notificar uno que en realidad no llegó a guardarse
+        // (por eso va después del await de arriba, no dentro de la transacción).
+        try
+        {
+            await notificadorTiempoReal.NotificarEventoCajaAsync(
+                new EventoCajaDto(
+                    "cobro", $"Cobro — {resultado.PacienteNombre} — {resultado.Concepto}",
+                    resultado.MontoPagado, EsIngreso: true, resultado.RegistradoEn),
+                cancellationToken);
+        }
+        catch (Exception)
+        {
+            // Silencioso a propósito: ver comentario de arriba.
+        }
+
+        return resultado;
     }
 
     /// <summary>

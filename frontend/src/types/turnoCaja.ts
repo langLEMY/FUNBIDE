@@ -14,10 +14,6 @@ export interface TurnoCaja {
   cerradoEn: string | null
 }
 
-export interface AbrirTurnoCajaRequest {
-  montoInicial: number
-}
-
 export interface CerrarTurnoCajaRequest {
   montoFinalContado: number
   notas: string | null
@@ -36,6 +32,30 @@ export interface TurnoCajaAdmin {
   diferencia: number | null
   notas: string | null
   cerradoEn: string | null
+}
+
+export interface MovimientoReporteCierre {
+  concepto: string
+  monto: number
+  registradoEn: string
+}
+
+export interface ReporteCierreCaja {
+  turnoId: string
+  usuarioAperturaNombre: string
+  usuarioCierreNombre: string | null
+  fondoInicial: number
+  abiertoEn: string
+  cerradoEn: string | null
+  montoFinalContado: number
+  montoEsperado: number
+  diferencia: number
+  notas: string | null
+  cantidadCobros: number
+  totalFacturado: number
+  totalesPorMetodoPago: Record<string, number>
+  egresos: MovimientoReporteCierre[]
+  ingresosManuales: MovimientoReporteCierre[]
 }
 
 export interface ResumenCaja {

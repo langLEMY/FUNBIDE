@@ -23,6 +23,7 @@ public sealed class InventarioController(
     IEditarInventarioItemUseCase editarInventarioItem,
     IEliminarInventarioItemUseCase eliminarInventarioItem,
     IDescargarInventarioUseCase descargarInventario,
+    IRegistrarEntradaInventarioUseCase registrarEntrada,
     IImportarInventarioUseCase importarInventario) : ControllerBase
 {
     [HttpGet]
@@ -66,6 +67,13 @@ public sealed class InventarioController(
     public async Task<ActionResult<MovimientoInventarioDto>> DescargarAsync(
         DescargarInventarioRequest request, CancellationToken cancellationToken) =>
         Ok(await descargarInventario.EjecutarAsync(request, cancellationToken));
+
+    [HttpPost("entrada")]
+    [RequiereRol(RolUsuario.Admin, RolUsuario.Doctor, RolUsuario.Fondos, RolUsuario.Lemy)]
+    [RequierePermiso(ModuloPermiso.Inventario)]
+    public async Task<ActionResult<MovimientoInventarioDto>> RegistrarEntradaAsync(
+        RegistrarEntradaInventarioRequest request, CancellationToken cancellationToken) =>
+        Ok(await registrarEntrada.EjecutarAsync(request, cancellationToken));
 
     [HttpPost("importar")]
     [RequiereRol(RolUsuario.Admin, RolUsuario.Lemy)]

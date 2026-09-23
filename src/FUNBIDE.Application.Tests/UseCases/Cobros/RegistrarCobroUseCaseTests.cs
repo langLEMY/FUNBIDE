@@ -25,6 +25,7 @@ public class RegistrarCobroUseCaseTests
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
     private readonly IDateTimeProvider _dateTimeProvider = Substitute.For<IDateTimeProvider>();
     private readonly IAuditoriaLogService _auditoriaLogService = Substitute.For<IAuditoriaLogService>();
+    private readonly INotificadorTiempoRealService _notificadorTiempoReal = Substitute.For<INotificadorTiempoRealService>();
 
     private static Paciente CrearPaciente() =>
         new("Ana", "Pérez", DocumentoIdentidad.Crear("00112345678"), "8091234567");
@@ -51,21 +52,28 @@ public class RegistrarCobroUseCaseTests
 
     private RegistrarCobroUseCase CrearCasoDeUso() => new(
         _cobroRepository, _turnoCajaRepository, _seguroMedicoRepository, _tarifarioRepository, _movimientoFinancieroRepository,
-        _pacienteRepository, _usuarioRepository, _resumenDiarioRepository, _unitOfWork, _currentUser, _dateTimeProvider, _auditoriaLogService);
+        _pacienteRepository, _usuarioRepository, _resumenDiarioRepository, _unitOfWork, _currentUser, _dateTimeProvider,
+        _auditoriaLogService, _notificadorTiempoReal);
 
     private static RegistrarCobroRequest CrearRequest(Guid pacienteId, Guid? seguroMedicoId = null, decimal montoPagado = 1000m) =>
         new(pacienteId, null, "Consulta general", 1000m, PagoEfectivo(montoPagado), seguroMedicoId, seguroMedicoId is null ? null : "AUTH-1");
 
     [Fact]
-    public async Task EjecutarAsync_SinCajaAbierta_LanzaInvalidOperationExceptionYNoRegistraNada()
+    public async Task EjecutarAsync_SinCajaAbierta_LaAbreSolaConElFondoFijoYRegistraElCobro()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns((TurnoCaja?)null);
-        var request = CrearRequest(Guid.NewGuid());
+        // La caja ya no se abre a mano: si no hay turno abierto, ObtenerAbiertoConBloqueoOAbrirAsync
+        // (ver TurnoCajaRepository) lo abre solo con TurnoCaja.FondoFijo y lo devuelve, en
+        // vez de que este caso de uso falle con "no hay caja abierta".
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
+        var paciente = CrearPaciente();
+        _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
+        var request = CrearRequest(paciente.Id);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => CrearCasoDeUso().EjecutarAsync(request, CancellationToken.None));
+        await CrearCasoDeUso().EjecutarAsync(request, CancellationToken.None);
 
-        await _cobroRepository.DidNotReceive().AgregarAsync(Arg.Any<Domain.Entities.Cobro>(), Arg.Any<CancellationToken>());
+        await _cobroRepository.Received(1).AgregarAsync(Arg.Any<Domain.Entities.Cobro>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -73,7 +81,9 @@ public class RegistrarCobroUseCaseTests
     {
         var citaId = Guid.NewGuid();
         var paciente = CrearPaciente();
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
         _cobroRepository.ExisteCobroParaCitaAsync(citaId, Arg.Any<CancellationToken>()).Returns(true);
         var request = new RegistrarCobroRequest(paciente.Id, citaId, "Consulta", 500m, PagoEfectivo(500m), null, null);
@@ -87,7 +97,9 @@ public class RegistrarCobroUseCaseTests
     [Fact]
     public async Task EjecutarAsync_PacienteNoExiste_LanzaRecursoNoEncontradoException()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var pacienteId = Guid.NewGuid();
         _pacienteRepository.ObtenerPorIdAsync(pacienteId, Arg.Any<CancellationToken>()).Returns((Paciente?)null);
 
@@ -98,7 +110,9 @@ public class RegistrarCobroUseCaseTests
     [Fact]
     public async Task EjecutarAsync_SeguroDesactivado_LanzaInvalidOperationException()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
 
@@ -117,7 +131,9 @@ public class RegistrarCobroUseCaseTests
         // RegistrarCobroRequestValidator, que en producción rechaza esto antes de
         // llegar acá): sin TarifarioProcedimientoId, Cobro ya no tiene de dónde sacar
         // un monto de cobertura válido, ni siquiera con un seguro activo.
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
 
@@ -136,7 +152,9 @@ public class RegistrarCobroUseCaseTests
     [Fact]
     public async Task EjecutarAsync_Exitoso_AcumulaEnResumenDiarioSoloLoPagadoNoElTotal()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
 
@@ -159,7 +177,9 @@ public class RegistrarCobroUseCaseTests
     [Fact]
     public async Task EjecutarAsync_ConPagoDividido_SumaTodasLasLineasYLasDevuelveEnElDto()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
 
@@ -183,7 +203,9 @@ public class RegistrarCobroUseCaseTests
     [Fact]
     public async Task EjecutarAsync_ConTarifario_UsaMontosExactosDelTarifarioIgnorandoLoQueMandaElCliente()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
 
@@ -211,7 +233,9 @@ public class RegistrarCobroUseCaseTests
     [Fact]
     public async Task EjecutarAsync_ConTarifarioConFondo_CreaMovimientoFinancieroYLoAcumulaEnElResumen()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
 
@@ -244,7 +268,9 @@ public class RegistrarCobroUseCaseTests
     [Fact]
     public async Task EjecutarAsync_ConTarifarioSinFondo_NoCreaMovimientoFinanciero()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
 
@@ -268,7 +294,9 @@ public class RegistrarCobroUseCaseTests
     [Fact]
     public async Task EjecutarAsync_TarifarioDeOtraAseguradora_LanzaInvalidOperationException()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
 
@@ -289,7 +317,9 @@ public class RegistrarCobroUseCaseTests
     [Fact]
     public async Task EjecutarAsync_TarifarioDesactivado_LanzaInvalidOperationException()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
 
@@ -311,7 +341,9 @@ public class RegistrarCobroUseCaseTests
     [Fact]
     public async Task EjecutarAsync_ConDoctor_DevuelveDoctorIdYNombreResueltoEnElDto()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
 
@@ -332,7 +364,9 @@ public class RegistrarCobroUseCaseTests
     [Fact]
     public async Task EjecutarAsync_TarifarioNoExiste_LanzaRecursoNoEncontradoException()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
 
@@ -370,14 +404,17 @@ public class RegistrarCobroUseCaseTests
         var resultado = await CrearCasoDeUso().EjecutarAsync(request, CancellationToken.None);
 
         Assert.Equal(cobroExistente.Id, resultado.Id);
-        await _turnoCajaRepository.DidNotReceive().ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>());
+        await _turnoCajaRepository.DidNotReceive().ObtenerAbiertoConBloqueoOAbrirAsync(
+            Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>());
         await _cobroRepository.DidNotReceive().AgregarAsync(Arg.Any<Cobro>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task EjecutarAsync_ClaveIdempotenciaNueva_LaGuardaEnElCobroCreado()
     {
-        _turnoCajaRepository.ObtenerAbiertoConBloqueoAsync(Arg.Any<CancellationToken>()).Returns(CrearTurnoAbierto());
+        _turnoCajaRepository
+            .ObtenerAbiertoConBloqueoOAbrirAsync(Arg.Any<Guid>(), Arg.Any<DateTimeOffset>(), Arg.Any<CancellationToken>())
+            .Returns(CrearTurnoAbierto());
         var paciente = CrearPaciente();
         _pacienteRepository.ObtenerPorIdAsync(paciente.Id, Arg.Any<CancellationToken>()).Returns(paciente);
         _cobroRepository

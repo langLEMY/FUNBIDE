@@ -1,8 +1,10 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { Fragment, useEffect, useState, type FormEvent } from 'react'
 import { DashboardLayout } from '../components/layout/DashboardLayout'
 import { useAuth } from '../auth/AuthContext'
 import { api, ApiError } from '../lib/api'
-import type { TurnoCaja, ResumenCaja } from '../types/turnoCaja'
+import { useCajaTiempoReal } from '../lib/cajaHub'
+import { imprimirVentana } from '../lib/imprimir'
+import type { TurnoCaja, ResumenCaja, ReporteCierreCaja } from '../types/turnoCaja'
 import type { Cobro } from '../types/cobro'
 import type { MovimientoFinanciero } from '../types/finanzas'
 import './CajaPage.css'
@@ -33,16 +35,13 @@ export function CajaPage() {
   const [error, setError] = useState<string | null>(null)
   const [recargarClave, setRecargarClave] = useState(0)
 
-  const [montoInicial, setMontoInicial] = useState('')
-  const [abriendo, setAbriendo] = useState(false)
-  const [errorAbrir, setErrorAbrir] = useState<string | null>(null)
-
   const [mostrarCierre, setMostrarCierre] = useState(false)
   const [montoFinalContado, setMontoFinalContado] = useState('')
   const [notasCierre, setNotasCierre] = useState('')
   const [cerrando, setCerrando] = useState(false)
   const [errorCerrar, setErrorCerrar] = useState<string | null>(null)
   const [ultimoCierre, setUltimoCierre] = useState<TurnoCaja | null>(null)
+  const [reporteCierre, setReporteCierre] = useState<ReporteCierreCaja | null>(null)
 
   const [egresoConcepto, setEgresoConcepto] = useState('')
   const [egresoMonto, setEgresoMonto] = useState('')
@@ -130,28 +129,10 @@ export function CajaPage() {
     }
   }, [recargarClave])
 
-  const handleAbrir = async (event: FormEvent) => {
-    event.preventDefault()
-    setErrorAbrir(null)
-
-    const monto = Number(montoInicial)
-    if (!montoInicial.trim() || !Number.isFinite(monto) || monto < 0) {
-      setErrorAbrir('Ingresa un monto inicial válido.')
-      return
-    }
-
-    setAbriendo(true)
-    try {
-      await api.post<TurnoCaja>('/api/caja/turnos', { montoInicial: monto })
-      setMontoInicial('')
-      setUltimoCierre(null)
-      recargar()
-    } catch (err) {
-      setErrorAbrir(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo abrir la caja.')
-    } finally {
-      setAbriendo(false)
-    }
-  }
+  // El resumen/timeline se refresca solo (sondeo de 20s, ver arriba); esto además lo
+  // empuja al instante cuando SignalR avisa un cobro/movimiento/cierre nuevo, sin esperar
+  // esos 20s -- ver useCajaTiempoReal.
+  useCajaTiempoReal(() => recargar())
 
   const handleCerrar = async (event: FormEvent) => {
     event.preventDefault()
@@ -174,11 +155,24 @@ export function CajaPage() {
       setNotasCierre('')
       setMostrarCierre(false)
       recargar()
+
+      // Mejor esfuerzo: si el reporte detallado falla, el cierre ya quedó guardado igual
+      // -- el banner de arqueo de arriba alcanza para confirmar que cerró bien.
+      try {
+        const reporte = await api.get<ReporteCierreCaja>(`/api/caja/turnos/${cerrado.id}/reporte-cierre`)
+        setReporteCierre(reporte)
+      } catch {
+        setReporteCierre(null)
+      }
     } catch (err) {
       setErrorCerrar(err instanceof ApiError ? (err.detalle ?? err.message) : 'No se pudo cerrar la caja.')
     } finally {
       setCerrando(false)
     }
+  }
+
+  const handleImprimirCierre = () => {
+    requestAnimationFrame(imprimirVentana)
   }
 
   const handleRegistrarEgreso = async (event: FormEvent) => {
@@ -266,42 +260,35 @@ export function CajaPage() {
       {error && <p className="caja-error">{error}</p>}
 
       {ultimoCierre && ultimoCierre.diferencia !== null && (
-        <section className="caja-resultado-arqueo-card">
+        <section className="caja-resultado-arqueo-card no-imprimir">
           <p className={ultimoCierre.diferencia === 0 ? 'caja-arqueo-cuadrado' : 'caja-arqueo-diferencia'}>
             {ultimoCierre.diferencia === 0
               ? 'Arqueo cuadrado sin diferencias.'
               : `Arqueo con ${ultimoCierre.diferencia > 0 ? 'sobrante' : 'faltante'} de ${formateadorMoneda.format(Math.abs(ultimoCierre.diferencia))} (esperado ${formateadorMoneda.format(ultimoCierre.montoEsperado ?? 0)}, contado ${formateadorMoneda.format(ultimoCierre.montoFinalContado ?? 0)}).`}
           </p>
-          <button type="button" onClick={() => setUltimoCierre(null)}>
-            Entendido
-          </button>
+          <div className="caja-resultado-arqueo-acciones">
+            {reporteCierre && (
+              <button type="button" onClick={handleImprimirCierre}>
+                Imprimir cierre
+              </button>
+            )}
+            <button type="button" onClick={() => setUltimoCierre(null)}>
+              Entendido
+            </button>
+          </div>
         </section>
       )}
 
       {!turno ? (
         <section className="caja-apertura-card">
-          <h2>Abrir caja</h2>
+          <h2>Caja cerrada</h2>
           <p className="text-secondary caja-card-subtitulo">
-            Registra el monto inicial en efectivo antes de empezar a operar.
+            La caja se abre sola, con el fondo fijo de {formateadorMoneda.format(2000)}, en cuanto se registre el
+            primer cobro o movimiento del día — no hace falta abrirla a mano.
           </p>
-          <form className="caja-apertura-form" onSubmit={(event) => void handleAbrir(event)}>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              placeholder="Monto inicial en efectivo"
-              value={montoInicial}
-              onChange={(event) => setMontoInicial(event.target.value)}
-              required
-            />
-            <button type="submit" disabled={abriendo}>
-              {abriendo ? 'Abriendo…' : 'Abrir caja'}
-            </button>
-          </form>
-          {errorAbrir && <p className="caja-error">{errorAbrir}</p>}
         </section>
       ) : (
-        <>
+        <div className="no-imprimir">
           <div className="caja-grilla-balance">
             <section className="caja-balance-card">
               <p className="text-secondary">Efectivo en caja</p>
@@ -493,7 +480,92 @@ export function CajaPage() {
               </>
             )}
           </section>
-        </>
+        </div>
+      )}
+
+      {reporteCierre && (
+        <div className="caja-comprobante-cierre">
+          <header className="caja-comprobante-membrete">
+            <h1>FUNBIDE</h1>
+            <p>Reporte de cierre de caja</p>
+          </header>
+          <hr />
+          <dl>
+            <dt>Turno</dt>
+            <dd>{reporteCierre.turnoId}</dd>
+            <dt>Abierto por</dt>
+            <dd>{reporteCierre.usuarioAperturaNombre} — {formateadorFechaHora.format(new Date(reporteCierre.abiertoEn))}</dd>
+            {reporteCierre.usuarioCierreNombre && (
+              <>
+                <dt>Cerrado por</dt>
+                <dd>
+                  {reporteCierre.usuarioCierreNombre}
+                  {reporteCierre.cerradoEn ? ` — ${formateadorFechaHora.format(new Date(reporteCierre.cerradoEn))}` : ''}
+                </dd>
+              </>
+            )}
+          </dl>
+          <hr />
+          <dl>
+            <dt>Fondo inicial</dt>
+            <dd>{formateadorMoneda.format(reporteCierre.fondoInicial)}</dd>
+            <dt>Cobros del turno</dt>
+            <dd>{reporteCierre.cantidadCobros}</dd>
+            <dt>Total facturado</dt>
+            <dd>{formateadorMoneda.format(reporteCierre.totalFacturado)}</dd>
+          </dl>
+          <hr />
+          <p className="caja-comprobante-subtitulo">Desglose por método de pago</p>
+          <dl>
+            {Object.entries(reporteCierre.totalesPorMetodoPago).map(([metodo, monto]) => (
+              <Fragment key={metodo}>
+                <dt>{metodo}</dt>
+                <dd>{formateadorMoneda.format(monto)}</dd>
+              </Fragment>
+            ))}
+          </dl>
+          {reporteCierre.ingresosManuales.length > 0 && (
+            <>
+              <hr />
+              <p className="caja-comprobante-subtitulo">Ingresos manuales</p>
+              <ul>
+                {reporteCierre.ingresosManuales.map((m, i) => (
+                  <li key={i}>
+                    {m.concepto} — {formateadorMoneda.format(m.monto)}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {reporteCierre.egresos.length > 0 && (
+            <>
+              <hr />
+              <p className="caja-comprobante-subtitulo">Salidas autorizadas</p>
+              <ul>
+                {reporteCierre.egresos.map((m, i) => (
+                  <li key={i}>
+                    {m.concepto} — {formateadorMoneda.format(m.monto)}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <hr />
+          <dl>
+            <dt>Efectivo esperado</dt>
+            <dd>{formateadorMoneda.format(reporteCierre.montoEsperado)}</dd>
+            <dt>Efectivo contado</dt>
+            <dd>{formateadorMoneda.format(reporteCierre.montoFinalContado)}</dd>
+            <dt>Diferencia</dt>
+            <dd>{formateadorMoneda.format(reporteCierre.diferencia)}</dd>
+          </dl>
+          {reporteCierre.notas && (
+            <>
+              <hr />
+              <p>Notas: {reporteCierre.notas}</p>
+            </>
+          )}
+        </div>
       )}
     </DashboardLayout>
   )
