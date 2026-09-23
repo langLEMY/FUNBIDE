@@ -20,6 +20,19 @@ jobs:
       - name: Restaurar dependencias
         run: dotnet restore FUNBIDE.sln
 
+      # dotnet list --vulnerable no falla el build por sí solo (solo imprime una tabla),
+      # así que se revisa la salida a mano: si aparece un paquete de severidad Alta o
+      # Crítica (columna "Severity" de la tabla), se corta el job acá para que el CVE no
+      # pase desapercibido en el resto del pipeline.
+      - name: Escanear paquetes NuGet vulnerables
+        run: |
+          salida=$(dotnet list FUNBIDE.sln package --vulnerable --include-transitive 2>&1)
+          echo "$salida"
+          if echo "$salida" | grep -qE "Critical|High"; then
+            echo "::error::Se encontraron paquetes NuGet vulnerables de severidad Alta o Crítica — revisar la tabla de arriba."
+            exit 1
+          fi
+
       - name: Compilar
         run: dotnet build FUNBIDE.sln --no-restore -c Release
 
@@ -43,6 +56,11 @@ jobs:
 
       - name: Instalar dependencias
         run: npm ci
+
+      # npm audit ya devuelve código de salida distinto de cero si encuentra algo de ese
+      # nivel o peor — no hace falta parsear la salida a mano como con dotnet list arriba.
+      - name: Escanear dependencias npm vulnerables
+        run: npm audit --audit-level=high
 
       - name: Ejecutar tests
         run: npm test

@@ -1,0 +1,19 @@
+# Dependabot no hace auto-merge acá a propósito: solo abre el PR de actualización para
+# que alguien se entere de que hay un CVE conocido (o simplemente una versión nueva) en
+# una dependencia — revisarlo y aprobarlo sigue siendo una decisión humana. El CI
+# (.github/workflows/ci.yml) ya corre "dotnet list package --vulnerable"/"npm audit"
+# sobre estos PRs igual que sobre cualquier otro, así que un update que introduzca un
+# problema nuevo también se detecta ahí.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
