@@ -7,14 +7,18 @@ public static class ApplicationBuilderExtensions
     /// <summary>
     /// Orden deliberado: el manejo de excepciones envuelve todo; los encabezados
     /// reenviados por Nginx se aplican antes que nada más para que la IP real del
-    /// cliente esté disponible en el resto del pipeline; el guard append-only y la
-    /// validación de roles corren después de enrutar y autenticar (necesitan el
-    /// endpoint resuelto y el ClaimsPrincipal poblado) pero antes de ejecutar la acción.
+    /// cliente esté disponible en el resto del pipeline; las cabeceras de seguridad
+    /// (SecurityHeadersMiddleware) van antes de UseRouting para que le lleguen a
+    /// TODA respuesta, incluida la del frontend servido como archivos estáticos, no
+    /// solo a la de los controladores; el guard append-only y la validación de roles
+    /// corren después de enrutar y autenticar (necesitan el endpoint resuelto y el
+    /// ClaimsPrincipal poblado) pero antes de ejecutar la acción.
     /// </summary>
     public static IApplicationBuilder UseFunbidePipeline(this WebApplication app)
     {
         app.UseMiddleware<ExceptionHandlingMiddleware>();
         app.UseForwardedHeaders();
+        app.UseMiddleware<SecurityHeadersMiddleware>();
 
         app.UseRouting();
         app.UseRateLimiter();
