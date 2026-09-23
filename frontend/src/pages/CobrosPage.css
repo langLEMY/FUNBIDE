@@ -307,13 +307,16 @@
 
 .cobros-comprobante-membrete {
   text-align: center;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
 }
 
+/* 64px (subido desde 40px): a 80mm/576 dots, el logo con dithering Floyd-Steinberg
+   necesita este tamaño para que el detalle del globo/manos no se pierda en un borrón —
+   probado sin desbordar el ancho de @page (80mm auto, margin 2mm). */
 .cobros-comprobante-logo {
   display: block;
-  margin: 0 auto 6px;
-  height: 40px;
+  margin: 0 auto 8px;
+  height: 64px;
   width: auto;
 }
 
@@ -335,7 +338,7 @@
 
 .cobros-comprobante-divisor {
   border-top: 1px dashed #000;
-  margin: 8px 0;
+  margin: 10px 0;
 }
 
 .cobros-comprobante-tipo {
@@ -352,22 +355,52 @@
   text-align: center;
 }
 
+/* Cada par dt/dd se arma en una sola línea "Etiqueta: valor" (ver dt::after/dd::after
+   más abajo) en vez de apilar dt y dd como dos líneas centradas por separado: con montos
+   u otros valores largos, centrar cada uno por su lado se ve desordenado. Centrando el
+   bloque completo (text-align acá) el recibo queda parejo de punta a punta, y el texto
+   de cada línea se sigue leyendo de corrido, izquierda a derecha, como cualquier texto. */
 .cobros-comprobante-datos {
   margin: 0;
+  padding: 0;
   font-size: 11px;
-  line-height: 1.5;
+  line-height: 1.7;
+  text-align: center;
 }
 
-.cobros-comprobante-datos dt {
+.cobros-comprobante-datos dt,
+.cobros-comprobante-datos dd {
+  display: inline;
+  margin: 0;
   font-weight: 700;
 }
 
 .cobros-comprobante-datos dd {
-  margin: 0 0 4px;
+  font-weight: 400;
+}
+
+.cobros-comprobante-datos dt::after {
+  content: ': ';
+}
+
+/* Fuerza el salto de línea después de cada dd sin depender de que dt/dd sean bloques
+   (lo que los volvería a poner en líneas separadas) — \A es un salto de línea dentro de
+   contenido generado, y solo se respeta con white-space: pre en el propio pseudo-elemento. */
+.cobros-comprobante-datos dd::after {
+  content: '\A';
+  white-space: pre;
+}
+
+/* Monto total / Monto pagado: lo primero que busca el paciente en el recibo, destacado
+   sobre el resto de los datos (código de autorización, método de pago, etc.). */
+.cobros-comprobante-datos dt.cobros-comprobante-dato-destacado,
+.cobros-comprobante-datos dd.cobros-comprobante-dato-destacado {
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .cobros-comprobante-gracias {
-  margin: 0;
+  margin: 10px 0 0;
   font-size: 11px;
   font-weight: 600;
   text-align: center;

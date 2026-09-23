@@ -792,13 +792,17 @@ export function CobrosPage() {
       {ultimoCobro && comprobante && (
         <div className="cobros-comprobante">
           <header className="cobros-comprobante-membrete">
-            <img className="cobros-comprobante-logo" src="/logo-funbide.png" alt="" />
+            {/* Logo con dithering Floyd-Steinberg, pensado para imprimir reconocible en
+                blanco y negro puro en la térmica — distinto del logo a color de
+                pantalla/sidebar (/logo-funbide.png), que no rinde bien en ese modo. */}
+            <img className="cobros-comprobante-logo" src="/logo-funbide-recibo-termico.png" alt="" />
             <span className="cobros-comprobante-clinica">FUNDACIÓN BIENESTAR Y DESARROLLO</span>
             <span className="cobros-comprobante-direccion">
               Calle Guaroa No. 4, Esq. Simón Orozco, Invivienda
               <br />
               Santo Domingo Este, Hainamosa, Distrito Nacional
             </span>
+            <span className="cobros-comprobante-direccion">RNC: 430090387</span>
           </header>
 
           <div className="cobros-comprobante-divisor" />
@@ -822,8 +826,8 @@ export function CobrosPage() {
           <div className="cobros-comprobante-divisor" />
 
           <dl className="cobros-comprobante-datos">
-            <dt>Monto total</dt>
-            <dd>{formateadorMoneda.format(ultimoCobro.montoTotal)}</dd>
+            <dt className="cobros-comprobante-dato-destacado">Monto total</dt>
+            <dd className="cobros-comprobante-dato-destacado">{formateadorMoneda.format(ultimoCobro.montoTotal)}</dd>
             {ultimoCobro.seguroMedicoNombre && (
               <>
                 <dt>Seguro</dt>
@@ -849,8 +853,8 @@ export function CobrosPage() {
                 ? 'Sin pagar (a deuda)'
                 : ultimoCobro.pagos.map((p) => `${p.metodo} ${formateadorMoneda.format(p.monto)}`).join(' + ')}
             </dd>
-            <dt>Monto pagado</dt>
-            <dd>{formateadorMoneda.format(ultimoCobro.montoPagado)}</dd>
+            <dt className="cobros-comprobante-dato-destacado">Monto pagado</dt>
+            <dd className="cobros-comprobante-dato-destacado">{formateadorMoneda.format(ultimoCobro.montoPagado)}</dd>
             {ultimoCobro.montoPendiente > 0 && (
               <>
                 <dt>Saldo pendiente</dt>
