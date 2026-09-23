@@ -46,6 +46,24 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA funbide TO funbide_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA funbide GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO funbide_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA funbide GRANT USAGE, SELECT ON SEQUENCES TO funbide_app;
 
+-- 1.1) auditoria_logs es la ÚNICA tabla con este REVOKE explícito: es append-only
+--      de verdad (AuditoriaLog hereda de AppendOnlyEntity — sin setters públicos
+--      ni forma de editarla/borrarla desde el dominio) y ya existe una primera
+--      capa de defensa a nivel HTTP (AppendOnlyGuardMiddleware bloquea PUT/PATCH/
+--      DELETE en los endpoints marcados [SoloLecturaEInsercion]). Pero ese guard
+--      es de la API — el rol funbide_app, con el GRANT genérico de arriba, sigue
+--      pudiendo actualizar o borrar filas de auditoría si alguien se conecta
+--      directo con ese connection string (una query manual, un bug, un script
+--      corrido fuera de la API). El REVOKE de acá cierra ese hueco a nivel de
+--      base de datos: doble capa, HTTP + Postgres, para el único registro donde
+--      "nadie debería poder editar/borrar esto, ni siquiera el propio backend"
+--      es una invariante real del negocio, no solo una regla de la UI.
+--      AuditoriaLogRepository (ver src/FUNBIDE.Infrastructure/Persistence/Repositories/
+--      AuditoriaLogRepository.cs) solo hace INSERT y SELECT sobre esta tabla —
+--      confirmado que ningún caso de uso la actualiza ni la borra antes de este
+--      REVOKE, así que no rompe nada legítimo.
+REVOKE UPDATE, DELETE ON funbide.auditoria_logs FROM funbide_app;
+
 -- 2) Las tablas de funbide.* que ya tienen RLS activo comparten una sola
 --    política "authenticated_access" (acceso total al rol `authenticated`).
 --    funbide_app es un rol distinto (conexión directa del backend, nunca pasa
