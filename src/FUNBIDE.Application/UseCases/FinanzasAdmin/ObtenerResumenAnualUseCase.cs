@@ -54,7 +54,7 @@ public sealed class ObtenerResumenAnualUseCase(
                 // aditivo que el fondo interno automático de arriba (aparece en Ingresos y,
                 // aparte, en el desglose de Fondo). No choca con "Fondo interno — ..." (el
                 // concepto que arma RegistrarCobroUseCase), que no contiene esta frase.
-                if (EsGananciaDeLaFundacion(movimiento.Concepto))
+                if (GananciaDeLaFundacionHelper.EsGananciaDeLaFundacion(movimiento.Concepto))
                 {
                     fondoGananciasPorMes[movimiento.RegistradoEn.Month - 1] += movimiento.Monto;
                 }
@@ -71,9 +71,4 @@ public sealed class ObtenerResumenAnualUseCase(
                 fondoGananciasPorMes[mes - 1]))
             .ToList();
     }
-
-    private static bool EsGananciaDeLaFundacion(string concepto) =>
-        concepto.Contains("ganancia de la fundación", StringComparison.OrdinalIgnoreCase) ||
-        concepto.Contains("ganancia fundación", StringComparison.OrdinalIgnoreCase) ||
-        concepto.Contains("ganancia de la fundacion", StringComparison.OrdinalIgnoreCase);
 }

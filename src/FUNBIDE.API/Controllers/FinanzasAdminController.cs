@@ -19,6 +19,7 @@ namespace FUNBIDE.API.Controllers;
 public sealed class FinanzasAdminController(
     IListarMovimientosImportantesUseCase listarMovimientos,
     IObtenerResumenAnualUseCase obtenerResumenAnual,
+    IObtenerResumenPorPeriodoUseCase obtenerResumenPorPeriodo,
     IRegistrarGastoAdminUseCase registrarGasto) : ControllerBase
 {
     [HttpGet("movimientos")]
@@ -32,6 +33,17 @@ public sealed class FinanzasAdminController(
     public async Task<ActionResult<IReadOnlyList<ResumenMensualDto>>> ObtenerResumenAnualAsync(
         [FromQuery] int anio, CancellationToken cancellationToken) =>
         Ok(await obtenerResumenAnual.EjecutarAsync(anio, cancellationToken));
+
+    // Hermano de resumen-anual con granularidad diaria/semanal (ver ObtenerResumenPorPeriodoUseCase)
+    // para el selector de tendencia del gráfico — pensado para un rango acotado (un mes), no
+    // para un año entero con granularidad diaria (365 puntos).
+    [HttpGet("resumen-periodo")]
+    [RequierePermiso(ModuloPermiso.Finanzas, ModuloPermiso.Gastos)]
+    public async Task<ActionResult<IReadOnlyList<ResumenPeriodoDto>>> ObtenerResumenPorPeriodoAsync(
+        [FromQuery] DateTimeOffset desde, [FromQuery] DateTimeOffset hasta,
+        [FromQuery] GranularidadResumen granularidad, CancellationToken cancellationToken) =>
+        Ok(await obtenerResumenPorPeriodo.EjecutarAsync(
+            new ObtenerResumenPorPeriodoRequest(desde, hasta, granularidad), cancellationToken));
 
     [HttpPost("gastos")]
     [RequierePermiso(ModuloPermiso.Gastos)]

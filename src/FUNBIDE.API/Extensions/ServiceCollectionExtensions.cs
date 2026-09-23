@@ -44,11 +44,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IListarPendientesDeCobroUseCase, ListarPendientesDeCobroUseCase>();
         services.AddScoped<IListarPacientesDelDoctorUseCase, ListarPacientesDelDoctorUseCase>();
 
-        services.AddScoped<IAbrirTurnoCajaUseCase, AbrirTurnoCajaUseCase>();
         services.AddScoped<ICerrarTurnoCajaUseCase, CerrarTurnoCajaUseCase>();
         services.AddScoped<IObtenerTurnoCajaActualUseCase, ObtenerTurnoCajaActualUseCase>();
         services.AddScoped<IObtenerResumenCajaUseCase, ObtenerResumenCajaUseCase>();
         services.AddScoped<IListarTurnosCajaUseCase, ListarTurnosCajaUseCase>();
+        services.AddScoped<IObtenerReporteCierreCajaUseCase, ObtenerReporteCierreCajaUseCase>();
 
         services.AddScoped<IRegistrarCobroUseCase, RegistrarCobroUseCase>();
         services.AddScoped<IListarCobrosDelTurnoUseCase, ListarCobrosDelTurnoUseCase>();
@@ -75,6 +75,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IObtenerHistorialPorPacienteUseCase, ObtenerHistorialPorPacienteUseCase>();
 
         services.AddScoped<IDescargarInventarioUseCase, DescargarInventarioUseCase>();
+        services.AddScoped<IRegistrarEntradaInventarioUseCase, RegistrarEntradaInventarioUseCase>();
         services.AddScoped<IListarInventarioUseCase, ListarInventarioUseCase>();
         services.AddScoped<ICrearInventarioItemUseCase, CrearInventarioItemUseCase>();
         services.AddScoped<IEditarInventarioItemUseCase, EditarInventarioItemUseCase>();
@@ -122,6 +123,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IListarMovimientosImportantesUseCase, ListarMovimientosImportantesUseCase>();
         services.AddScoped<IObtenerResumenAnualUseCase, ObtenerResumenAnualUseCase>();
+        services.AddScoped<IObtenerResumenPorPeriodoUseCase, ObtenerResumenPorPeriodoUseCase>();
         services.AddScoped<IRegistrarGastoAdminUseCase, RegistrarGastoAdminUseCase>();
 
         services.AddScoped<IListarEmpleadosUseCase, ListarEmpleadosUseCase>();

@@ -20,6 +20,7 @@ export const chartColorsPorTema = {
     pacientes: '#2fbf8f',
     actividad: '#2fbf8f',
     gasto: '#dd7d70',
+    acentoPrimario: '#4c7dff',
   },
   claro: {
     surface1: 'rgba(255, 255, 255, 0.92)',
@@ -32,6 +33,7 @@ export const chartColorsPorTema = {
     pacientes: '#2fbf8f',
     actividad: '#2fbf8f',
     gasto: '#c4574b',
+    acentoPrimario: '#0b1e75',
   },
 } as const
 

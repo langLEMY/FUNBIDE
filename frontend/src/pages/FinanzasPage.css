@@ -54,6 +54,17 @@
   cursor: default;
 }
 
+.finanzas-admin-granularidad {
+  display: flex;
+  gap: 6px;
+}
+
+.finanzas-admin-granularidad button.activo {
+  background: var(--acento-primario);
+  border-color: var(--acento-primario);
+  color: #ffffff;
+}
+
 .finanzas-admin-kpis {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -95,6 +106,42 @@
 .finanzas-admin-tabla-titulo {
   margin: 0 0 14px;
   font-size: 15px;
+  font-weight: 600;
+}
+
+/* Tooltip a medida del gráfico de tendencia (ver TooltipFinanzas en FinanzasPage.tsx) --
+   mismo material de vidrio que MonthlyMetricChart.css, con el % de cambio vs. el punto
+   anterior en verde/rojo debajo del monto de cada serie. */
+.finanzas-admin-grafico-tooltip {
+  background: var(--glass-float-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-top);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-float);
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.finanzas-admin-grafico-tooltip-label {
+  margin: 0 0 6px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.finanzas-admin-grafico-tooltip-fila {
+  margin: 2px 0;
+  font-weight: 600;
+}
+
+.finanzas-admin-grafico-tooltip-cambio-positivo {
+  color: var(--success, #1a7f37);
+  font-weight: 600;
+}
+
+.finanzas-admin-grafico-tooltip-cambio-negativo {
+  color: var(--danger);
   font-weight: 600;
 }
 

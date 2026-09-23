@@ -19,6 +19,17 @@ export interface ResumenMensual {
   fondoGanancias: number
 }
 
+export type GranularidadResumen = 'Diaria' | 'Semanal'
+
+export interface ResumenPeriodo {
+  periodo: string
+  ingresos: number
+  gastos: number
+  ganancia: number
+  /** Subconjunto de `ingresos` que es fondo interno de la fundación (excedente negociado con las aseguradoras). */
+  fondoGanancias: number
+}
+
 export interface RegistrarGastoAdminRequest {
   concepto: string
   monto: number
